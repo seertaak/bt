@@ -1,0 +1,11 @@
+*.swp
+*.swo
+build
+obj
+out
+**/__pycache__/*
+**/.DS_Store
+.vscode
+ctags
+tags
+.idea/*
