@@ -12,6 +12,7 @@ set(sources "")
 add_executable(
     bt 
     src/main.cpp
+    include/bullet/lexer.hpp
     ${sources}
 )
 
@@ -24,6 +25,7 @@ target_include_directories(bt PRIVATE include)
 add_executable(
     tests 
     test/main.cpp
+    include/bullet/lexer.hpp
     ${sources}
 )
 

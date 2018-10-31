@@ -22,4 +22,5 @@ class ALKConan(ConanFile):
         cmake = CMake(self, generator='Ninja')
         cmake.configure()
         cmake.build()
+        cmake.test()
 
