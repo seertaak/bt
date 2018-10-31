@@ -32,21 +32,7 @@ namespace lexer {
     using r::front;
 
     namespace token {
-
-#define def_token(tok_name, tok)                                               \
-    struct BOOST_PP_CAT(tok_name, _t) : token_tag {                            \
-        static constexpr const string_view name{BOOST_PP_STRINGIZE(tok_name)}; \
-        static constexpr const string_view token{tok};                         \
-    } tok_name
-
         struct token_tag {};
-
-        def_token(semicolon, ";");
-        def_token(eol, "EOL");
-        def_token(oparen, "(");
-        def_token(cparen, ")");
-        def_token(indent, "INDENT");
-        def_token(dedent, "DEDENT");
 
         template <typename T>
         auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
@@ -63,6 +49,92 @@ namespace lexer {
         auto operator!=(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
             return false;
         }
+
+#define def_token(tok_name, tok)                                                    \
+    struct BOOST_PP_CAT(tok_name, _t) : token_tag {                                 \
+        static constexpr const std::string_view name{BOOST_PP_STRINGIZE(tok_name)}; \
+        static constexpr const std::string_view token{tok};                         \
+    } tok_name;
+
+#define def_token_helper(_, __, x) def_token x
+
+#define def_tokens(...) \
+    BOOST_PP_SEQ_FOR_EACH(def_token_helper, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
+
+        def_tokens((eol, "EOL"),
+                   (indent, "INDENT"),
+                   (dedent, "DEDENT"),
+                   (import, "import"),
+                   (public_, "public"),
+                   (private_, "private"),
+                   (macro, "macro"),
+                   (help, "help"),
+                   (doc, "doc"),
+                   (pre, "pre"),
+                   (post, "post"),
+                   (meta, "meta"),
+                   (verbatim, "verbatim"),
+                   (note, "note"),
+                   (var, "var"),
+                   (data, "data"),
+                   (object, "object"),
+                   (const_, "const"),
+                   (type, "type"),
+                   (fn, "fn"),
+                   (def, "def"),
+                   (in, "in"),
+                   (for_, "for"),
+                   (while_, "while"),
+                   (repeat, "repeat"),
+                   (until, "until"),
+                   (break_, "break"),
+                   (goto_, "goto"),
+                   (throw_, "throw"),
+                   (catch_, "catch"),
+                   (if_, "if"),
+                   (case_, "case"));
+
+        def_tokens((plus_equal, "+="),
+                   (minus_equal, "-="),
+                   (star_equal, "*="),
+                   (slash_equal, "/="),
+                   (hat_equal, "^="),
+                   (percentage_equal, "%="),
+                   (leq, "<="),
+                   (geq, ">="),
+                   (equal, "=="),
+                   (thick_arrow, "=>"),
+                   (thin_arrow, "->"),
+                   (question_mark, "?"),
+                   (bar, "|"),
+                   (tilde, "~"),
+                   (ampersand, "!"),
+                   (bang, "!"),
+                   (dollar, "$"),
+                   (colon, ":"),
+                   (semicolon, ","),
+                   (comma, ","),
+                   (dot, "."),
+                   (hash, "#"),
+                   (atsign, "@"),
+                   (backtick, "`"),
+                   (backslash, "\\"),
+                   (lt, "<"),
+                   (gt, ">"),
+                   (oparen, "("),
+                   (cparen, ")"),
+                   (obracket, "["),
+                   (cbracket, "]"),
+                   (obraces, "{"),
+                   (cbraces, "}"),
+                   (assign, "="),
+                   (plus, "+"),
+                   (minus, "-"),
+                   (star, "*"),
+                   (slash, "/"),
+                   (hat, "^"),
+                   (percentage, "%"));
+
     }  // namespace token
 
     struct identifier_t {
@@ -155,7 +227,9 @@ namespace lexer {
             auto identifier = x3::rule<class identifier_type, string>("identifier") =
                 lexeme[(alpha | char_('_')) >> *(alnum | char_('_'))];
 
-            constexpr auto token = [](auto t) { return lit(data(decltype(t)::token)) >> attr(t); };
+            constexpr auto token = [](auto t) {
+                return lit(std::data(decltype(t)::token)) >> attr(t);
+            };
 
             const auto tokens = *(identifier | token(oparen) | token(cparen));
             const auto line = margin >> tokens;
