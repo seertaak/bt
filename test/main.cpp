@@ -19,17 +19,17 @@ bang
 
     // clang-format off
     const auto expected = vector<token_t>{
-        {semicolon},
-        {semicolon},
+        {eol},
+        {eol},
         {"foo"},
-        {oparen},
+        {indent},
         {"bar"},
-        {semicolon},
+        {eol},
         {"baz"},
-        {cparen},
-        {semicolon},
+        {dedent},
+        {eol},
         {"bang"},
-        {semicolon},
+        {eol},
     };
     // clang-format on
 
@@ -47,14 +47,14 @@ bang
 
     // clang-format off
     const auto expected = vector<token_t>{
-        {semicolon},
-        {semicolon},
+        {eol},
+        {eol},
         {"foo"},
         {"bar"},
         {"baz"},
-        {semicolon},
+        {eol},
         {"bang"},
-        {semicolon},
+        {eol},
     };
     // clang-format on
 
