@@ -18,6 +18,7 @@
 #include <boost/spirit/home/x3/support/utility/error_reporting.hpp>
 #include <range/v3/core.hpp>
 
+#include <bullet/token.hpp>
 #include <bullet/util.hpp>
 
 namespace lexer {
@@ -31,131 +32,7 @@ namespace lexer {
     using r::back;
     using r::front;
 
-    namespace token {
-        struct token_tag {};
-
-        template <typename T>
-        auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
-            os << T::name;
-            return os;
-        }
-
-        template <typename T>
-        auto operator==(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
-            return true;
-        }
-
-        template <typename T>
-        auto operator!=(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
-            return false;
-        }
-
-#define def_token(tok_name, tok)                                                    \
-    struct BOOST_PP_CAT(tok_name, _t) : token_tag {                                 \
-        static constexpr const std::string_view name{BOOST_PP_STRINGIZE(tok_name)}; \
-        static constexpr const std::string_view token{tok};                         \
-    } tok_name;
-
-#define def_token_helper(_, __, x) def_token x
-
-#define def_tokens(...) \
-    BOOST_PP_SEQ_FOR_EACH(def_token_helper, _, BOOST_PP_VARIADIC_TO_SEQ(__VA_ARGS__))
-
-        def_tokens((eol, "EOL"),
-                   (indent, "INDENT"),
-                   (dedent, "DEDENT"),
-                   (import, "import"),
-                   (public_, "public"),
-                   (private_, "private"),
-                   (macro, "macro"),
-                   (help, "help"),
-                   (doc, "doc"),
-                   (pre, "pre"),
-                   (post, "post"),
-                   (meta, "meta"),
-                   (verbatim, "verbatim"),
-                   (note, "note"),
-                   (var, "var"),
-                   (data, "data"),
-                   (object, "object"),
-                   (const_, "const"),
-                   (type, "type"),
-                   (fn, "fn"),
-                   (def, "def"),
-                   (in, "in"),
-                   (for_, "for"),
-                   (while_, "while"),
-                   (repeat, "repeat"),
-                   (until, "until"),
-                   (break_, "break"),
-                   (goto_, "goto"),
-                   (throw_, "throw"),
-                   (catch_, "catch"),
-                   (if_, "if"),
-                   (case_, "case"));
-
-        def_tokens((plus_equal, "+="),
-                   (minus_equal, "-="),
-                   (star_equal, "*="),
-                   (slash_equal, "/="),
-                   (hat_equal, "^="),
-                   (percentage_equal, "%="),
-                   (leq, "<="),
-                   (geq, ">="),
-                   (equal, "=="),
-                   (thick_arrow, "=>"),
-                   (thin_arrow, "->"),
-                   (question_mark, "?"),
-                   (bar, "|"),
-                   (tilde, "~"),
-                   (ampersand, "!"),
-                   (bang, "!"),
-                   (dollar, "$"),
-                   (colon, ":"),
-                   (semicolon, ","),
-                   (comma, ","),
-                   (dot, "."),
-                   (hash, "#"),
-                   (atsign, "@"),
-                   (backtick, "`"),
-                   (backslash, "\\"),
-                   (lt, "<"),
-                   (gt, ">"),
-                   (oparen, "("),
-                   (cparen, ")"),
-                   (obracket, "["),
-                   (cbracket, "]"),
-                   (obraces, "{"),
-                   (cbraces, "}"),
-                   (assign, "="),
-                   (plus, "+"),
-                   (minus, "-"),
-                   (star, "*"),
-                   (slash, "/"),
-                   (hat, "^"),
-                   (percentage, "%"));
-
-    }  // namespace token
-
-    struct identifier_t {
-        string name;
-        explicit identifier_t(string s) : name(s) {}
-    };
-
-    using token_t = variant<token::oparen_t,
-                            token::cparen_t,
-                            token::semicolon_t,
-                            token::eol_t,
-                            token::indent_t,
-                            token::dedent_t,
-                            string>;
-
-    auto operator<<(ostream& os, const token_t& t) -> ostream& {
-        visit([&](auto t) { os << t; }, t);
-        return os;
-    }
-
-    BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens) =
+    BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens1) =
         boost::hof::pipable([](string_view input) -> vector<token_t> {
             using namespace boost::spirit;
             using x3::alnum;
@@ -221,19 +98,99 @@ namespace lexer {
 
             // Lexer grammar definition:
 
+            // clang-format off
+
             auto margin = x3::rule<class margin_type, vector<token_t>>("margin") =
-                no_skip[eps[on_margin_begin] >> (*lit(' '))[on_margin_end]];
+                no_skip[
+                    eps [on_margin_begin] >> (*lit(' ')) [on_margin_end]
+                ];
 
             auto identifier = x3::rule<class identifier_type, string>("identifier") =
-                lexeme[(alpha | char_('_')) >> *(alnum | char_('_'))];
+                lexeme[
+                    (alpha | char_('_')) >> *(alnum | char_('_'))
+                ];
 
             constexpr auto token = [](auto t) {
                 return lit(std::data(decltype(t)::token)) >> attr(t);
             };
 
-            const auto tokens = *(identifier | token(oparen) | token(cparen));
+            const auto tokens = *( identifier 
+                                 | token(cbraces)
+                                 | token(import)
+                                 | token(_public)
+                                 | token(_private)
+                                 | token(macro)
+                                 | token(help)
+                                 | token(doc)
+                                 | token(pre)
+                                 | token(post)
+                                 | token(meta)
+                                 | token(verbatim)
+                                 | token(note)
+                                 | token(var)
+                                 | token(data)
+                                 | token(object)
+                                 | token(_const)
+                                 | token(type)
+                                 | token(fn)
+                                 | token(def)
+                                 | token(in)
+                                 | token(_for)
+                                 | token(_while)
+                                 | token(repeat)
+                                 | token(until)
+                                 | token(_break)
+                                 | token(_goto)
+                                 | token(_throw)
+                                 | token(_catch)
+                                 | token(_if)
+                                 | token(_case)
+                                 | token(plus_equal)
+                                 | token(minus_equal)
+                                 | token(star_equal)
+                                 | token(slash_equal)
+                                 | token(hat_equal)
+                                 | token(percentage_equal)
+                                 | token(leq)
+                                 | token(geq)
+                                 | token(equal)
+                                 | token(thick_arrow)
+                                 | token(thin_arrow)
+                                 | token(question_mark)
+                                 | token(bar)
+                                 | token(tilde)
+                                 | token(ampersand)
+                                 | token(bang)
+                                 | token(dollar)
+                                 | (token(colon) >> &!x3::eol)
+                                 | token(semicolon)
+                                 | token(comma)
+                                 | token(dot)
+                                 | token(hash)
+                                 | token(atsign)
+                                 | token(backtick)
+                                 | token(backslash)
+                                 | token(lt)
+                                 | token(gt)
+                                 | token(oparen)
+                                 | token(cparen)
+                                 | token(obracket)
+                                 | token(cbracket)
+                                 | token(obraces)
+                                 | token(cbraces)
+                                 | token(assign)
+                                 | token(plus)
+                                 | token(minus)
+                                 | token(star)
+                                 | token(slash)
+                                 | token(hat)
+                                 | token(percentage)
+                                 );
+
             const auto line = margin >> tokens;
-            const auto lines = line % (-(lit(':')[on_colon]) >> x3::eol);
+            const auto lines = line % ( -(lit(':') [on_colon]) >> x3::eol );
+
+            // clang-format on
 
             // Now, we invoke the grammar on the input.
 
@@ -244,6 +201,95 @@ namespace lexer {
                 throw runtime_error("Unable to parse.");
 
             return result;
+        });
+
+    namespace op {
+        using namespace boost::spirit;
+
+        template <typename TokenVariant, typename TokenValue>
+        struct value : x3::parser<value<TokenVariant, TokenValue>> {
+            using base_type = x3::parser<value<TokenVariant, TokenValue>>;
+            using attribute_type = TokenVariant;
+            static bool const has_attribute = true;
+
+            template <typename Iterator, typename Context, typename RContext, typename Attribute>
+            bool parse(Iterator& first,
+                       Iterator const& last,
+                       Context const& context,
+                       RContext& rcontext,
+                       Attribute& attr) const {
+                Iterator i = first;
+
+                if (holds_alternative<TokenValue>(*i)) {
+                    ++i;
+                    attr = *first;
+                    return true;
+                }
+
+                return false;
+            }
+        };
+
+    }  // namespace op
+
+    template <typename T>
+    const op::value<token_t, T> tk{};
+
+    constexpr auto t = [](auto tok) { return tk<decltype(tok)>; };
+
+    BOOST_HOF_STATIC_LAMBDA_FUNCTION(parse_tokens) =
+        boost::hof::pipable([](const auto& input, auto&& grammar) -> vector<token_t> {
+            auto i = begin(input);
+            auto output = vector<token_t>();
+            output.reserve(size(input));
+
+            if (!parse(i, end(input), grammar, output)) throw runtime_error("Unable to parse.");
+
+            return output;
+        });
+
+    BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens2) =
+        boost::hof::pipable([](vector<token_t> input) -> vector<token_t> {
+            using namespace boost::spirit;
+
+            constexpr auto t = [](auto tok) { return tk<decltype(tok)>; };
+
+            auto atom = x3::rule<class margin_type, vector<token_t>>("atom");
+
+            /*
+            const auto group = indent_group | brace_group | bracket_group | paren_group;
+
+            const auto indent_group = t(indent) >> lines_group >> t(dedent);
+            const auto lines_group = inline_group % t(eol);
+
+            const auto brace_group = t(obrace) >> -inline_group >> t(cbrace);
+            const auto bracket_group = t(obracket) >> -inline_group >> t(cbracket);
+            const auto paren_group = t(oparen) >> -inline_group >> t(cparen);
+
+            const auto inline_group = semicolon_group >> -(t(colon) >> +inline_group);
+            const auto semicolon_group = comma_group % t(semicolon);
+            const auto comma_group = atom % t(comma);
+
+            const auto basic_token = tokens - delimiters - separators;
+
+            const auto delimiters = t(oparen) | t(cparen) | t(obracket) | t(cbracket) | t(obrace) |
+                                    t(cbrace) | t(indent) | t(dedent) | t(colon);
+
+            const auto separators = (t(eol) | t(semicolon) | t(comma));
+
+            atom = basic_token;  // | group;
+
+            using namespace token;
+
+            auto output = vector<token_t>();
+            auto i = begin(input);
+
+            if (!parse(i, end(input), atom, output)) throw runtime_error("Unable to parse.");
+            */
+
+            auto output = vector<token_t>();
+
+            return output;
         });
 }  // namespace lexer
 

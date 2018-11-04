@@ -3,11 +3,23 @@
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <utility>
+#include <variant>
+
+#include <boost/hana.hpp>
 
 namespace bt {
     namespace file = std::filesystem;
     using namespace std::literals;
     using clock = std::chrono::system_clock;
+
+    BOOST_HOF_STATIC_LAMBDA_FUNCTION(match) = boost::hof::pipable([](auto&& x, auto&&... fn) {
+        return std::visit(boost::hana::overload(std::forward(fn)...), std::forward(x));
+    });
+
+    auto match2 = [](auto&& x, auto&&... fn) {
+        return std::visit(boost::hana::overload(std::forward(fn)...), std::forward(x));
+    };
 
     class ephemeral_file {
         const file::path file_;
