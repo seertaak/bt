@@ -5,7 +5,9 @@
 #include <type_traits>
 #include <variant>
 
-#include <bullet/util.hpp>
+#include <boost/hana.hpp>
+
+#include <bullet/identifier.hpp>
 
 //-------------------------------------------
 // Note: this file was generated based on:
@@ -15,13 +17,12 @@
 // Token table is stored in tools/tokens.csv.
 //-------------------------------------------
 
-// clang-format off
-
 namespace lexer {
     using namespace std;
+    namespace hana = boost::hana;
 
     namespace token {
-        struct token_tag {};
+        struct token_tag : x3::position_tagged {};
 
         template <typename T>
         auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
@@ -39,16 +40,25 @@ namespace lexer {
             return false;
         }
 
+        template <typename T>
+        auto token_name(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
+            return T::name;
+        }
+
+        template <typename T>
+        auto token_symbol(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
+            return T::name;
+        }
+
         {{ token_class_defs }}
+
+        constexpr auto types = hana::tuple_t<
+            {{ token_type_list }}
+        >;
     }
 
-    struct identifier_t {
-        string name;
-        explicit identifier_t(string s) : name(s) {}
-    };
-
     using token_t = variant<
-        {{ token_type_list }}, 
+        {{ token_type_list_ns }},
         identifier_t
     >;
 
@@ -56,5 +66,14 @@ namespace lexer {
         visit([&](auto t) { os << t; }, t);
         return os;
     }
+
+    auto token_name(const token_t& t) -> string_view { 
+        return visit([&](auto t) { return token_name(t); }, t);
+    }
+
+    auto token_symbol(const token_t& t) -> string_view { 
+        return visit([&](auto t) { return token_symbol(t); }, t);
+    }
+
     {{ tokens }}
 }  // namespace lexer

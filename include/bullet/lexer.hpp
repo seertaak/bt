@@ -77,17 +77,17 @@ namespace lexer {
 
                 if (n == margin) {
                     if (colon_indent) throw runtime_error("Indent expected");
-                    if (real_indent) _val(ctx).emplace_back(eol);
+                    if (real_indent) _val(ctx).push_back(EOL);
                 } else if (n > margin) {
-                    if (colon_indent) _val(ctx).emplace_back(indent);
+                    if (colon_indent) _val(ctx).push_back(INDENT);
                     margins.emplace_back(n, colon_indent);
                 } else {
                     if (colon_indent) throw runtime_error("Indent expected");
 
                     while (!empty(margins) && n < get<int16_t>(back(margins))) {
-                        if (get<bool>(back(margins))) _val(ctx).emplace_back(dedent);
+                        if (get<bool>(back(margins))) _val(ctx).push_back(DEDENT);
 
-                        _val(ctx).push_back(token_t(eol));
+                        _val(ctx).push_back(EOL);
 
                         margins.pop_back();
                     }
@@ -98,6 +98,13 @@ namespace lexer {
 
             // Lexer grammar definition:
 
+            const auto symbol = hana::fold(token::types, !eps, [](auto l, auto r) {
+                using T = typename decltype(r)::type;
+                const auto t = T{};
+
+                return l | (lit(std::data(T::token)) >> attr(t));
+            });
+
             // clang-format off
 
             auto margin = x3::rule<class margin_type, vector<token_t>>("margin") =
@@ -105,87 +112,12 @@ namespace lexer {
                     eps [on_margin_begin] >> (*lit(' ')) [on_margin_end]
                 ];
 
-            auto identifier = x3::rule<class identifier_type, string>("identifier") =
+            auto identifier = x3::rule<class identifier_type, identifier_t>("identifier") =
                 lexeme[
                     (alpha | char_('_')) >> *(alnum | char_('_'))
                 ];
 
-            constexpr auto token = [](auto t) {
-                return lit(std::data(decltype(t)::token)) >> attr(t);
-            };
-
-            const auto tokens = *( identifier 
-                                 | token(cbraces)
-                                 | token(import)
-                                 | token(_public)
-                                 | token(_private)
-                                 | token(macro)
-                                 | token(help)
-                                 | token(doc)
-                                 | token(pre)
-                                 | token(post)
-                                 | token(meta)
-                                 | token(verbatim)
-                                 | token(note)
-                                 | token(var)
-                                 | token(data)
-                                 | token(object)
-                                 | token(_const)
-                                 | token(type)
-                                 | token(fn)
-                                 | token(def)
-                                 | token(in)
-                                 | token(_for)
-                                 | token(_while)
-                                 | token(repeat)
-                                 | token(until)
-                                 | token(_break)
-                                 | token(_goto)
-                                 | token(_throw)
-                                 | token(_catch)
-                                 | token(_if)
-                                 | token(_case)
-                                 | token(plus_equal)
-                                 | token(minus_equal)
-                                 | token(star_equal)
-                                 | token(slash_equal)
-                                 | token(hat_equal)
-                                 | token(percentage_equal)
-                                 | token(leq)
-                                 | token(geq)
-                                 | token(equal)
-                                 | token(thick_arrow)
-                                 | token(thin_arrow)
-                                 | token(question_mark)
-                                 | token(bar)
-                                 | token(tilde)
-                                 | token(ampersand)
-                                 | token(bang)
-                                 | token(dollar)
-                                 | (token(colon) >> &!x3::eol)
-                                 | token(semicolon)
-                                 | token(comma)
-                                 | token(dot)
-                                 | token(hash)
-                                 | token(atsign)
-                                 | token(backtick)
-                                 | token(backslash)
-                                 | token(lt)
-                                 | token(gt)
-                                 | token(oparen)
-                                 | token(cparen)
-                                 | token(obracket)
-                                 | token(cbracket)
-                                 | token(obraces)
-                                 | token(cbraces)
-                                 | token(assign)
-                                 | token(plus)
-                                 | token(minus)
-                                 | token(star)
-                                 | token(slash)
-                                 | token(hat)
-                                 | token(percentage)
-                                 );
+            const auto tokens = *(identifier | symbol);
 
             const auto line = margin >> tokens;
             const auto lines = line % ( -(lit(':') [on_colon]) >> x3::eol );
@@ -206,11 +138,13 @@ namespace lexer {
     namespace op {
         using namespace boost::spirit;
 
-        template <typename TokenVariant, typename TokenValue>
-        struct value : x3::parser<value<TokenVariant, TokenValue>> {
-            using base_type = x3::parser<value<TokenVariant, TokenValue>>;
+        template <typename TokenVariant>
+        struct token_literal : x3::parser<token_literal<TokenVariant>> {
+            using base_type = x3::parser<token_literal<TokenVariant>>;
             using attribute_type = TokenVariant;
             static bool const has_attribute = true;
+
+            explicit token_literal(TokenVariant t) : literal(t) {}
 
             template <typename Iterator, typename Context, typename RContext, typename Attribute>
             bool parse(Iterator& first,
@@ -220,7 +154,7 @@ namespace lexer {
                        Attribute& attr) const {
                 Iterator i = first;
 
-                if (holds_alternative<TokenValue>(*i)) {
+                if (*i == literal) {
                     ++i;
                     attr = *first;
                     return true;
@@ -228,14 +162,13 @@ namespace lexer {
 
                 return false;
             }
+
+            TokenVariant literal;
         };
 
     }  // namespace op
 
-    template <typename T>
-    const op::value<token_t, T> tk{};
-
-    constexpr auto t = [](auto tok) { return tk<decltype(tok)>; };
+    constexpr auto tlit = [](auto tok) { return op::token_literal<decltype(tok)>(tok); };
 
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(parse_tokens) =
         boost::hof::pipable([](const auto& input, auto&& grammar) -> vector<token_t> {
@@ -251,8 +184,6 @@ namespace lexer {
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens2) =
         boost::hof::pipable([](vector<token_t> input) -> vector<token_t> {
             using namespace boost::spirit;
-
-            constexpr auto t = [](auto tok) { return tk<decltype(tok)>; };
 
             auto atom = x3::rule<class margin_type, vector<token_t>>("atom");
 
@@ -272,8 +203,8 @@ namespace lexer {
 
             const auto basic_token = tokens - delimiters - separators;
 
-            const auto delimiters = t(oparen) | t(cparen) | t(obracket) | t(cbracket) | t(obrace) |
-                                    t(cbrace) | t(indent) | t(dedent) | t(colon);
+            const auto delimiters = t(oparen) | t(cparen) | t(obracket) | t(cbracket) |
+            t(obrace) | t(cbrace) | t(indent) | t(dedent) | t(colon);
 
             const auto separators = (t(eol) | t(semicolon) | t(comma));
 
@@ -291,5 +222,5 @@ namespace lexer {
 
             return output;
         });
-}  // namespace lexer
+    }  // namespace lexer
 

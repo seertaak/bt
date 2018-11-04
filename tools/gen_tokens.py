@@ -1,15 +1,19 @@
 # Generate tokens
 
 from jinja2 import Template
+import sys
 
 def_class = Template("""
-        struct {{ class_name }} : token_tag {
-            static constexpr const std::string_view name{"{{ name }}"};
-            static constexpr const std::string_view token{"{{ symbol }}"};
-        };""");
+struct {{ class_name }} : token_tag {
+    static constexpr const std::string_view name{"{{ name }}"};
+    static constexpr const std::string_view token{"{{ symbol }}"};
+};""");
 
 def_token = Template("""
-    constexpr token_t {{ token }} {token::{{ token_type }}{}};""")
+const token_t {{ token }} {token::{{ token_type }}{}};""")
+
+def_types_ns = Template("""token::{{ token_type }}""")
+def_types = Template("""{{ token_type }}""")
 
 def run():
     template = Template(open('token.hpp.j2').read())
@@ -24,7 +28,7 @@ def run():
 
     tab.sort(key=lambda p: (-len(p[1]), p[0]))
 
-    class_defs, def_tokens = [], []
+    class_defs, def_tokens, token_type_list, token_type_list_ns = [], [], [], []
 
     for name, symbol in tab:
         class_defs.append(def_class.render(
@@ -32,13 +36,20 @@ def run():
                 name=name.upper(),
                 symbol=symbol))
 
+        token_type = "{}_t".format(name)
+
+        token_type_list.append(def_types.render(token_type=token_type))
+        token_type_list_ns.append(def_types_ns.render(token_type=token_type))
+
         def_tokens.append(def_token.render(
                 token=name.upper(),
-                token_type="{}_t".format(name)))
+                token_type=token_type))
 
     with open('tokens.hpp', 'w') as f:
         out = template.render(
                 token_class_defs="".join(class_defs),
+                token_type_list=",".join(token_type_list),
+                token_type_list_ns=",".join(token_type_list_ns),
                 tokens="".join(def_tokens))
 
         f.write(out)
