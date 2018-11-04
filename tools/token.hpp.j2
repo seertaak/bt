@@ -1,0 +1,60 @@
+#pragma once
+
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <variant>
+
+#include <bullet/util.hpp>
+
+//-------------------------------------------
+// Note: this file was generated based on:
+//      cd tools
+//      python3 gen_tokens.py
+//
+// Token table is stored in tools/tokens.csv.
+//-------------------------------------------
+
+// clang-format off
+
+namespace lexer {
+    using namespace std;
+
+    namespace token {
+        struct token_tag {};
+
+        template <typename T>
+        auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
+            os << T::name;
+            return os;
+        }
+
+        template <typename T>
+        auto operator==(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
+            return true;
+        }
+
+        template <typename T>
+        auto operator!=(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
+            return false;
+        }
+
+        {{ token_class_defs }}
+    }
+
+    struct identifier_t {
+        string name;
+        explicit identifier_t(string s) : name(s) {}
+    };
+
+    using token_t = variant<
+        {{ token_type_list }}, 
+        identifier_t
+    >;
+
+    auto operator<<(ostream& os, const token_t& t) -> ostream& {
+        visit([&](auto t) { os << t; }, t);
+        return os;
+    }
+    {{ tokens }}
+}  // namespace lexer
