@@ -8,8 +8,8 @@
 using namespace std;
 using namespace lexer;
 using namespace lexer::token;
-
 /*
+
 TEST_CASE("Indented line", "[lexer]") {
     const auto input = R"(
 foo:
