@@ -33,14 +33,6 @@ namespace lexer {
     using r::back;
     using r::front;
 
-            const auto symbol = hana::fold(token::types, !x3::eps, [](auto l, auto r) {
-                using T = typename decltype(r)::type;
-                const auto t = T{};
-
-                return l | (x3::lit(std::data(T::token)) >> x3::attr(t));
-            });
-
-
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens1) =
         boost::hof::pipable([](string_view input) -> vector<token_t> {
             using namespace boost::spirit;
@@ -105,11 +97,17 @@ namespace lexer {
                 colon_indent = false;
             };
 
-            constexpr auto ident_to_token = [] (auto& ctx) {
+            constexpr auto ident_to_token = [](auto& ctx) {
                 const auto s = string(begin(_attr(ctx)), end(_attr(ctx)));
                 _val(ctx) = lexer::token_t(lexer::identifier_t(s));
             };
 
+            const auto symbol = hana::fold(token::types, !x3::eps, [](auto l, auto r) {
+                using T = typename decltype(r)::type;
+                const auto t = T{};
+
+                return l | (x3::lit(std::data(T::token)) >> x3::attr(t));
+            });
 
             // Lexer grammar definition:
 
@@ -192,43 +190,55 @@ namespace lexer {
             return output;
         });
 
+    namespace token_tree {
+        namespace x3 = boost::spirit::x3;
+        using namespace token;
+
+        const auto symbol = hana::fold(token::types, !x3::eps, [](auto l, auto r) {
+            return l | tlit(token_t(typename decltype(r)::type{}));
+        });
+
+        const auto node = x3::rule<class token_tree_type, vector<token_t>>("token_tree");
+        const auto inline_group = x3::rule<class inline_group_type, vector<token_t>>("inline_group");
+
+        const auto separators = (tlit(EOL) | tlit(SEMICOLON) | tlit(COMMA));
+
+        const auto delimiters = tlit(OPAREN) | tlit(CPAREN) | tlit(OBRACKET) | tlit(CBRACKET) |
+                                tlit(OBRACES) | tlit(CBRACES) | tlit(INDENT) | tlit(DEDENT) |
+                                tlit(COLON);
+
+        const auto basic_token = symbol - delimiters - separators;
+
+        const auto comma_group = node % tlit(COMMA);
+        const auto semicolon_group = comma_group % tlit(SEMICOLON);
+
+        const auto inline_group_def = semicolon_group >> -(tlit(COLON) >> +inline_group);
+
+        const auto paren_group = tlit(OPAREN) >> -inline_group >> tlit(CPAREN);
+        const auto bracket_group = tlit(OBRACKET) >> -inline_group >> tlit(CBRACKET);
+        const auto brace_group = tlit(OBRACES) >> -inline_group >> tlit(CBRACES);
+        const auto lines_group = inline_group % tlit(EOL);
+
+        const auto indent_group = tlit(INDENT) >> lines_group >> tlit(DEDENT);
+
+        const auto group = x3::rule<class token_tree_type, vector<token_t>>("group")
+                = indent_group | brace_group | bracket_group | paren_group;
+
+        const auto node_def = *symbol;// | group;
+
+        BOOST_SPIRIT_DEFINE(node, inline_group);
+    }  // namespace token_tree
+
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens2) =
         boost::hof::pipable([](vector<token_t> input) -> vector<token_t> {
             namespace x3 = boost::spirit::x3;
-            using namespace token;
-
-            const auto separators = (tlit(EOL) | tlit(SEMICOLON) | tlit(COMMA));
-
-            const auto delimiters = tlit(OPAREN) | tlit(CPAREN) | tlit(OBRACKET) | tlit(CBRACKET) | tlit(OBRACES) | tlit(CBRACES) | tlit(INDENT) | tlit(DEDENT) | tlit(COLON);
-
-            const auto basic_token = symbol - delimiters - separators;
-
-
-            auto atom = x3::rule<class atom_type, token_t>("atom")
-                = separators;  // | group;
-
-            /*
-            const auto group = indent_group | brace_group | bracket_group | paren_group;
-
-            const auto indent_group = tlit(indent) >> lines_group >> tlit(dedent);
-            const auto lines_group = inline_group % tlit(eol);
-
-            const auto brace_group = tlit(obrace) >> -inline_group >> tlit(cbrace);
-            const auto bracket_group = tlit(obracket) >> -inline_group >> tlit(cbracket);
-            const auto paren_group = tlit(oparen) >> -inline_group >> tlit(cparen);
-
-            const auto inline_group = semicolon_group >> -(tlit(colon) >> +inline_group);
-            const auto semicolon_group = comma_group % tlit(semicolon);
-            const auto comma_group = atom % tlit(comma);
-
-            */
 
             auto output = vector<token_t>();
             auto i = begin(input);
 
-            if (!x3::parse(i, end(input), +atom, output)) throw runtime_error("Unable to parse.");
+            if (!x3::parse(i, end(input), token_tree::node, output))
+                throw runtime_error("Unable to parse.");
 
             return output;
         });
-    }  // namespace lexer
-
+}  // namespace lexer
