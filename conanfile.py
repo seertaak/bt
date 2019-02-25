@@ -4,7 +4,7 @@ from conans import ConanFile, CMake
 class ALKConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     requires = (
-        "boost/1.68.0@conan/stable",
+        "boost/1.69.0@conan/stable",
         "range-v3/0.4.0@ericniebler/stable",
         "Catch/1.12.1@bincrafters/stable ",
         "abseil/20180600@bincrafters/stable",

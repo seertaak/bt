@@ -1,15 +1,16 @@
 #pragma once
 
 #include <chrono>
-#include <filesystem>
 #include <fstream>
 #include <utility>
 #include <variant>
 
+#include <boost/filesystem.hpp>
 #include <boost/hana.hpp>
+#include <boost/hof.hpp>
 
 namespace bt {
-    namespace file = std::filesystem;
+    namespace file = boost::filesystem;
     using namespace std::literals;
     using clock = std::chrono::system_clock;
 
@@ -30,7 +31,7 @@ namespace bt {
                     ("f"s + std::to_string(clock::now().time_since_epoch().count()) + ".tmp")) {
             if (!empty(contents)) {
                 try {
-                    auto out = std::fstream(file_, std::ios::out);
+                    auto out = file::fstream(file_, std::ios::out);
                     out << contents;
                 } catch (...) {
                     if (exists(file_)) {

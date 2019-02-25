@@ -17,7 +17,7 @@ add_executable(
 )
 
 conan_target_link_libraries(bt)
-target_compile_features(bt PRIVATE cxx_std_20)
+target_compile_features(bt PRIVATE cxx_std_17)
 target_compile_options(bt PRIVATE -Wno-logical-op-parentheses)
 target_compile_definitions(bt PRIVATE BOOST_HANA_CONFIG_ENABLE_STRING_UDL)
 target_include_directories(bt PRIVATE include)
@@ -30,7 +30,7 @@ add_executable(
 )
 
 conan_target_link_libraries(tests)
-target_compile_features(tests PRIVATE cxx_std_20)
+target_compile_features(tests PRIVATE cxx_std_17)
 target_compile_options(tests PRIVATE -Wno-logical-op-parentheses)
 target_include_directories(tests PRIVATE include)
 target_compile_definitions(tests PRIVATE BOOST_HANA_CONFIG_ENABLE_STRING_UDL)

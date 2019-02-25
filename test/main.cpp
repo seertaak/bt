@@ -1,14 +1,54 @@
 #define CATCH_CONFIG_MAIN
 
+#include <sstream>
+
 #include <catch.hpp>
 
-#include <bullet/lexer.hpp>
+#include <bullet/token.hpp>
+#include <bullet/token_tree.hpp>
 #include <bullet/util.hpp>
 
 using namespace std;
 using namespace lexer;
 using namespace lexer::token;
+
+TEST_CASE("Basic token functionality", "[lexer]") {
+    REQUIRE(token_name(VERBATIM) == "VERBATIM");
+    REQUIRE(token_symbol(VERBATIM) == "verbatim");
+
+    REQUIRE(token_name(BAR) == "BAR");
+    REQUIRE(token_symbol(BAR) == "|");
+
+    auto s = std::stringstream();
+    s << CASE;
+
+    REQUIRE(s.str() == "CASE");
+}
+
+TEST_CASE("Token tree functionality", "[lexer]") {
+    const auto tt = token_tree_t(
+        token_list_t(VERBATIM, BAR, BAR),
+        
+    );
+
+}
+
 /*
+
+
+TEST_CASE("Indented line", "[lexer]") {
+    const auto input = R"(foo )"sv;
+
+    // clang-format off
+    const auto expected = vector<token_t>{
+        identifier_t("foo"),
+    };
+    // clang-format on
+
+    const auto output = input | tokens1;
+    for (auto t : output) cout << t << endl;
+    REQUIRE(expected == output);
+}
 
 TEST_CASE("Indented line", "[lexer]") {
     const auto input = R"(
@@ -34,10 +74,14 @@ bang
     };
     // clang-format on
 
+    std::cout << "GOT HERE" << std::endl;
     const auto output = input | tokens1;
+    std::cout << "GOT HERE" << std::endl;
     for (auto t : output) cout << t << endl;
+    std::cout << "GOT HERE" << std::endl;
     REQUIRE(expected == output);
 }
+
 
 TEST_CASE("Extended line", "[lexer]") {
     const auto input = R"(

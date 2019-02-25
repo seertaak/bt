@@ -47,7 +47,7 @@ namespace lexer {
 
         template <typename T>
         auto token_symbol(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
-            return T::name;
+            return T::token;
         }
 
         struct verbatim_t : token_tag {
