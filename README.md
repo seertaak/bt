@@ -8,7 +8,7 @@ setting where full (i.e. manual) control over memory and threads is
 required. Its overarching philosophy
 is to trust the programmer, rather than imposing restrictions on them.
 For example, Bullet adopts the open extension approaches of Julia and Go:
-an extension written by a user of a library is syntacally on an equal
+an extension written by a user of a library is syntactically on an equal
 footing to the functionality of the library itself.
 Instead of trying to divine the possible uses of a language feature, 
 Bullet strives to give the programmer the tools to "skin" those language
