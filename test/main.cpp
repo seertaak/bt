@@ -6,6 +6,7 @@
 
 #include <bullet/token.hpp>
 #include <bullet/token_tree.hpp>
+#include <bullet/lexer.hpp>
 #include <bullet/util.hpp>
 
 using namespace std;
@@ -25,15 +26,14 @@ TEST_CASE("Basic token functionality", "[lexer]") {
     REQUIRE(s.str() == "CASE");
 }
 
+
+/*
 TEST_CASE("Token tree functionality", "[lexer]") {
     const auto tt = token_tree_t(
         token_list_t(VERBATIM, BAR, BAR),
         
     );
-
 }
-
-/*
 
 
 TEST_CASE("Indented line", "[lexer]") {
