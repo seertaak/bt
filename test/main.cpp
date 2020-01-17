@@ -2,7 +2,7 @@
 
 #include <sstream>
 
-#include <catch.hpp>
+#include <catch2/catch.hpp>
 
 #include <bullet/token.hpp>
 #include <bullet/token_tree.hpp>
