@@ -12,9 +12,9 @@
 
 namespace lexer {
     namespace x3 = boost::spirit::x3;
-    using namespace ranges::v3;
+    using namespace ranges;
 
-    using ranges::v3::empty;
+    using ranges::empty;
 
     template <typename T>
     using rec = typename boost::recursive_wrapper<T>;
@@ -49,7 +49,7 @@ namespace lexer {
         os << '(';
         if (!empty(t)) {
             os << front(t);
-            for (const auto& v: t | view::tail)
+            for (const auto& v: t | views::tail)
                 os << ", " << v;
         }
         os << ')';
