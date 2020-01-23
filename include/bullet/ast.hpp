@@ -2,10 +2,10 @@
 
 #include <list>
 
-#include <boost/spirit/home/x3/support/ast/variant.hpp>
-#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/fusion/include/io.hpp>
 #include <boost/optional.hpp>
+#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
+#include <boost/spirit/home/x3/support/ast/variant.hpp>
 
 namespace bt {
     namespace ast {
@@ -108,4 +108,3 @@ namespace bt {
         }
     }  // namespace ast
 }  // namespace bt
-

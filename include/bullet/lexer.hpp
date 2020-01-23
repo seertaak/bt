@@ -18,8 +18,8 @@
 #include <boost/spirit/home/x3/support/utility/error_reporting.hpp>
 #include <range/v3/core.hpp>
 
-#include <bullet/util.hpp>
 #include <bullet/token.hpp>
+#include <bullet/util.hpp>
 
 namespace lexer {
     using namespace std;
@@ -35,8 +35,8 @@ namespace lexer {
     using std::end;
     using std::size;
 
-    BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens) =
-        boost::hof::pipable([](string_view input) -> vector<token_t> {
+    BOOST_HOF_STATIC_LAMBDA_FUNCTION(
+        tokens) = boost::hof::pipable([](string_view input) -> vector<token_t> {
         using namespace boost::spirit;
         using x3::alnum;
         using x3::alpha;
@@ -73,7 +73,8 @@ namespace lexer {
 
         const auto on_colon = [&](auto& ctx) { colon_indent = true; };
 
-        const auto on_margin_end = [&margins, &colon_indent, &b_ws, &pending_dedents, input](auto& ctx) {
+        const auto on_margin_end = [&margins, &colon_indent, &b_ws, &pending_dedents,
+                                    input](auto& ctx) {
             const auto e_ws = begin(_where(ctx));
 
             const int n = e_ws - b_ws;
@@ -81,8 +82,7 @@ namespace lexer {
 
             if (n == margin) {
                 if (colon_indent) throw runtime_error("Indent expected");
-                if (b_ws != begin(input))
-                    _val(ctx).emplace_back(LINE_END);
+                if (b_ws != begin(input)) _val(ctx).emplace_back(LINE_END);
             } else if (n > margin) {
                 if (colon_indent) _val(ctx).emplace_back(OPAREN);
                 margins.emplace_back(n, colon_indent);
@@ -90,8 +90,7 @@ namespace lexer {
                 if (colon_indent) throw runtime_error("Indent expected");
 
                 while (!empty(margins) && n < get<int16_t>(back(margins))) {
-                    if (get<bool>(back(margins))) 
-                        _val(ctx).emplace_back(CPAREN);
+                    if (get<bool>(back(margins))) _val(ctx).emplace_back(CPAREN);
 
                     _val(ctx).push_back(token_t(LINE_END));
 
@@ -222,8 +221,7 @@ namespace lexer {
             throw runtime_error("Failed to tokenize.");
 
         while (size(margins) > 1) {
-            if (get<bool>(back(margins))) 
-                result.emplace_back(CPAREN);
+            if (get<bool>(back(margins))) result.emplace_back(CPAREN);
             margins.pop_back();
         }
 
@@ -259,215 +257,219 @@ namespace lexer {
 
     }  // namespace op
 
-//    template <typename T>
-//    const op::value<token_t, T> tk{};
-//
-//    constexpr auto t = [](auto tok) { return tk<decltype(tok)>; };
-//
-//    BOOST_HOF_STATIC_LAMBDA_FUNCTION(parse_tokens) =
-//        boost::hof::pipable([](const auto& input, auto&& grammar) -> vector<token_t> {
-//            auto i = begin(input);
-//            auto output = vector<token_t>();
-//            output.reserve(size(input));
-//
-//            if (!parse(i, end(input), grammar, output)) throw runtime_error("Unable to parse.");
-//
-//            return output;
-//        });
-//
-//    BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens2) =
-//        boost::hof::pipable([](vector<token_t> input) -> vector<token_t> {
-//            using namespace boost::spirit;
-//            using x3::alnum;
-//            using x3::alpha;
-//            using x3::attr;
-//            using x3::double_;
-//            using x3::eoi;
-//            using x3::eps;
-//            using x3::int_;
-//            using x3::lexeme;
-//            using x3::lit;
-//            using x3::no_skip;
-//            using x3::omit;
-//            using x3::raw;
-//            using x3::ascii::char_;
-//            using x3::ascii::space;
-//
-//            using namespace token;
-//
-//            // Below, some helpers to handle indent/dedent via margin stack.  Very similar to python
-//            // implementation, but in addition to storing the current margin x-pos, we also record
-//            // whether a given indent was preceeded by a colon (':'). If so, the indent is "real",
-//            // and we emit open and close parentheses. Otherwise, the new lines are considered to be
-//            // an extension of the previous.
-//
-//            auto margins = vector<pair<int16_t, bool>>{{0, true}};
-//            auto colon_indent = false;
-//            auto b_ws = begin(input);
-//
-//            const auto on_margin_begin = [&](auto& ctx) {
-//                _val(ctx) = {};
-//                b_ws = begin(_where(ctx));
-//            };
-//
-//            const auto on_colon = [&](auto& ctx) { colon_indent = true; };
-//
-//            const auto on_margin_end = [&margins, &colon_indent, &b_ws, input](auto& ctx) {
-//                const auto e_ws = begin(_where(ctx));
-//
-//                const int n = e_ws - b_ws;
-//                const auto [margin, real_indent] = back(margins);
-//
-//                if (n == margin) {
-//                    if (colon_indent) throw runtime_error("Indent expected");
-//                    if (real_indent) _val(ctx).emplace_back(EOL);
-//                } else if (n > margin) {
-//                    if (colon_indent) _val(ctx).emplace_back(INDENT);
-//                    margins.emplace_back(n, colon_indent);
-//                } else {
-//                    if (colon_indent) throw runtime_error("Indent expected");
-//
-//                    while (!empty(margins) && n < get<int16_t>(back(margins))) {
-//                        if (get<bool>(back(margins))) _val(ctx).emplace_back(DEDENT);
-//
-//                        _val(ctx).push_back(token_t(EOL));
-//
-//                        margins.pop_back();
-//                    }
-//                }
-//
-//                colon_indent = false;
-//            };
-//
-//
-//            auto margin = x3::rule<class margin_type, vector<token_t>>("margin") =
-//                no_skip[
-//                    eps [on_margin_begin] >> (*lit(' ')) [on_margin_end]
-//                ];
-//
-//            auto identifier = x3::rule<class identifier_type, string>("identifier") =
-//                lexeme[
-//                    (alpha | char_('_')) >> *(alnum | char_('_'))
-//                ];
-//
-//            constexpr auto token = [](auto t) {
-//                return lit(std::data(token_name(t))) >> attr(t);
-//            };
-//
-//            const auto tokens = *( identifier 
-//                                 | token(CBRACES)
-//                                 | token(IMPORT)
-//                                 | token(PUBLIC)
-//                                 | token(PRIVATE)
-//                                 | token(MACRO)
-//                                 | token(HELP)
-//                                 | token(DOC)
-//                                 | token(PRE)
-//                                 | token(POST)
-//                                 | token(META)
-//                                 | token(VERBATIM)
-//                                 | token(NOTE)
-//                                 | token(VAR)
-//                                 | token(DATA)
-//                                 | token(OBJECT)
-//                                 | token(CONST)
-//                                 | token(TYPE)
-//                                 | token(FN)
-//                                 | token(DEF)
-//                                 | token(IN)
-//                                 | token(FOR)
-//                                 | token(WHILE)
-//                                 | token(REPEAT)
-//                                 | token(UNTIL)
-//                                 | token(BREAK)
-//                                 | token(GOTO)
-//                                 | token(THROW)
-//                                 | token(CATCH)
-//                                 | token(IF)
-//                                 | token(CASE)
-//                                 | token(PLUS_EQUAL)
-//                                 | token(MINUS_EQUAL)
-//                                 | token(STAR_EQUAL)
-//                                 | token(SLASH_EQUAL)
-//                                 | token(HAT_EQUAL)
-//                                 | token(PERCENTAGE_EQUAL)
-//                                 | token(LEQ)
-//                                 | token(GEQ)
-//                                 | token(EQUAL)
-//                                 | token(THICK_ARROW)
-//                                 | token(THIN_ARROW)
-//                                 | token(QUESTION_MARK)
-//                                 | token(BAR)
-//                                 | token(TILDE)
-//                                 | token(AMPERSAND)
-//                                 | token(BANG)
-//                                 | token(DOLLAR)
-//                                 | (token(COLON) >> &!x3::eol)
-//                                 | token(SEMICOLON)
-//                                 | token(COMMA)
-//                                 | token(DOT)
-//                                 | token(HASH)
-//                                 | token(ATSIGN)
-//                                 | token(BACKTICK)
-//                                 | token(BACKSLASH)
-//                                 | token(LT)
-//                                 | token(GT)
-//                                 | token(OPAREN)
-//                                 | token(CPAREN)
-//                                 | token(OBRACKET)
-//                                 | token(CBRACKET)
-//                                 | token(OBRACES)
-//                                 | token(CBRACES)
-//                                 | token(ASSIGN)
-//                                 | token(PLUS)
-//                                 | token(MINUS)
-//                                 | token(STAR)
-//                                 | token(SLASH)
-//                                 | token(HAT)
-//                                 | token(PERCENTAGE)
-//                                 );
-//
-//
-//            constexpr auto t = [](auto tok) { return tk<decltype(tok)>; };
-//
-//            auto atom = x3::rule<class atom_type, vector<token_t>>("atom");
-//
-//            /*
-//            auto inline_group = x3::rule<class inline_group_type, vector<token_t>>("inline_group");
-//            const auto lines_group = inline_group % t(EOL);
-//            const auto indent_group = t(INDENT) >> lines_group >> t(DEDENT);
-//            const auto comma_group = atom % t(COMMA);
-//            const auto semicolon_group = comma_group % t(SEMICOLON);
-//            inline_group = semicolon_group >> -(t(COLON) >> +inline_group);
-//
-//            const auto brace_group = t(OBRACES) >> -inline_group >> t(CBRACES);
-//            const auto bracket_group = t(OBRACKET) >> -inline_group >> t(CBRACKET);
-//            const auto paren_group = t(OPAREN) >> -inline_group >> t(CPAREN);
-//
-//            const auto group = indent_group | brace_group | bracket_group | paren_group;
-//
-//            */
-//            const auto delimiters = t(OPAREN) | t(CPAREN) | t(OBRACKET) | t(CBRACKET) | t(OBRACES) |
-//                                    t(CBRACES) | t(INDENT) | t(DEDENT) | t(COLON);
-//
-//            const auto separators = (t(EOL) | t(SEMICOLON) | t(COMMA));
-//
-//            const auto basic_token = tokens - delimiters - separators;
-//
-//            // atom = basic_token | group;
-//            const auto atom_def = basic_token;
-//
-//            BOOST_SPIRIT_DEFINE(atom);
-//
-//            using namespace token;
-//
-//            auto output = vector<token_t>();
-//            auto i = begin(input);
-//
-//            if (!parse(i, end(input), atom, output)) throw runtime_error("Unable to parse.");
-//
-//            return output;
-//        });
+    //    template <typename T>
+    //    const op::value<token_t, T> tk{};
+    //
+    //    constexpr auto t = [](auto tok) { return tk<decltype(tok)>; };
+    //
+    //    BOOST_HOF_STATIC_LAMBDA_FUNCTION(parse_tokens) =
+    //        boost::hof::pipable([](const auto& input, auto&& grammar) -> vector<token_t> {
+    //            auto i = begin(input);
+    //            auto output = vector<token_t>();
+    //            output.reserve(size(input));
+    //
+    //            if (!parse(i, end(input), grammar, output)) throw runtime_error("Unable to
+    //            parse.");
+    //
+    //            return output;
+    //        });
+    //
+    //    BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens2) =
+    //        boost::hof::pipable([](vector<token_t> input) -> vector<token_t> {
+    //            using namespace boost::spirit;
+    //            using x3::alnum;
+    //            using x3::alpha;
+    //            using x3::attr;
+    //            using x3::double_;
+    //            using x3::eoi;
+    //            using x3::eps;
+    //            using x3::int_;
+    //            using x3::lexeme;
+    //            using x3::lit;
+    //            using x3::no_skip;
+    //            using x3::omit;
+    //            using x3::raw;
+    //            using x3::ascii::char_;
+    //            using x3::ascii::space;
+    //
+    //            using namespace token;
+    //
+    //            // Below, some helpers to handle indent/dedent via margin stack.  Very similar to
+    //            python
+    //            // implementation, but in addition to storing the current margin x-pos, we also
+    //            record
+    //            // whether a given indent was preceeded by a colon (':'). If so, the indent is
+    //            "real",
+    //            // and we emit open and close parentheses. Otherwise, the new lines are considered
+    //            to be
+    //            // an extension of the previous.
+    //
+    //            auto margins = vector<pair<int16_t, bool>>{{0, true}};
+    //            auto colon_indent = false;
+    //            auto b_ws = begin(input);
+    //
+    //            const auto on_margin_begin = [&](auto& ctx) {
+    //                _val(ctx) = {};
+    //                b_ws = begin(_where(ctx));
+    //            };
+    //
+    //            const auto on_colon = [&](auto& ctx) { colon_indent = true; };
+    //
+    //            const auto on_margin_end = [&margins, &colon_indent, &b_ws, input](auto& ctx) {
+    //                const auto e_ws = begin(_where(ctx));
+    //
+    //                const int n = e_ws - b_ws;
+    //                const auto [margin, real_indent] = back(margins);
+    //
+    //                if (n == margin) {
+    //                    if (colon_indent) throw runtime_error("Indent expected");
+    //                    if (real_indent) _val(ctx).emplace_back(EOL);
+    //                } else if (n > margin) {
+    //                    if (colon_indent) _val(ctx).emplace_back(INDENT);
+    //                    margins.emplace_back(n, colon_indent);
+    //                } else {
+    //                    if (colon_indent) throw runtime_error("Indent expected");
+    //
+    //                    while (!empty(margins) && n < get<int16_t>(back(margins))) {
+    //                        if (get<bool>(back(margins))) _val(ctx).emplace_back(DEDENT);
+    //
+    //                        _val(ctx).push_back(token_t(EOL));
+    //
+    //                        margins.pop_back();
+    //                    }
+    //                }
+    //
+    //                colon_indent = false;
+    //            };
+    //
+    //
+    //            auto margin = x3::rule<class margin_type, vector<token_t>>("margin") =
+    //                no_skip[
+    //                    eps [on_margin_begin] >> (*lit(' ')) [on_margin_end]
+    //                ];
+    //
+    //            auto identifier = x3::rule<class identifier_type, string>("identifier") =
+    //                lexeme[
+    //                    (alpha | char_('_')) >> *(alnum | char_('_'))
+    //                ];
+    //
+    //            constexpr auto token = [](auto t) {
+    //                return lit(std::data(token_name(t))) >> attr(t);
+    //            };
+    //
+    //            const auto tokens = *( identifier
+    //                                 | token(CBRACES)
+    //                                 | token(IMPORT)
+    //                                 | token(PUBLIC)
+    //                                 | token(PRIVATE)
+    //                                 | token(MACRO)
+    //                                 | token(HELP)
+    //                                 | token(DOC)
+    //                                 | token(PRE)
+    //                                 | token(POST)
+    //                                 | token(META)
+    //                                 | token(VERBATIM)
+    //                                 | token(NOTE)
+    //                                 | token(VAR)
+    //                                 | token(DATA)
+    //                                 | token(OBJECT)
+    //                                 | token(CONST)
+    //                                 | token(TYPE)
+    //                                 | token(FN)
+    //                                 | token(DEF)
+    //                                 | token(IN)
+    //                                 | token(FOR)
+    //                                 | token(WHILE)
+    //                                 | token(REPEAT)
+    //                                 | token(UNTIL)
+    //                                 | token(BREAK)
+    //                                 | token(GOTO)
+    //                                 | token(THROW)
+    //                                 | token(CATCH)
+    //                                 | token(IF)
+    //                                 | token(CASE)
+    //                                 | token(PLUS_EQUAL)
+    //                                 | token(MINUS_EQUAL)
+    //                                 | token(STAR_EQUAL)
+    //                                 | token(SLASH_EQUAL)
+    //                                 | token(HAT_EQUAL)
+    //                                 | token(PERCENTAGE_EQUAL)
+    //                                 | token(LEQ)
+    //                                 | token(GEQ)
+    //                                 | token(EQUAL)
+    //                                 | token(THICK_ARROW)
+    //                                 | token(THIN_ARROW)
+    //                                 | token(QUESTION_MARK)
+    //                                 | token(BAR)
+    //                                 | token(TILDE)
+    //                                 | token(AMPERSAND)
+    //                                 | token(BANG)
+    //                                 | token(DOLLAR)
+    //                                 | (token(COLON) >> &!x3::eol)
+    //                                 | token(SEMICOLON)
+    //                                 | token(COMMA)
+    //                                 | token(DOT)
+    //                                 | token(HASH)
+    //                                 | token(ATSIGN)
+    //                                 | token(BACKTICK)
+    //                                 | token(BACKSLASH)
+    //                                 | token(LT)
+    //                                 | token(GT)
+    //                                 | token(OPAREN)
+    //                                 | token(CPAREN)
+    //                                 | token(OBRACKET)
+    //                                 | token(CBRACKET)
+    //                                 | token(OBRACES)
+    //                                 | token(CBRACES)
+    //                                 | token(ASSIGN)
+    //                                 | token(PLUS)
+    //                                 | token(MINUS)
+    //                                 | token(STAR)
+    //                                 | token(SLASH)
+    //                                 | token(HAT)
+    //                                 | token(PERCENTAGE)
+    //                                 );
+    //
+    //
+    //            constexpr auto t = [](auto tok) { return tk<decltype(tok)>; };
+    //
+    //            auto atom = x3::rule<class atom_type, vector<token_t>>("atom");
+    //
+    //            /*
+    //            auto inline_group = x3::rule<class inline_group_type,
+    //            vector<token_t>>("inline_group"); const auto lines_group = inline_group % t(EOL);
+    //            const auto indent_group = t(INDENT) >> lines_group >> t(DEDENT);
+    //            const auto comma_group = atom % t(COMMA);
+    //            const auto semicolon_group = comma_group % t(SEMICOLON);
+    //            inline_group = semicolon_group >> -(t(COLON) >> +inline_group);
+    //
+    //            const auto brace_group = t(OBRACES) >> -inline_group >> t(CBRACES);
+    //            const auto bracket_group = t(OBRACKET) >> -inline_group >> t(CBRACKET);
+    //            const auto paren_group = t(OPAREN) >> -inline_group >> t(CPAREN);
+    //
+    //            const auto group = indent_group | brace_group | bracket_group | paren_group;
+    //
+    //            */
+    //            const auto delimiters = t(OPAREN) | t(CPAREN) | t(OBRACKET) | t(CBRACKET) |
+    //            t(OBRACES) |
+    //                                    t(CBRACES) | t(INDENT) | t(DEDENT) | t(COLON);
+    //
+    //            const auto separators = (t(EOL) | t(SEMICOLON) | t(COMMA));
+    //
+    //            const auto basic_token = tokens - delimiters - separators;
+    //
+    //            // atom = basic_token | group;
+    //            const auto atom_def = basic_token;
+    //
+    //            BOOST_SPIRIT_DEFINE(atom);
+    //
+    //            using namespace token;
+    //
+    //            auto output = vector<token_t>();
+    //            auto i = begin(input);
+    //
+    //            if (!parse(i, end(input), atom, output)) throw runtime_error("Unable to parse.");
+    //
+    //            return output;
+    //        });
 }  // namespace lexer
-
-

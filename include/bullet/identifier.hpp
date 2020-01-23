@@ -55,4 +55,3 @@ namespace lexer {
 }  // namespace lexer
 
 BOOST_FUSION_ADAPT_STRUCT(lexer::identifier_t, name)
-
