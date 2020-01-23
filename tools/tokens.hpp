@@ -6,6 +6,8 @@
 #include <variant>
 
 #include <boost/hana.hpp>
+#include <range/v3/core.hpp>
+#include <range/v3/view/tail.hpp>
 
 #include <bullet/identifier.hpp>
 
@@ -47,7 +49,7 @@ namespace lexer {
 
         template <typename T>
         auto token_symbol(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
-            return T::name;
+            return T::token;
         }
 
         
@@ -86,6 +88,10 @@ struct catch_t : token_tag {
 struct const_t : token_tag {
     static constexpr const std::string_view name{"CONST"};
     static constexpr const std::string_view token{"const"};
+};
+struct false_t : token_tag {
+    static constexpr const std::string_view name{"FALSE"};
+    static constexpr const std::string_view token{"false"};
 };
 struct macro_t : token_tag {
     static constexpr const std::string_view name{"MACRO"};
@@ -127,9 +133,17 @@ struct note_t : token_tag {
     static constexpr const std::string_view name{"NOTE"};
     static constexpr const std::string_view token{"note"};
 };
+struct null_lit_t : token_tag {
+    static constexpr const std::string_view name{"NULL_LIT"};
+    static constexpr const std::string_view token{"null"};
+};
 struct post_t : token_tag {
     static constexpr const std::string_view name{"POST"};
     static constexpr const std::string_view token{"post"};
+};
+struct true_t : token_tag {
+    static constexpr const std::string_view name{"TRUE"};
+    static constexpr const std::string_view token{"true"};
 };
 struct type_t : token_tag {
     static constexpr const std::string_view name{"TYPE"};
@@ -217,7 +231,7 @@ struct thin_arrow_t : token_tag {
 };
 struct ampersand_t : token_tag {
     static constexpr const std::string_view name{"AMPERSAND"};
-    static constexpr const std::string_view token{"!"};
+    static constexpr const std::string_view token{"&"};
 };
 struct assign_t : token_tag {
     static constexpr const std::string_view name{"ASSIGN"};
@@ -339,14 +353,18 @@ struct indent_t : token_tag {
     static constexpr const std::string_view name{"INDENT"};
     static constexpr const std::string_view token{""};
 };
+struct line_end_t : token_tag {
+    static constexpr const std::string_view name{"LINE_END"};
+    static constexpr const std::string_view token{""};
+};
 
         constexpr auto types = hana::tuple_t<
-            verbatim_t,private_t,import_t,object_t,public_t,repeat_t,break_t,catch_t,const_t,macro_t,throw_t,until_t,while_t,case_t,data_t,goto_t,help_t,meta_t,note_t,post_t,type_t,def_t,doc_t,for_t,pre_t,var_t,backslash_t,equal_t,fn_t,geq_t,hat_equal_t,if_t,in_t,leq_t,minus_equal_t,percentage_equal_t,plus_equal_t,slash_equal_t,star_equal_t,thick_arrow_t,thin_arrow_t,ampersand_t,assign_t,atsign_t,backtick_t,bang_t,bar_t,cbraces_t,cbracket_t,colon_t,comma_t,cparen_t,dollar_t,dot_t,gt_t,hash_t,hat_t,lt_t,minus_t,obraces_t,obracket_t,oparen_t,percentage_t,plus_t,question_mark_t,semicolon_t,slash_t,star_t,tilde_t,dedent_t,eol_t,indent_t
+            verbatim_t,private_t,import_t,object_t,public_t,repeat_t,break_t,catch_t,const_t,false_t,macro_t,throw_t,until_t,while_t,case_t,data_t,goto_t,help_t,meta_t,note_t,null_lit_t,post_t,true_t,type_t,def_t,doc_t,for_t,pre_t,var_t,backslash_t,equal_t,fn_t,geq_t,hat_equal_t,if_t,in_t,leq_t,minus_equal_t,percentage_equal_t,plus_equal_t,slash_equal_t,star_equal_t,thick_arrow_t,thin_arrow_t,ampersand_t,assign_t,atsign_t,backtick_t,bang_t,bar_t,cbraces_t,cbracket_t,colon_t,comma_t,cparen_t,dollar_t,dot_t,gt_t,hash_t,hat_t,lt_t,minus_t,obraces_t,obracket_t,oparen_t,percentage_t,plus_t,question_mark_t,semicolon_t,slash_t,star_t,tilde_t,dedent_t,eol_t,indent_t,line_end_t
         >;
     }
 
     using token_t = variant<
-        token::verbatim_t,token::private_t,token::import_t,token::object_t,token::public_t,token::repeat_t,token::break_t,token::catch_t,token::const_t,token::macro_t,token::throw_t,token::until_t,token::while_t,token::case_t,token::data_t,token::goto_t,token::help_t,token::meta_t,token::note_t,token::post_t,token::type_t,token::def_t,token::doc_t,token::for_t,token::pre_t,token::var_t,token::backslash_t,token::equal_t,token::fn_t,token::geq_t,token::hat_equal_t,token::if_t,token::in_t,token::leq_t,token::minus_equal_t,token::percentage_equal_t,token::plus_equal_t,token::slash_equal_t,token::star_equal_t,token::thick_arrow_t,token::thin_arrow_t,token::ampersand_t,token::assign_t,token::atsign_t,token::backtick_t,token::bang_t,token::bar_t,token::cbraces_t,token::cbracket_t,token::colon_t,token::comma_t,token::cparen_t,token::dollar_t,token::dot_t,token::gt_t,token::hash_t,token::hat_t,token::lt_t,token::minus_t,token::obraces_t,token::obracket_t,token::oparen_t,token::percentage_t,token::plus_t,token::question_mark_t,token::semicolon_t,token::slash_t,token::star_t,token::tilde_t,token::dedent_t,token::eol_t,token::indent_t,
+        token::verbatim_t,token::private_t,token::import_t,token::object_t,token::public_t,token::repeat_t,token::break_t,token::catch_t,token::const_t,token::false_t,token::macro_t,token::throw_t,token::until_t,token::while_t,token::case_t,token::data_t,token::goto_t,token::help_t,token::meta_t,token::note_t,token::null_lit_t,token::post_t,token::true_t,token::type_t,token::def_t,token::doc_t,token::for_t,token::pre_t,token::var_t,token::backslash_t,token::equal_t,token::fn_t,token::geq_t,token::hat_equal_t,token::if_t,token::in_t,token::leq_t,token::minus_equal_t,token::percentage_equal_t,token::plus_equal_t,token::slash_equal_t,token::star_equal_t,token::thick_arrow_t,token::thin_arrow_t,token::ampersand_t,token::assign_t,token::atsign_t,token::backtick_t,token::bang_t,token::bar_t,token::cbraces_t,token::cbracket_t,token::colon_t,token::comma_t,token::cparen_t,token::dollar_t,token::dot_t,token::gt_t,token::hash_t,token::hat_t,token::lt_t,token::minus_t,token::obraces_t,token::obracket_t,token::oparen_t,token::percentage_t,token::plus_t,token::question_mark_t,token::semicolon_t,token::slash_t,token::star_t,token::tilde_t,token::dedent_t,token::eol_t,token::indent_t,token::line_end_t,
         identifier_t
     >;
 
@@ -373,6 +391,7 @@ const token_t REPEAT {token::repeat_t{}};
 const token_t BREAK {token::break_t{}};
 const token_t CATCH {token::catch_t{}};
 const token_t CONST {token::const_t{}};
+const token_t FALSE {token::false_t{}};
 const token_t MACRO {token::macro_t{}};
 const token_t THROW {token::throw_t{}};
 const token_t UNTIL {token::until_t{}};
@@ -383,7 +402,9 @@ const token_t GOTO {token::goto_t{}};
 const token_t HELP {token::help_t{}};
 const token_t META {token::meta_t{}};
 const token_t NOTE {token::note_t{}};
+const token_t NULL_LIT {token::null_lit_t{}};
 const token_t POST {token::post_t{}};
+const token_t TRUE {token::true_t{}};
 const token_t TYPE {token::type_t{}};
 const token_t DEF {token::def_t{}};
 const token_t DOC {token::doc_t{}};
@@ -436,4 +457,27 @@ const token_t TILDE {token::tilde_t{}};
 const token_t DEDENT {token::dedent_t{}};
 const token_t EOL {token::eol_t{}};
 const token_t INDENT {token::indent_t{}};
+const token_t LINE_END {token::line_end_t{}};
+
+    using token_list_t = std::vector<token_t>;
+
+    inline auto operator==(const token_list_t& lhs, const token_list_t& rhs) -> bool {
+        if (lhs.size() != rhs.size()) return false;
+        const auto n = lhs.size();
+        for (auto i = 0; i < n; i++)
+            if (lhs[i] != rhs[i])
+                return false;
+        return true;
+    }
+
+    inline auto operator<<(std::ostream& os, const token_list_t& t) -> std::ostream& {
+        os << '[';
+        if (!ranges::empty(t)) {
+            os << ranges::front(t);
+            for (const auto& v: t | ranges::views::tail)
+                os << ", " << v;
+        }
+        os << ']';
+        return os;
+    }
 }  // namespace lexer

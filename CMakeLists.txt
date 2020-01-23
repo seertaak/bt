@@ -12,7 +12,6 @@ set(sources "")
 add_executable(
     bt 
     src/main.cpp
-    include/bullet/lexer.hpp
     ${sources}
 )
 
@@ -22,18 +21,13 @@ target_compile_options(bt PRIVATE -Wno-logical-op-parentheses)
 target_compile_definitions(bt PRIVATE BOOST_HANA_CONFIG_ENABLE_STRING_UDL)
 target_include_directories(bt PRIVATE include)
 
-add_executable(
-    tests 
-    test/main.cpp
-    include/bullet/lexer.hpp
-    ${sources}
-)
-
-conan_target_link_libraries(tests)
-target_compile_features(tests PRIVATE cxx_std_17)
-target_compile_options(tests PRIVATE -Wno-logical-op-parentheses)
-target_include_directories(tests PRIVATE include)
-target_compile_definitions(tests PRIVATE BOOST_HANA_CONFIG_ENABLE_STRING_UDL)
+# TESTS
 enable_testing()
 
-add_test(NAME Test COMMAND tests)
+add_executable(test_lexer test/lexer.cpp)
+conan_target_link_libraries(test_lexer)
+target_compile_features(test_lexer PRIVATE cxx_std_17)
+target_compile_options(test_lexer PRIVATE -Wno-logical-op-parentheses)
+target_include_directories(test_lexer PRIVATE include)
+target_compile_definitions(test_lexer PRIVATE BOOST_HANA_CONFIG_ENABLE_STRING_UDL)
+add_test(NAME Lexer COMMAND test_lexer)

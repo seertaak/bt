@@ -6,6 +6,8 @@
 #include <variant>
 
 #include <boost/hana.hpp>
+#include <range/v3/core.hpp>
+#include <range/v3/view/tail.hpp>
 
 #include <bullet/identifier.hpp>
 
@@ -47,7 +49,7 @@ namespace lexer {
 
         template <typename T>
         auto token_symbol(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
-            return T::name;
+            return T::token;
         }
 
         {{ token_class_defs }}
@@ -76,4 +78,26 @@ namespace lexer {
     }
 
     {{ tokens }}
+
+    using token_list_t = std::vector<token_t>;
+
+    inline auto operator==(const token_list_t& lhs, const token_list_t& rhs) -> bool {
+        if (lhs.size() != rhs.size()) return false;
+        const auto n = lhs.size();
+        for (auto i = 0; i < n; i++)
+            if (lhs[i] != rhs[i])
+                return false;
+        return true;
+    }
+
+    inline auto operator<<(std::ostream& os, const token_list_t& t) -> std::ostream& {
+        os << '[';
+        if (!ranges::empty(t)) {
+            os << ranges::front(t);
+            for (const auto& v: t | ranges::views::tail)
+                os << ", " << v;
+        }
+        os << ']';
+        return os;
+    }
 }  // namespace lexer

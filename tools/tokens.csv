@@ -44,7 +44,7 @@ thin_arrow,->
 question_mark,?
 bar,|
 tilde,~
-ampersand,!
+ampersand,&
 bang,!
 dollar,$
 colon,:
@@ -70,3 +70,7 @@ star,*
 slash,/
 hat,^
 percentage,%
+true,true
+false,false
+null_lit,null
+line_end,,

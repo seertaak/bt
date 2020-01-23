@@ -6,6 +6,8 @@
 #include <variant>
 
 #include <boost/hana.hpp>
+#include <range/v3/core.hpp>
+#include <range/v3/view/tail.hpp>
 
 #include <bullet/identifier.hpp>
 
@@ -86,6 +88,10 @@ namespace lexer {
             static constexpr const std::string_view name{"CONST"};
             static constexpr const std::string_view token{"const"};
         };
+        struct false_t : token_tag {
+            static constexpr const std::string_view name{"FALSE"};
+            static constexpr const std::string_view token{"false"};
+        };
         struct macro_t : token_tag {
             static constexpr const std::string_view name{"MACRO"};
             static constexpr const std::string_view token{"macro"};
@@ -126,9 +132,17 @@ namespace lexer {
             static constexpr const std::string_view name{"NOTE"};
             static constexpr const std::string_view token{"note"};
         };
+        struct null_lit_t : token_tag {
+            static constexpr const std::string_view name{"NULL_LIT"};
+            static constexpr const std::string_view token{"null"};
+        };
         struct post_t : token_tag {
             static constexpr const std::string_view name{"POST"};
             static constexpr const std::string_view token{"post"};
+        };
+        struct true_t : token_tag {
+            static constexpr const std::string_view name{"TRUE"};
+            static constexpr const std::string_view token{"true"};
         };
         struct type_t : token_tag {
             static constexpr const std::string_view name{"TYPE"};
@@ -216,7 +230,7 @@ namespace lexer {
         };
         struct ampersand_t : token_tag {
             static constexpr const std::string_view name{"AMPERSAND"};
-            static constexpr const std::string_view token{"!"};
+            static constexpr const std::string_view token{"&"};
         };
         struct assign_t : token_tag {
             static constexpr const std::string_view name{"ASSIGN"};
@@ -249,6 +263,10 @@ namespace lexer {
         struct colon_t : token_tag {
             static constexpr const std::string_view name{"COLON"};
             static constexpr const std::string_view token{":"};
+        };
+        struct comma_t : token_tag {
+            static constexpr const std::string_view name{"COMMA"};
+            static constexpr const std::string_view token{","};
         };
         struct cparen_t : token_tag {
             static constexpr const std::string_view name{"CPAREN"};
@@ -306,6 +324,10 @@ namespace lexer {
             static constexpr const std::string_view name{"QUESTION_MARK"};
             static constexpr const std::string_view token{"?"};
         };
+        struct semicolon_t : token_tag {
+            static constexpr const std::string_view name{"SEMICOLON"};
+            static constexpr const std::string_view token{";"};
+        };
         struct slash_t : token_tag {
             static constexpr const std::string_view name{"SLASH"};
             static constexpr const std::string_view token{"/"};
@@ -318,25 +340,21 @@ namespace lexer {
             static constexpr const std::string_view name{"TILDE"};
             static constexpr const std::string_view token{"~"};
         };
-        struct comma_t : token_tag {
-            static constexpr const std::string_view name{"COMMA"};
-            static constexpr const std::string_view token{","};
-        };
         struct dedent_t : token_tag {
             static constexpr const std::string_view name{"DEDENT"};
             static constexpr const std::string_view token{""};
         };
         struct eol_t : token_tag {
             static constexpr const std::string_view name{"EOL"};
-            static constexpr const std::string_view token{"\n"};
+            static constexpr const std::string_view token{""};
         };
         struct indent_t : token_tag {
             static constexpr const std::string_view name{"INDENT"};
             static constexpr const std::string_view token{""};
         };
-        struct semicolon_t : token_tag {
-            static constexpr const std::string_view name{"SEMICOLON"};
-            static constexpr const std::string_view token{";"};
+        struct line_end_t : token_tag {
+            static constexpr const std::string_view name{"LINE_END"};
+            static constexpr const std::string_view token{""};
         };
 
         constexpr auto types = hana::tuple_t<verbatim_t,
@@ -348,6 +366,7 @@ namespace lexer {
                                              break_t,
                                              catch_t,
                                              const_t,
+                                             false_t,
                                              macro_t,
                                              throw_t,
                                              until_t,
@@ -358,7 +377,9 @@ namespace lexer {
                                              help_t,
                                              meta_t,
                                              note_t,
+                                             null_lit_t,
                                              post_t,
+                                             true_t,
                                              type_t,
                                              def_t,
                                              doc_t,
@@ -389,6 +410,7 @@ namespace lexer {
                                              cbraces_t,
                                              cbracket_t,
                                              colon_t,
+                                             comma_t,
                                              cparen_t,
                                              dollar_t,
                                              dot_t,
@@ -403,14 +425,14 @@ namespace lexer {
                                              percentage_t,
                                              plus_t,
                                              question_mark_t,
+                                             semicolon_t,
                                              slash_t,
                                              star_t,
                                              tilde_t,
-                                             comma_t,
                                              dedent_t,
                                              eol_t,
                                              indent_t,
-                                             semicolon_t>;
+                                             line_end_t>;
     }  // namespace token
 
     using token_t = variant<token::verbatim_t,
@@ -422,6 +444,7 @@ namespace lexer {
                             token::break_t,
                             token::catch_t,
                             token::const_t,
+                            token::false_t,
                             token::macro_t,
                             token::throw_t,
                             token::until_t,
@@ -432,7 +455,9 @@ namespace lexer {
                             token::help_t,
                             token::meta_t,
                             token::note_t,
+                            token::null_lit_t,
                             token::post_t,
+                            token::true_t,
                             token::type_t,
                             token::def_t,
                             token::doc_t,
@@ -463,6 +488,7 @@ namespace lexer {
                             token::cbraces_t,
                             token::cbracket_t,
                             token::colon_t,
+                            token::comma_t,
                             token::cparen_t,
                             token::dollar_t,
                             token::dot_t,
@@ -477,15 +503,20 @@ namespace lexer {
                             token::percentage_t,
                             token::plus_t,
                             token::question_mark_t,
+                            token::semicolon_t,
                             token::slash_t,
                             token::star_t,
                             token::tilde_t,
-                            token::comma_t,
                             token::dedent_t,
                             token::eol_t,
                             token::indent_t,
-                            token::semicolon_t,
+                            token::line_end_t,
                             identifier_t>;
+
+    auto operator<<(ostream& os, const token_t& t) -> ostream& {
+        visit([&](auto t) { os << t; }, t);
+        return os;
+    }
 
     auto token_name(const token_t& t) -> string_view {
         return visit([&](auto t) { return token_name(t); }, t);
@@ -493,12 +524,6 @@ namespace lexer {
 
     auto token_symbol(const token_t& t) -> string_view {
         return visit([&](auto t) { return token_symbol(t); }, t);
-    }
-
-    auto operator<<(ostream& os, const token_t& t) -> ostream& {
-        visit([&](auto t) { os << t; }, t);
-        //os << token_name(t);
-        return os;
     }
 
     const token_t VERBATIM{token::verbatim_t{}};
@@ -510,6 +535,7 @@ namespace lexer {
     const token_t BREAK{token::break_t{}};
     const token_t CATCH{token::catch_t{}};
     const token_t CONST{token::const_t{}};
+    const token_t FALSE{token::false_t{}};
     const token_t MACRO{token::macro_t{}};
     const token_t THROW{token::throw_t{}};
     const token_t UNTIL{token::until_t{}};
@@ -520,7 +546,9 @@ namespace lexer {
     const token_t HELP{token::help_t{}};
     const token_t META{token::meta_t{}};
     const token_t NOTE{token::note_t{}};
+    const token_t NULL_LIT{token::null_lit_t{}};
     const token_t POST{token::post_t{}};
+    const token_t TRUE{token::true_t{}};
     const token_t TYPE{token::type_t{}};
     const token_t DEF{token::def_t{}};
     const token_t DOC{token::doc_t{}};
@@ -551,6 +579,7 @@ namespace lexer {
     const token_t CBRACES{token::cbraces_t{}};
     const token_t CBRACKET{token::cbracket_t{}};
     const token_t COLON{token::colon_t{}};
+    const token_t COMMA{token::comma_t{}};
     const token_t CPAREN{token::cparen_t{}};
     const token_t DOLLAR{token::dollar_t{}};
     const token_t DOT{token::dot_t{}};
@@ -565,12 +594,32 @@ namespace lexer {
     const token_t PERCENTAGE{token::percentage_t{}};
     const token_t PLUS{token::plus_t{}};
     const token_t QUESTION_MARK{token::question_mark_t{}};
+    const token_t SEMICOLON{token::semicolon_t{}};
     const token_t SLASH{token::slash_t{}};
     const token_t STAR{token::star_t{}};
     const token_t TILDE{token::tilde_t{}};
-    const token_t COMMA{token::comma_t{}};
     const token_t DEDENT{token::dedent_t{}};
     const token_t EOL{token::eol_t{}};
     const token_t INDENT{token::indent_t{}};
-    const token_t SEMICOLON{token::semicolon_t{}};
+    const token_t LINE_END{token::line_end_t{}};
+
+    using token_list_t = std::vector<token_t>;
+
+    inline auto operator==(const token_list_t& lhs, const token_list_t& rhs) -> bool {
+        if (lhs.size() != rhs.size()) return false;
+        const auto n = lhs.size();
+        for (auto i = 0; i < n; i++)
+            if (lhs[i] != rhs[i]) return false;
+        return true;
+    }
+
+    inline auto operator<<(std::ostream& os, const token_list_t& t) -> std::ostream& {
+        os << '[';
+        if (!ranges::empty(t)) {
+            os << ranges::front(t);
+            for (const auto& v : t | ranges::views::tail) os << ", " << v;
+        }
+        os << ']';
+        return os;
+    }
 }  // namespace lexer
