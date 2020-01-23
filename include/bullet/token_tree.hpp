@@ -33,26 +33,22 @@ namespace lexer {
     };
 
     inline auto operator<<(std::ostream& os, const token_tree_t& t) -> std::ostream& {
-        os << "token_tree_t[";
-
         if (const auto* tok = boost::get<token_t>(&t)) {
             os << *tok;
         } else {
             os << boost::get<token_list_t>(t);
         }
-
-        os << ']';
         return os;
     }
 
     inline auto operator<<(std::ostream& os, const token_list_t& t) -> std::ostream& {
-        os << '(';
+        os << '[';
         if (!empty(t)) {
             os << front(t);
             for (const auto& v: t | views::tail)
                 os << ", " << v;
         }
-        os << ')';
+        os << ']';
         return os;
     }
 }

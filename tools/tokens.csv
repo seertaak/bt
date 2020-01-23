@@ -48,7 +48,7 @@ ampersand,!
 bang,!
 dollar,$
 colon,:
-semicolon,,
+semicolon,;
 comma,,
 dot,.
 hash,#

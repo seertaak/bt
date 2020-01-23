@@ -24,6 +24,7 @@ def run():
             parts = line.split(',')
             name = parts[0]
             symbol = "" if len(parts) == 1 else parts[1]
+            if name == 'comma': symbol = ','
             tab.append((name, symbol))
 
     tab.sort(key=lambda p: (-len(p[1]), p[0]))
@@ -37,6 +38,8 @@ def run():
                 symbol=symbol))
 
         token_type = "{}_t".format(name)
+
+        print(f"| token({name.upper()})")
 
         token_type_list.append(def_types.render(token_type=token_type))
         token_type_list_ns.append(def_types_ns.render(token_type=token_type))

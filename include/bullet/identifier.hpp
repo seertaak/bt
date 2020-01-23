@@ -25,7 +25,7 @@ namespace lexer {
     inline auto token_symbol(const identifier_t& i) -> string_view { return i.name; }
 
     inline auto operator<<(ostream& os, const identifier_t& t) -> ostream& {
-        os << token_name(t);
+        os << "ident[" << token_name(t) << "]";
         return os;
     }
 

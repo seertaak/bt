@@ -2,18 +2,22 @@
 
 #include <sstream>
 
+#include <range/v3/core.hpp>
+#include <range/v3/view/transform.hpp>
+#include <range/v3/view/tail.hpp>
+#include <range/v3/algorithm/copy.hpp>
+
 #include <catch2/catch.hpp>
 
 #include <bullet/token.hpp>
 #include <bullet/token_tree.hpp>
-#include <bullet/lexer.hpp>
-#include <bullet/util.hpp>
+#include <bullet/tokenizer.hpp>
 
 using namespace std;
 using namespace lexer;
 using namespace lexer::token;
 
-TEST_CASE("Basic token functionality", "[lexer]") {
+TEST_CASE("Basic token functionality", "[token]") {
     REQUIRE(token_name(VERBATIM) == "VERBATIM");
     REQUIRE(token_symbol(VERBATIM) == "verbatim");
 
@@ -23,19 +27,43 @@ TEST_CASE("Basic token functionality", "[lexer]") {
     auto s = std::stringstream();
     s << CASE;
 
-    REQUIRE(s.str() == "CASE");
+    REQUIRE(s.str() == "token[CASE]");
 }
 
+TEST_CASE("Token tree functionality", "[token_tree]") {
+    const auto tt = token_tree_t(token_list_t{VERBATIM, BAR, BAR});
+    auto s = std::stringstream();
+    s << tt;
+    REQUIRE(s.str() == "[token[VERBATIM], token[BAR], token[BAR]]");
+}
+
+namespace {
+    auto token_list_to_tree(const std::vector<token_t>& tokens) -> token_tree_t {
+        auto result = token_list_t{};
+        for (auto t: tokens) 
+            result.push_back(t);
+        return token_tree_t(result);
+    }
+}
+
+TEST_CASE("Parse token tree", "[tokenizer/tokens1]") {
+    const auto input = 
+R"bt(foo:
+    print(bar)
+
+    verbatim
+
+x = if
+
+meta
+)bt"sv;
+    const auto tokens = token_list_to_tree(lexer::tokens1(input));
+    auto u = std::stringstream();
+    u << tokens;
+    REQUIRE(u.str() == "[token[META], token[META]]");
+}
 
 /*
-TEST_CASE("Token tree functionality", "[lexer]") {
-    const auto tt = token_tree_t(
-        token_list_t(VERBATIM, BAR, BAR),
-        
-    );
-}
-
-
 TEST_CASE("Indented line", "[lexer]") {
     const auto input = R"(foo )"sv;
 

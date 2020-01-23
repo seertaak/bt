@@ -26,7 +26,7 @@ namespace lexer {
 
         template <typename T>
         auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
-            os << T::name;
+            os << "token[" << T::name << ']';
             return os;
         }
 
@@ -320,7 +320,7 @@ namespace lexer {
         };
         struct comma_t : token_tag {
             static constexpr const std::string_view name{"COMMA"};
-            static constexpr const std::string_view token{""};
+            static constexpr const std::string_view token{","};
         };
         struct dedent_t : token_tag {
             static constexpr const std::string_view name{"DEDENT"};
@@ -328,7 +328,7 @@ namespace lexer {
         };
         struct eol_t : token_tag {
             static constexpr const std::string_view name{"EOL"};
-            static constexpr const std::string_view token{""};
+            static constexpr const std::string_view token{"\n"};
         };
         struct indent_t : token_tag {
             static constexpr const std::string_view name{"INDENT"};
@@ -336,7 +336,7 @@ namespace lexer {
         };
         struct semicolon_t : token_tag {
             static constexpr const std::string_view name{"SEMICOLON"};
-            static constexpr const std::string_view token{""};
+            static constexpr const std::string_view token{";"};
         };
 
         constexpr auto types = hana::tuple_t<verbatim_t,
@@ -487,17 +487,18 @@ namespace lexer {
                             token::semicolon_t,
                             identifier_t>;
 
-    auto operator<<(ostream& os, const token_t& t) -> ostream& {
-        visit([&](auto t) { os << t; }, t);
-        return os;
-    }
-
     auto token_name(const token_t& t) -> string_view {
         return visit([&](auto t) { return token_name(t); }, t);
     }
 
     auto token_symbol(const token_t& t) -> string_view {
         return visit([&](auto t) { return token_symbol(t); }, t);
+    }
+
+    auto operator<<(ostream& os, const token_t& t) -> ostream& {
+        visit([&](auto t) { os << t; }, t);
+        //os << token_name(t);
+        return os;
     }
 
     const token_t VERBATIM{token::verbatim_t{}};
