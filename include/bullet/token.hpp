@@ -10,6 +10,7 @@
 #include <range/v3/view/tail.hpp>
 
 #include <bullet/identifier.hpp>
+#include <bullet/numeric_token.hpp>
 
 //-------------------------------------------
 // Note: this file was generated based on:
@@ -511,7 +512,9 @@ namespace lexer {
                             token::eol_t,
                             token::indent_t,
                             token::line_end_t,
-                            identifier_t>;
+                            identifier_t,
+                            literal::numeric::ullint>;
+                            //literal::numeric::ldouble>;
 
     auto operator<<(ostream& os, const token_t& t) -> ostream& {
         visit([&](auto t) { os << t; }, t);

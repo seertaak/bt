@@ -119,6 +119,14 @@ namespace lexer {
             return lit(std::data(token_symbol(t))) >> attr(t);
         };
 
+        using namespace literal::numeric;
+
+        auto num_i64 = x3::rule<class num_i64_type, ullint>("num_i64") 
+            = x3::no_skip[x3::ulong_long > lit("i64")];
+
+        auto num_u64 = x3::rule<class num_u64_type, ullint>("num_u64") 
+            = x3::no_skip[x3::ulong_long > lit("u64")];
+
         const auto tokens =  (    token(VERBATIM)
                                 | token(PRIVATE)
                                 | token(IMPORT)
@@ -192,6 +200,8 @@ namespace lexer {
                                 | token(STAR)
                                 | token(TILDE)
                                 | identifier
+                                | num_i64
+                                | num_u64 
                 );
                 
 

@@ -98,7 +98,13 @@ TEST_CASE("Tokenize: line extension (no brackets generated)", "[lexer/tokens]") 
     REQUIRE(tokens("meta\n    verbatim"sv) == expected);
 }
 
-TEST_CASE("Parse token tree", "[lexer/tokens]") {
+TEST_CASE("Tokenize: integers.", "[lexer/tokens]") {
+    using namespace literal::numeric;
+    const auto expected = token_list_t{};
+    REQUIRE(tokens("42i64"sv) == token_list_t{token_t(ullint(42))});
+}
+
+TEST_CASE("Tokenize: random shit.", "[lexer/tokens]") {
     const auto input = R"bt(
         foo:
             print(bar)
