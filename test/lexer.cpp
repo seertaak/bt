@@ -100,8 +100,7 @@ TEST_CASE("Tokenize: line extension (no brackets generated)", "[lexer/tokens]") 
 
 TEST_CASE("Tokenize: integers.", "[lexer/tokens]") {
     using namespace literal::numeric;
-    const auto expected = token_list_t{};
-    REQUIRE(tokens("42i64"sv) == token_list_t{token_t(ullint(42))});
+    REQUIRE(tokens("42i64"sv) == token_list_t{token_t(integral_t(42, 'i', 64))});
 }
 
 TEST_CASE("Tokenize: random shit.", "[lexer/tokens]") {

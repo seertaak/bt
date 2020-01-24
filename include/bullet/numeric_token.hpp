@@ -21,83 +21,42 @@ namespace lexer {
         namespace numeric {
             struct tag : x3::position_tagged {};
 
-            // TODO: the same rigmarole for all octal, hexadecimal, floating point and for all the
-            // size (8, 16, 32, 64, size_t) variants.
+            struct integral_t : tag {
+                unsigned long long value;
+                char type;
+                int width;
 
-            template <typename T>
-            struct number_t : tag {
-                T value;
-                // note: adding explicit => BOOM compiler.
-                number_t() = default;
-                number_t(const number_t&) = default;
-                number_t(number_t&&) = default;
-                number_t(T value) : value(value) {}
+                integral_t(unsigned long long value, char type, int width):
+                    value(value), type(type), width(width) {}
 
-                auto operator=(number_t that) noexcept -> number_t& {
-                    value = that.value;
-                    return *this;
-                }
-
-                static const string name;
+                integral_t() = default;
+                integral_t(const integral_t&) = default;
+                integral_t& operator=(const integral_t&) = default;
             };
 
-            template <typename T>
-            const string number_t<T>::name = boost::typeindex::type_id<T>().pretty_name();
-
-            template <typename T>
-            inline auto token_name(const number_t<T>& i) -> string_view {
-                return number_t<T>::name;
+            inline auto token_name(const integral_t& i) -> string_view {
+                return "integral_t";
             }
 
-            template <typename T>
-            inline auto token_symbol(const number_t<T>& i) -> string_view {
-                return number_t<T>::name;
+            inline auto token_symbol(const integral_t& i) -> string_view {
+                return "integral_t";
             }
 
-            template <typename T>
-            inline auto operator<<(ostream& os, const number_t<T>& t) -> ostream& {
-                os << token_name(t) << '[' << t.value << ']';
+            inline auto operator<<(ostream& os, const integral_t& t) -> ostream& {
+                os << token_name(t) << '[' << t.value << (t.type ? t.type : '?')
+                    << t.width<< ']';
                 return os;
             }
 
-            template <typename T>
-            inline auto operator==(const number_t<T>& l, const number_t<T>& r) -> bool {
-                return l.value == r.value;
+            inline auto operator==(const integral_t& l, const integral_t& r) -> bool {
+                return l.value == r.value && l.width == r.width && l.type == r.type;
             }
 
-            template <typename T>
-            inline auto operator!=(const number_t<T>& l, const number_t<T>& r) -> bool {
+            inline auto operator!=(const integral_t& l, const integral_t& r) -> bool {
                 return !(l == r);
             }
-
-            template <typename T>
-            inline auto operator<(const number_t<T>& l, const number_t<T>& r) -> bool {
-                return l.value < r.value;
-            }
-
-            template <typename T>
-            inline auto operator<=(const number_t<T>& l, const number_t<T>& r) -> bool {
-                return l.value <= r.value;
-            }
-
-            template <typename T>
-            inline auto operator>(const number_t<T>& l, const number_t<T>& r) -> bool {
-                return l.value > r.value;
-            }
-
-            template <typename T>
-            inline auto operator>=(const number_t<T>& l, const number_t<T>& r) -> bool {
-                return l.value >= r.value;
-            }
-
-            template struct number_t<unsigned long long int >;
-            template struct number_t<long double>;
-
-            using ullint = number_t<unsigned long long int>;
-            using ldouble = number_t<long double>;
         }  // namespace numeric
     }      // namespace literal
 }  // namespace lexer
 
-BOOST_FUSION_ADAPT_STRUCT(lexer::literal::numeric::ullint, value)
-BOOST_FUSION_ADAPT_STRUCT(lexer::literal::numeric::ldouble, value)
+BOOST_FUSION_ADAPT_STRUCT(lexer::literal::numeric::integral_t, value, type, width)

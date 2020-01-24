@@ -513,7 +513,7 @@ namespace lexer {
                             token::indent_t,
                             token::line_end_t,
                             identifier_t,
-                            literal::numeric::ullint>;
+                            literal::numeric::integral_t>;
                             //literal::numeric::ldouble>;
 
     auto operator<<(ostream& os, const token_t& t) -> ostream& {
