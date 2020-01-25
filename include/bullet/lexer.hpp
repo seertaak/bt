@@ -123,7 +123,7 @@ namespace lexer {
 
         const auto convert_to_identifier = [] (auto ctx) {
             const string s = _attr(ctx);
-            _val(ctx) = identifier_t(s);
+            _val(ctx) = token_t(identifier_t(s));
         };
 
         auto identifier_pre 
@@ -133,7 +133,7 @@ namespace lexer {
               ];
 
         auto identifier 
-            = x3::rule<class identifier_type, identifier_t>("identifier") 
+            = x3::rule<class identifier_type, token_t>("identifier") 
             = identifier_pre[convert_to_identifier];
 
         constexpr auto token = [](auto t) {
@@ -164,12 +164,10 @@ namespace lexer {
             = x3::no_skip[x3::long_double >> "f" >> x3::int_];
 
         const auto escape_char = '\\' >> char_("\\{}");
-        const auto regular_char = char_;
+        const auto regular_char = char_ - '"';
         const auto string_content = *(escape_char | regular_char);
         const auto convert_to_string_token = [] (auto ctx) {
-            cout << "INPUT RAW STRING:" << _attr(ctx) << endl;
             _val(ctx) = token_t(string_token_t(_attr(ctx)));
-            cout << "OUTPUT STRING TOK:" << _val(ctx) << endl;
         };
 
         const auto string_token
