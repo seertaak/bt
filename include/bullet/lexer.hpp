@@ -121,14 +121,42 @@ namespace lexer {
 
         using namespace literal::numeric;
 
-        auto integral_token = x3::rule<class num_i64_type, integral_t>("num_i64") 
-            = x3::no_skip[
-                x3::ulong_long 
-                    > (x3::char_('i') | x3::char_('u'))
-                    > x3::int_
-              ];
+        const auto foo = [] (auto ctx) {
+            cout << "FOO" << endl;
+        };
+        const auto fooii = [] (auto ctx) {
+            cout << "FOOii" << endl;
+        };
+        const auto barbar = [] (auto ctx) {
+            cout << "BAR" << endl;
+        };
 
-        const auto tokens =  (    token(VERBATIM)
+        auto naked_integral_token 
+            = x3::rule<class naked_integral_type, integral_t>("integral") 
+            = x3::ulong_long >> attr('i') >> attr(64);
+
+        auto integral_token 
+            = x3::rule<class integral_type, integral_t>("naked_integral") 
+            = x3::no_skip[
+                   x3::ulong_long >> (x3::char_('i') | x3::char_('u')) >> x3::int_
+              ];
+        
+        auto naked_floating_point_token 
+            = x3::rule<class naked_floating_point_type, floating_point_t>(
+                    "naked_floating_point") 
+            =  !x3::no_skip[x3::ulong_long >> (" " | x3::eol | x3::eoi)] 
+            >>  x3::long_double 
+            >>  attr(64);
+
+        auto floating_point_token 
+            = x3::rule<class floating_point_type, floating_point_t>("floating_point") 
+            = x3::no_skip[x3::long_double >> "f" >> x3::int_];
+
+        const auto tokens =  (    floating_point_token
+                                | integral_token
+                                | naked_floating_point_token
+                                | naked_integral_token
+                                | token(VERBATIM)
                                 | token(PRIVATE)
                                 | token(IMPORT)
                                 | token(OBJECT)
@@ -201,7 +229,6 @@ namespace lexer {
                                 | token(STAR)
                                 | token(TILDE)
                                 | identifier
-                                | integral_token
                 );
                 
 

@@ -100,7 +100,32 @@ TEST_CASE("Tokenize: line extension (no brackets generated)", "[lexer/tokens]") 
 
 TEST_CASE("Tokenize: integers.", "[lexer/tokens]") {
     using namespace literal::numeric;
+    REQUIRE(tokens("42"sv) == token_list_t{token_t(integral_t(42, 'i', 64))});
+
     REQUIRE(tokens("42i64"sv) == token_list_t{token_t(integral_t(42, 'i', 64))});
+    REQUIRE(tokens("42u64"sv) == token_list_t{token_t(integral_t(42, 'u', 64))});
+    REQUIRE(tokens("42i32"sv) == token_list_t{token_t(integral_t(42, 'i', 32))});
+    REQUIRE(tokens("42u32"sv) == token_list_t{token_t(integral_t(42, 'u', 32))});
+    REQUIRE(tokens("42i16"sv) == token_list_t{token_t(integral_t(42, 'i', 16))});
+    REQUIRE(tokens("42u16"sv) == token_list_t{token_t(integral_t(42, 'u', 16))});
+    REQUIRE(tokens("42i8"sv) == token_list_t{token_t(integral_t(42, 'i', 8))});
+    REQUIRE(tokens("42u8"sv) == token_list_t{token_t(integral_t(42, 'u', 8))});
+}
+
+TEST_CASE("Tokenize: floats.", "[lexer/tokens]") {
+    using namespace literal::numeric;
+    // FIXME: allow floating points without trailing f(64|32)
+    REQUIRE(tokens("42.0"sv) == token_list_t{token_t(floating_point_t(42, 64))});
+    REQUIRE(tokens("42e0"sv) == token_list_t{token_t(floating_point_t(42, 64))});
+    REQUIRE(tokens("42e1"sv) == token_list_t{token_t(floating_point_t(420, 64))});
+
+    REQUIRE(tokens("42.0f64"sv) == token_list_t{token_t(floating_point_t(42, 64))});
+    REQUIRE(tokens("42e0f64"sv) == token_list_t{token_t(floating_point_t(42, 64))});
+    REQUIRE(tokens("42e1f64"sv) == token_list_t{token_t(floating_point_t(420, 64))});
+
+    REQUIRE(tokens("42.0f32"sv) == token_list_t{token_t(floating_point_t(42, 32))});
+    REQUIRE(tokens("42e0f32"sv) == token_list_t{token_t(floating_point_t(42, 32))});
+    REQUIRE(tokens("42e1f32"sv) == token_list_t{token_t(floating_point_t(420, 32))});
 }
 
 TEST_CASE("Tokenize: random shit.", "[lexer/tokens]") {
