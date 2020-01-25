@@ -7,16 +7,16 @@
 
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/fusion/include/io.hpp>
-//#include <boost/spirit/home/x3.hpp>
-//#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
+#include <boost/spirit/home/x3.hpp>
+#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 
 #include <bullet/util.hpp>
 
 namespace lexer {
     using namespace std;
-    //namespace x3 = boost::spirit::x3;
+    namespace x3 = boost::spirit::x3;
 
-    struct identifier_t {
+    struct identifier_t : x3::position_tagged {
         string name;
         explicit identifier_t(string s) : name(s) {}
         identifier_t() = default;

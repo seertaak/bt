@@ -6,6 +6,8 @@
 #include <variant>
 
 #include <boost/hana.hpp>
+#include <boost/spirit/home/x3.hpp>
+#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <range/v3/core.hpp>
 #include <range/v3/view/tail.hpp>
 
@@ -26,8 +28,7 @@ namespace lexer {
     namespace hana = boost::hana;
 
     namespace token {
-        //struct token_tag : x3::position_tagged {};
-        struct token_tag {};
+        struct token_tag : x3::position_tagged {};
 
         template <typename T>
         auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
