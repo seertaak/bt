@@ -114,7 +114,6 @@ TEST_CASE("Tokenize: integers.", "[lexer/tokens]") {
 
 TEST_CASE("Tokenize: floats.", "[lexer/tokens]") {
     using namespace literal::numeric;
-    // FIXME: allow floating points without trailing f(64|32)
     REQUIRE(tokens("42.0"sv) == token_list_t{token_t(floating_point_t(42, 64))});
     REQUIRE(tokens("42e0"sv) == token_list_t{token_t(floating_point_t(42, 64))});
     REQUIRE(tokens("42e1"sv) == token_list_t{token_t(floating_point_t(420, 64))});
@@ -126,6 +125,20 @@ TEST_CASE("Tokenize: floats.", "[lexer/tokens]") {
     REQUIRE(tokens("42.0f32"sv) == token_list_t{token_t(floating_point_t(42, 32))});
     REQUIRE(tokens("42e0f32"sv) == token_list_t{token_t(floating_point_t(42, 32))});
     REQUIRE(tokens("42e1f32"sv) == token_list_t{token_t(floating_point_t(420, 32))});
+}
+
+TEST_CASE("Tokenize: strings.", "[lexer/tokens]") {
+    using namespace literal::numeric;
+    REQUIRE(
+        tokens(R"bt("this is a test")bt"sv) == 
+            token_list_t{token_t(string_token_t("this is a test"))});
+    REQUIRE(
+        tokens(R"bt("this "is" a test")bt"sv) == 
+            token_list_t{token_t(string_token_t(R"raw(this "is" a test)raw"))});
+
+    REQUIRE(
+        tokens(R"bt("backlash? \\")bt"sv) == 
+            token_list_t{token_t(string_token_t(R"raw(backslash? \)raw"))});
 }
 
 TEST_CASE("Tokenize: random shit.", "[lexer/tokens]") {

@@ -7,19 +7,20 @@
 
 #include <boost/fusion/include/adapt_struct.hpp>
 #include <boost/fusion/include/io.hpp>
-#include <boost/spirit/home/x3.hpp>
-#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
+//#include <boost/spirit/home/x3.hpp>
+//#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
 #include <boost/type_index.hpp>
 
 #include <bullet/util.hpp>
 
 namespace lexer {
     using namespace std;
-    namespace x3 = boost::spirit::x3;
+    //namespace x3 = boost::spirit::x3;
 
     namespace literal {
         namespace numeric {
-            struct tag : x3::position_tagged {};
+            struct tag {};
+            //struct tag : x3::position_tagged {};
 
             struct integral_t : tag {
                 unsigned long long value;

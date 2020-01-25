@@ -10,6 +10,8 @@
 #include <range/v3/view/tail.hpp>
 
 #include <bullet/identifier.hpp>
+#include <bullet/string_token.hpp>
+#include <bullet/numeric_token.hpp>
 
 //-------------------------------------------
 // Note: this file was generated based on:
@@ -365,7 +367,10 @@ struct line_end_t : token_tag {
 
     using token_t = variant<
         token::verbatim_t,token::private_t,token::import_t,token::object_t,token::public_t,token::repeat_t,token::break_t,token::catch_t,token::const_t,token::false_t,token::macro_t,token::throw_t,token::until_t,token::while_t,token::case_t,token::data_t,token::goto_t,token::help_t,token::meta_t,token::note_t,token::null_lit_t,token::post_t,token::true_t,token::type_t,token::def_t,token::doc_t,token::for_t,token::pre_t,token::var_t,token::backslash_t,token::equal_t,token::fn_t,token::geq_t,token::hat_equal_t,token::if_t,token::in_t,token::leq_t,token::minus_equal_t,token::percentage_equal_t,token::plus_equal_t,token::slash_equal_t,token::star_equal_t,token::thick_arrow_t,token::thin_arrow_t,token::ampersand_t,token::assign_t,token::atsign_t,token::backtick_t,token::bang_t,token::bar_t,token::cbraces_t,token::cbracket_t,token::colon_t,token::comma_t,token::cparen_t,token::dollar_t,token::dot_t,token::gt_t,token::hash_t,token::hat_t,token::lt_t,token::minus_t,token::obraces_t,token::obracket_t,token::oparen_t,token::percentage_t,token::plus_t,token::question_mark_t,token::semicolon_t,token::slash_t,token::star_t,token::tilde_t,token::dedent_t,token::eol_t,token::indent_t,token::line_end_t,
-        identifier_t
+        identifier_t,
+        string_token_t,
+        literal::numeric::integral_t,
+        literal::numeric::floating_point_t
     >;
 
     auto operator<<(ostream& os, const token_t& t) -> ostream& {

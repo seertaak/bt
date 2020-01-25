@@ -10,6 +10,8 @@
 #include <range/v3/view/tail.hpp>
 
 #include <bullet/identifier.hpp>
+#include <bullet/string_token.hpp>
+#include <bullet/numeric_token.hpp>
 
 //-------------------------------------------
 // Note: this file was generated based on:
@@ -61,7 +63,10 @@ namespace lexer {
 
     using token_t = variant<
         {{ token_type_list_ns }},
-        identifier_t
+        identifier_t,
+        string_token_t,
+        literal::numeric::integral_t,
+        literal::numeric::floating_point_t
     >;
 
     auto operator<<(ostream& os, const token_t& t) -> ostream& {

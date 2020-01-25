@@ -11,6 +11,7 @@
 
 #include <bullet/identifier.hpp>
 #include <bullet/numeric_token.hpp>
+#include <bullet/string_token.hpp>
 
 //-------------------------------------------
 // Note: this file was generated based on:
@@ -25,7 +26,8 @@ namespace lexer {
     namespace hana = boost::hana;
 
     namespace token {
-        struct token_tag : x3::position_tagged {};
+        //struct token_tag : x3::position_tagged {};
+        struct token_tag {};
 
         template <typename T>
         auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
@@ -513,6 +515,7 @@ namespace lexer {
                             token::indent_t,
                             token::line_end_t,
                             identifier_t,
+                            string_token_t,
                             literal::numeric::integral_t,
                             literal::numeric::floating_point_t>;
 

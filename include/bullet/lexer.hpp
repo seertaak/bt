@@ -22,6 +22,7 @@
 #include <bullet/util.hpp>
 
 namespace lexer {
+    namespace x3 = boost::spirit::x3;
     using namespace std;
 
     namespace hana = boost::hana;
@@ -34,6 +35,16 @@ namespace lexer {
     using std::begin;
     using std::end;
     using std::size;
+
+    template <typename T>
+        struct as_type {
+            template <typename E>
+            constexpr auto operator[](E e) const { return x3::rule<struct _, T> {} = e; }
+        };
+
+    template <typename T>
+        static inline constexpr as_type<T> as;
+        
 
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(
         tokens) = boost::hof::pipable([](string_view input) -> vector<token_t> {
@@ -110,10 +121,20 @@ namespace lexer {
                 eps[on_line_begin] >> (*lit(' ')) [on_margin_end]
             ];
 
-        auto identifier = x3::rule<class identifier_type, string>("identifier") =
-            lexeme[
+        const auto convert_to_identifier = [] (auto ctx) {
+            const string s = _attr(ctx);
+            _val(ctx) = identifier_t(s);
+        };
+
+        auto identifier_pre 
+            = x3::rule<class identifier_pre_type, string>("identifier_pre") 
+            = lexeme[
                 (alpha | char_('_')) >> *(alnum | char_('_'))
-            ];
+              ];
+
+        auto identifier 
+            = x3::rule<class identifier_type, identifier_t>("identifier") 
+            = identifier_pre[convert_to_identifier];
 
         constexpr auto token = [](auto t) {
             return lit(std::data(token_symbol(t))) >> attr(t);
@@ -121,36 +142,39 @@ namespace lexer {
 
         using namespace literal::numeric;
 
-        const auto foo = [] (auto ctx) {
-            cout << "FOO" << endl;
-        };
-        const auto fooii = [] (auto ctx) {
-            cout << "FOOii" << endl;
-        };
-        const auto barbar = [] (auto ctx) {
-            cout << "BAR" << endl;
-        };
-
-        auto naked_integral_token 
+        const auto naked_integral_token 
             = x3::rule<class naked_integral_type, integral_t>("integral") 
             = x3::ulong_long >> attr('i') >> attr(64);
 
-        auto integral_token 
+        const auto integral_token 
             = x3::rule<class integral_type, integral_t>("naked_integral") 
             = x3::no_skip[
                    x3::ulong_long >> (x3::char_('i') | x3::char_('u')) >> x3::int_
               ];
         
-        auto naked_floating_point_token 
+        const auto naked_floating_point_token 
             = x3::rule<class naked_floating_point_type, floating_point_t>(
                     "naked_floating_point") 
             =  !x3::no_skip[x3::ulong_long >> (" " | x3::eol | x3::eoi)] 
             >>  x3::long_double 
             >>  attr(64);
 
-        auto floating_point_token 
+        const auto floating_point_token 
             = x3::rule<class floating_point_type, floating_point_t>("floating_point") 
             = x3::no_skip[x3::long_double >> "f" >> x3::int_];
+
+        const auto escape_char = '\\' >> char_("\\{}");
+        const auto regular_char = char_;
+        const auto string_content = *(escape_char | regular_char);
+        const auto convert_to_string_token = [] (auto ctx) {
+            cout << "INPUT RAW STRING:" << _attr(ctx) << endl;
+            _val(ctx) = token_t(string_token_t(_attr(ctx)));
+            cout << "OUTPUT STRING TOK:" << _val(ctx) << endl;
+        };
+
+        const auto string_token
+            = x3::rule<class string_token_type, token_t>("string_token") 
+            = lexeme['"' >> *(char_ - '"') >> '"'][convert_to_string_token];
 
         const auto tokens =  (    floating_point_token
                                 | integral_token
@@ -228,6 +252,7 @@ namespace lexer {
                                 | token(SLASH)
                                 | token(STAR)
                                 | token(TILDE)
+                                | string_token
                                 | identifier
                 );
                 
