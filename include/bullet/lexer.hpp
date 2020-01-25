@@ -108,9 +108,14 @@ namespace lexer {
         // and we emit open and close parentheses. Otherwise, the new lines are considered to be
         // an extension of the previous.
 
+        auto i = std::begin(input);
+        auto error_handler = error_handler_type(i, std::end(input), std::cerr);
+
         auto margins = vector<pair<int16_t, bool>>{{0, true}};
         auto colon_indent = false;
         auto b_ws = begin(input);
+        auto i_colon = begin(input);
+        auto i_line_end = begin(input);
         auto pending_dedents = 0;
 
         const auto on_line_begin = [&](auto& ctx) {
@@ -118,28 +123,43 @@ namespace lexer {
             b_ws = begin(_where(ctx));
         };
 
-        const auto on_colon = [&](auto& ctx) { colon_indent = true; };
+        const auto on_line_end = [&](auto& ctx) {
+            i_line_end = begin(_where(ctx));
+        };
+
+        const auto on_colon = [&](auto& ctx) { 
+            colon_indent = true; 
+            i_colon = begin(_where(ctx));
+        };
 
         const auto on_margin_end = [&margins, &colon_indent, &b_ws, &pending_dedents,
-                                    input](auto& ctx) {
+                                    input, &error_handler, &i_colon, &i_line_end](auto& ctx) {
             const auto e_ws = begin(_where(ctx));
 
             const int n = e_ws - b_ws;
             const auto [margin, real_indent] = back(margins);
 
+            const auto push_tok = [&] (auto tok, auto b, auto e) {
+                std::visit([&] (auto& tok) {
+                    error_handler.tag(tok, b, e);
+                    cout << "TAGGED: " << tok << "; " << tok.id_first << " -> "<< tok.id_last << endl;
+                }, tok);    
+                _val(ctx).push_back(tok);
+            };
+
             if (n == margin) {
                 if (colon_indent) throw runtime_error("Indent expected");
-                if (b_ws != begin(input)) _val(ctx).emplace_back(LINE_END);
+                if (b_ws != begin(input)) push_tok(LINE_END, i_line_end, b_ws);
             } else if (n > margin) {
-                if (colon_indent) _val(ctx).emplace_back(OPAREN);
+                if (colon_indent) push_tok(OPAREN, i_colon, i_line_end);
                 margins.emplace_back(n, colon_indent);
             } else {
                 if (colon_indent) throw runtime_error("Indent expected");
 
                 while (!empty(margins) && n < get<int16_t>(back(margins))) {
-                    if (get<bool>(back(margins))) _val(ctx).emplace_back(CPAREN);
+                    if (get<bool>(back(margins))) push_tok(CPAREN, i_line_end, b_ws);
 
-                    _val(ctx).push_back(token_t(LINE_END));
+                    push_tok(LINE_END, i_line_end, b_ws);
 
                     margins.pop_back();
                 }
@@ -326,7 +346,7 @@ namespace lexer {
                 margin
             >> +tokens
             >> -lit(':')[on_colon] 
-            >> x3::eol
+            >> x3::eol[on_line_end]
         );
 
         const auto lines = *(empty_line | non_empty_line);
@@ -336,9 +356,7 @@ namespace lexer {
         using x3::with;
 
         auto result = vector<token_t>();
-        auto i = std::begin(input);
 
-        auto error_handler = error_handler_type(i, std::end(input), std::cerr);
         auto const tokenizer 
             = with<error_handler_tag>(std::ref(error_handler))[lines];
 
@@ -346,7 +364,13 @@ namespace lexer {
             throw runtime_error("Failed to tokenize.");
 
         while (size(margins) > 1) {
-            if (get<bool>(back(margins))) result.emplace_back(CPAREN);
+            if (get<bool>(back(margins))) {
+                auto tok = CPAREN;
+                std::visit([&] (auto& tok) {
+                    error_handler.tag(tok, i, end(input));
+                }, tok);
+                result.emplace_back(tok);
+            }
             margins.pop_back();
         }
 
@@ -354,7 +378,7 @@ namespace lexer {
     });
 
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(
-        tokens) = boost::hof::pipable([](const located_tokens_t& lts) -> token_list_t {
+        tokens) = boost::hof::pipable([](const located_tokens_t& lts) -> const token_list_t& {
         return std::get<token_list_t>(lts);
     });
 
