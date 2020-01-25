@@ -14,7 +14,6 @@
 #include <boost/preprocessor.hpp>
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
-#include <boost/spirit/home/x3/support/utility/annotate_on_success.hpp>
 #include <boost/spirit/home/x3/support/utility/error_reporting.hpp>
 #include <range/v3/core.hpp>
 
@@ -35,6 +34,29 @@ namespace lexer {
     using std::begin;
     using std::end;
     using std::size;
+
+    using x3::error_handler_tag;
+    using error_handler_type = x3::error_handler<string_view::iterator>;
+
+    struct annotate_on_success
+    {
+        template <typename Iterator, typename Context, typename... Types>
+        inline void on_success(Iterator const& first, Iterator const& last
+          , std::variant<Types...>& token, Context const& context)
+        {
+            std::visit([&](auto& tok) { 
+				this->on_success(first, last, tok, context);
+			}, token);
+        }
+
+        template <typename T, typename Iterator, typename Context>
+        inline void on_success(Iterator const& first, Iterator const& last
+          , T& ast, Context const& context)
+        {
+            auto& error_handler = get<error_handler_tag>(context).get();
+            error_handler.tag(ast, first, last);
+        }
+    };
 
     struct error_handler {
         template <typename Iterator, typename Exception, typename Context>
@@ -58,9 +80,10 @@ namespace lexer {
     template <typename T>
         static inline constexpr as_type<T> as;
         
+    using located_tokens_t = std::tuple<vector<token_t>, error_handler_type>;
 
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(
-        tokens) = boost::hof::pipable([](string_view input) -> vector<token_t> {
+        tokenize) = boost::hof::pipable([](string_view input) -> located_tokens_t {
         using namespace boost::spirit;
         using x3::alnum;
         using x3::alpha;
@@ -149,7 +172,7 @@ namespace lexer {
         auto identifier 
             = x3::rule<identifier_type, token_t>("identifier") 
             = identifier_pre[convert_to_identifier];
-        struct identifier_type : x3::annotate_on_success {};
+        struct identifier_type : annotate_on_success {};
 
         constexpr auto token = [](auto t) {
             return lit(std::data(token_symbol(t))) >> attr(t);
@@ -161,7 +184,7 @@ namespace lexer {
         const auto naked_integral_token 
             = x3::rule<naked_integral_type, integral_t>("integral") 
             = x3::ulong_long >> attr('i') >> attr(64);
-        struct naked_integral_type : x3::annotate_on_success {};
+        struct naked_integral_type : annotate_on_success {};
 
         const auto integral_token 
             = x3::rule<class integral_type, integral_t>("naked_integral") 
@@ -176,13 +199,13 @@ namespace lexer {
             =  !x3::no_skip[x3::ulong_long >> (" " | x3::eol | x3::eoi)] 
             >>  x3::long_double 
             >>  attr(64);
-        struct naked_floating_point_type : x3::annotate_on_success {};
+        struct naked_floating_point_type : annotate_on_success {};
 
         struct floating_point_type;
         const auto floating_point_token 
             = x3::rule<class floating_point_type, floating_point_t>("floating_point") 
             = x3::no_skip[x3::long_double >> "f" >> x3::int_];
-        struct floating_point_type : x3::annotate_on_success {};
+        struct floating_point_type : annotate_on_success {};
     
         auto unesc_char = x3::symbols<char>();
         unesc_char.add
@@ -204,7 +227,7 @@ namespace lexer {
         const auto string_token
             = x3::rule<string_token_type, token_t>("string_token") 
             = string_content[convert_to_string_token];
-        struct string_token_type : x3::annotate_on_success {};
+        struct string_token_type : annotate_on_success {};
 
         struct basic_token_type;
 
@@ -290,7 +313,7 @@ namespace lexer {
                                 | identifier
                 );
                 
-        struct basic_token_type : x3::annotate_on_success {};
+        struct basic_token_type : annotate_on_success {};
 
         // NB: we need to define a rule here in order to force the attribute type
         // of this parser to be vector<token_t> (even though it will always return
@@ -310,9 +333,7 @@ namespace lexer {
 
         // clang-format on
 
-        using boost::spirit::x3::with;
-        using boost::spirit::x3::error_handler_tag;
-        using error_handler_type = x3::error_handler<string_view::iterator>;
+        using x3::with;
 
         auto result = vector<token_t>();
         auto i = std::begin(input);
@@ -329,7 +350,12 @@ namespace lexer {
             margins.pop_back();
         }
 
-        return result;
+        return {result, error_handler};
+    });
+
+    BOOST_HOF_STATIC_LAMBDA_FUNCTION(
+        tokens) = boost::hof::pipable([](const located_tokens_t& lts) -> token_list_t {
+        return std::get<token_list_t>(lts);
     });
 
     namespace op {

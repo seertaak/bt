@@ -36,11 +36,11 @@ TEST_CASE("Token list functionality", "[token]") {
     REQUIRE(s.str() == "[token[VERBATIM], token[BAR], token[BAR]]");
 }
 
-TEST_CASE("Tokenize: empty input", "[lexer/tokens]") {
-    REQUIRE(ranges::empty(""sv | tokens));
+TEST_CASE("Tokenize: empty input", "[lexer/tokenize]") {
+    REQUIRE(ranges::empty(""sv | tokenize | tokens));
 }
 
-TEST_CASE("Tokenize: each basic token can be tokenized.", "[lexer/tokens]") {
+TEST_CASE("Tokenize: each basic token can be tokenized.", "[lexer/tokenize]") {
     // iterate over all non-special (INDENT, DEDENT, EOL, etc.) token types 
     // and ensure they can be tokenized
     hana::for_each(token::types, [] (auto token_type_c) {
@@ -49,14 +49,14 @@ TEST_CASE("Tokenize: each basic token can be tokenized.", "[lexer/tokens]") {
         const auto tok_sym = token_symbol(tok);
         if (tok_sym.empty()) return;
 
-        const auto ts = tok_sym | tokens;
+        const auto ts = tok_sym | tokenize | tokens;
         REQUIRE(ranges::size(ts) == 1);
         REQUIRE(token_t(tok) == ranges::front(ts));
         REQUIRE(std::holds_alternative<token_type>(ranges::front(ts)));
     });
 }
 
-TEST_CASE("Tokenize: identifiers.", "[lexer/tokens]") {
+TEST_CASE("Tokenize: identifiers.", "[lexer/tokenize]") {
     const auto inputs = { 
         "foo"sv, 
         "FOO"sv, 
@@ -64,7 +64,7 @@ TEST_CASE("Tokenize: identifiers.", "[lexer/tokens]") {
         "BAR_23432"sv 
     };
     for (auto input: inputs) {
-        const auto ts = input | tokens;
+        const auto ts = input | tokenize | tokens;
         REQUIRE(ranges::size(ts) == 1);
         const auto t = ranges::front(ts);
         REQUIRE(std::holds_alternative<identifier_t>(t));
@@ -73,85 +73,85 @@ TEST_CASE("Tokenize: identifiers.", "[lexer/tokens]") {
 }
 
 
-TEST_CASE("Tokenize: inline colon (no brackets generated)", "[lexer/tokens]") {
+TEST_CASE("Tokenize: inline colon (no brackets generated)", "[lexer/tokenize]") {
     const auto expected = token_list_t{META, COLON, VERBATIM};
-    REQUIRE(tokens("meta:verbatim"sv) == expected);
-    REQUIRE(tokens("meta : verbatim"sv) == expected);
-    REQUIRE(tokens("meta: verbatim"sv) == expected);
+    REQUIRE(("meta:verbatim"sv | tokenize | tokens) == expected);
+    REQUIRE(("meta : verbatim"sv | tokenize | tokens) == expected);
+    REQUIRE(("meta: verbatim"sv | tokenize | tokens) == expected);
 }
 
-TEST_CASE("Tokenize: end-of-line colon (brackets generated)", "[lexer/tokens]") {
+TEST_CASE("Tokenize: end-of-line colon (brackets generated)", "[lexer/tokenize]") {
     const auto expected = token_list_t{
         META, 
         OPAREN, 
         VERBATIM,
         CPAREN
     };
-    REQUIRE(tokens("meta:\n    verbatim"sv) == expected);
+    REQUIRE(("meta:\n    verbatim"sv | tokenize | tokens) == expected);
 }
 
-TEST_CASE("Tokenize: line extension (no brackets generated)", "[lexer/tokens]") {
+TEST_CASE("Tokenize: line extension (no brackets generated)", "[lexer/tokenize]") {
     const auto expected = token_list_t{
         META, 
         VERBATIM,
     };
-    REQUIRE(tokens("meta\n    verbatim"sv) == expected);
+    REQUIRE(("meta\n    verbatim"sv | tokenize | tokens) == expected);
 }
 
-TEST_CASE("Tokenize: integers.", "[lexer/tokens]") {
+TEST_CASE("Tokenize: integers.", "[lexer/tokenize]") {
     using namespace literal::numeric;
-    REQUIRE(tokens("42"sv) == token_list_t{token_t(integral_t(42, 'i', 64))});
+    REQUIRE(("42"sv | tokenize | tokens) == token_list_t{token_t(integral_t(42, 'i', 64))});
 
-    REQUIRE(tokens("42i64"sv) == token_list_t{token_t(integral_t(42, 'i', 64))});
-    REQUIRE(tokens("42u64"sv) == token_list_t{token_t(integral_t(42, 'u', 64))});
-    REQUIRE(tokens("42i32"sv) == token_list_t{token_t(integral_t(42, 'i', 32))});
-    REQUIRE(tokens("42u32"sv) == token_list_t{token_t(integral_t(42, 'u', 32))});
-    REQUIRE(tokens("42i16"sv) == token_list_t{token_t(integral_t(42, 'i', 16))});
-    REQUIRE(tokens("42u16"sv) == token_list_t{token_t(integral_t(42, 'u', 16))});
-    REQUIRE(tokens("42i8"sv) == token_list_t{token_t(integral_t(42, 'i', 8))});
-    REQUIRE(tokens("42u8"sv) == token_list_t{token_t(integral_t(42, 'u', 8))});
+    REQUIRE(("42i64"sv | tokenize | tokens) == token_list_t{token_t(integral_t(42, 'i', 64))});
+    REQUIRE(("42u64"sv | tokenize | tokens) == token_list_t{token_t(integral_t(42, 'u', 64))});
+    REQUIRE(("42i32"sv | tokenize | tokens) == token_list_t{token_t(integral_t(42, 'i', 32))});
+    REQUIRE(("42u32"sv | tokenize | tokens) == token_list_t{token_t(integral_t(42, 'u', 32))});
+    REQUIRE(("42i16"sv | tokenize | tokens) == token_list_t{token_t(integral_t(42, 'i', 16))});
+    REQUIRE(("42u16"sv | tokenize | tokens) == token_list_t{token_t(integral_t(42, 'u', 16))});
+    REQUIRE(("42i8"sv | tokenize | tokens) == token_list_t{token_t(integral_t(42, 'i', 8))});
+    REQUIRE(("42u8"sv | tokenize | tokens) == token_list_t{token_t(integral_t(42, 'u', 8))});
 }
 
-TEST_CASE("Tokenize: floats.", "[lexer/tokens]") {
+TEST_CASE("Tokenize: floats.", "[lexer/tokenize]") {
     using namespace literal::numeric;
-    REQUIRE(tokens("42.0"sv) == token_list_t{token_t(floating_point_t(42, 64))});
-    REQUIRE(tokens("42e0"sv) == token_list_t{token_t(floating_point_t(42, 64))});
-    REQUIRE(tokens("42e1"sv) == token_list_t{token_t(floating_point_t(420, 64))});
+    REQUIRE(("42.0"sv | tokenize | tokens) == token_list_t{token_t(floating_point_t(42, 64))});
+    REQUIRE(("42e0"sv | tokenize | tokens) == token_list_t{token_t(floating_point_t(42, 64))});
+    REQUIRE(("42e1"sv | tokenize | tokens) == token_list_t{token_t(floating_point_t(420, 64))});
 
-    REQUIRE(tokens("42.0f64"sv) == token_list_t{token_t(floating_point_t(42, 64))});
-    REQUIRE(tokens("42e0f64"sv) == token_list_t{token_t(floating_point_t(42, 64))});
-    REQUIRE(tokens("42e1f64"sv) == token_list_t{token_t(floating_point_t(420, 64))});
+    REQUIRE(("42.0f64"sv | tokenize | tokens) == token_list_t{token_t(floating_point_t(42, 64))});
+    REQUIRE(("42e0f64"sv | tokenize | tokens) == token_list_t{token_t(floating_point_t(42, 64))});
+    REQUIRE(("42e1f64"sv | tokenize | tokens) == token_list_t{token_t(floating_point_t(420, 64))});
 
-    REQUIRE(tokens("42.0f32"sv) == token_list_t{token_t(floating_point_t(42, 32))});
-    REQUIRE(tokens("42e0f32"sv) == token_list_t{token_t(floating_point_t(42, 32))});
-    REQUIRE(tokens("42e1f32"sv) == token_list_t{token_t(floating_point_t(420, 32))});
+    REQUIRE(("42.0f32"sv | tokenize | tokens) == token_list_t{token_t(floating_point_t(42, 32))});
+    REQUIRE(("42e0f32"sv | tokenize | tokens) == token_list_t{token_t(floating_point_t(42, 32))});
+    REQUIRE(("42e1f32"sv | tokenize | tokens) == token_list_t{token_t(floating_point_t(420, 32))});
 }
 
-TEST_CASE("Tokenize: strings.", "[lexer/tokens]") {
+TEST_CASE("Tokenize: strings.", "[lexer/tokenize]") {
     REQUIRE(
-        tokens(R"bt("")bt"sv) == 
+        (R"bt("")bt"sv | tokenize | tokens) == 
             token_list_t{token_t(string_token_t(""))});
     REQUIRE(
-        tokens(R"bt("this is a test")bt"sv) == 
+        (R"bt("this is a test")bt"sv | tokenize | tokens) == 
             token_list_t{token_t(string_token_t("this is a test"))});
     REQUIRE(
-        tokens(R"bt("this \"is\" a test")bt"sv) == 
+        (R"bt("this \"is\" a test")bt"sv | tokenize | tokens) == 
             token_list_t{token_t(string_token_t(R"raw(this "is" a test)raw"))});
 
     REQUIRE(
-        tokens(R"bt("backslash? \\")bt"sv) == 
+        (R"bt("backslash? \\")bt"sv | tokenize | tokens) == 
             token_list_t{token_t(string_token_t(R"raw(backslash? \)raw"))});
 
     REQUIRE(
-        tokens(R"bt("newline? \nfoo")bt"sv) == 
+        (R"bt("newline? \nfoo")bt"sv | tokenize | tokens) == 
             token_list_t{token_t(string_token_t("newline? \nfoo"))});
 
     REQUIRE(
-        tokens(R"bt("tab? \tfoo")bt"sv) == 
+        (R"bt("tab? \tfoo")bt"sv | tokenize | tokens) == 
             token_list_t{token_t(string_token_t("tab? \tfoo"))});
 }
 
-TEST_CASE("Tokenize: random shit.", "[lexer/tokens]") {
+TEST_CASE("Tokenize: random shit.", "[lexer/tokenize]") {
     const auto input = R"bt(
         foo:
             print(bar)
@@ -165,7 +165,7 @@ TEST_CASE("Tokenize: random shit.", "[lexer/tokens]") {
 
         meta
     )bt"sv;
-    const auto ts = input | tokens;
+    const auto ts = input | tokenize | tokens;
     auto u = std::stringstream();
     u << ts;
     const auto expected = 
