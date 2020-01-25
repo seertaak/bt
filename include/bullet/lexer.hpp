@@ -36,6 +36,19 @@ namespace lexer {
     using std::end;
     using std::size;
 
+    struct error_handler {
+        template <typename Iterator, typename Exception, typename Context>
+        x3::error_handler_result on_error(
+            Iterator& first, Iterator const& last
+          , Exception const& x, Context const& context)
+        {
+            auto& error_handler = x3::get<x3::error_handler_tag>(context).get();
+            std::string message = "Error! Expecting: " + x.which() + " here:";
+            error_handler(x.where(), message);
+            return x3::error_handler_result::fail;
+        }
+    };
+
     template <typename T>
         struct as_type {
             template <typename E>
@@ -132,9 +145,11 @@ namespace lexer {
                 (alpha | char_('_')) >> *(alnum | char_('_'))
               ];
 
+        struct identifier_type;
         auto identifier 
-            = x3::rule<class identifier_type, token_t>("identifier") 
+            = x3::rule<identifier_type, token_t>("identifier") 
             = identifier_pre[convert_to_identifier];
+        struct identifier_type : x3::annotate_on_success {};
 
         constexpr auto token = [](auto t) {
             return lit(std::data(token_symbol(t))) >> attr(t);
@@ -142,9 +157,11 @@ namespace lexer {
 
         using namespace literal::numeric;
 
+        struct naked_integral_type; 
         const auto naked_integral_token 
-            = x3::rule<class naked_integral_type, integral_t>("integral") 
+            = x3::rule<naked_integral_type, integral_t>("integral") 
             = x3::ulong_long >> attr('i') >> attr(64);
+        struct naked_integral_type : x3::annotate_on_success {};
 
         const auto integral_token 
             = x3::rule<class integral_type, integral_t>("naked_integral") 
@@ -152,17 +169,20 @@ namespace lexer {
                    x3::ulong_long >> (x3::char_('i') | x3::char_('u')) >> x3::int_
               ];
         
+        struct naked_floating_point_type;
         const auto naked_floating_point_token 
-            = x3::rule<class naked_floating_point_type, floating_point_t>(
+            = x3::rule<naked_floating_point_type, floating_point_t>(
                     "naked_floating_point") 
             =  !x3::no_skip[x3::ulong_long >> (" " | x3::eol | x3::eoi)] 
             >>  x3::long_double 
             >>  attr(64);
+        struct naked_floating_point_type : x3::annotate_on_success {};
 
+        struct floating_point_type;
         const auto floating_point_token 
             = x3::rule<class floating_point_type, floating_point_t>("floating_point") 
             = x3::no_skip[x3::long_double >> "f" >> x3::int_];
-
+        struct floating_point_type : x3::annotate_on_success {};
     
         auto unesc_char = x3::symbols<char>();
         unesc_char.add
@@ -180,11 +200,17 @@ namespace lexer {
             _val(ctx) = token_t(string_token_t(_attr(ctx)));
         };
 
+        struct string_token_type;
         const auto string_token
-            = x3::rule<class string_token_type, token_t>("string_token") 
+            = x3::rule<string_token_type, token_t>("string_token") 
             = string_content[convert_to_string_token];
+        struct string_token_type : x3::annotate_on_success {};
 
-        const auto tokens =  (    floating_point_token
+        struct basic_token_type;
+
+        const auto tokens 
+            = x3::rule<class basic_token_type, token_t>("basic_token") 
+            =                   ( floating_point_token
                                 | integral_token
                                 | naked_floating_point_token
                                 | naked_integral_token
@@ -264,12 +290,14 @@ namespace lexer {
                                 | identifier
                 );
                 
+        struct basic_token_type : x3::annotate_on_success {};
 
         // NB: we need to define a rule here in order to force the attribute type
         // of this parser to be vector<token_t> (even though it will always return
         // an empty vector, because it matches empty lines!).
-        auto empty_line = x3::rule<class empty_line_type, vector<token_t>>("empty_line") =
-                no_skip[*lit(' ')] >> x3::eol;
+        auto empty_line 
+            = x3::rule<class empty_line_type, vector<token_t>>("empty_line") 
+            = no_skip[*lit(' ')] >> x3::eol;
 
         const auto non_empty_line = (
                 margin
@@ -282,12 +310,18 @@ namespace lexer {
 
         // clang-format on
 
-        // Now, we invoke the grammar on the input.
+        using boost::spirit::x3::with;
+        using boost::spirit::x3::error_handler_tag;
+        using error_handler_type = x3::error_handler<string_view::iterator>;
 
         auto result = vector<token_t>();
         auto i = std::begin(input);
 
-        if (!phrase_parse(i, std::end(input), lines, lit(' '), result))
+        auto error_handler = error_handler_type(i, std::end(input), std::cerr);
+        auto const tokenizer 
+            = with<error_handler_tag>(std::ref(error_handler))[lines];
+
+        if (!phrase_parse(i, std::end(input), tokenizer, lit(' '), result))
             throw runtime_error("Failed to tokenize.");
 
         while (size(margins) > 1) {
