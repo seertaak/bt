@@ -163,16 +163,26 @@ namespace lexer {
             = x3::rule<class floating_point_type, floating_point_t>("floating_point") 
             = x3::no_skip[x3::long_double >> "f" >> x3::int_];
 
-        const auto escape_char = '\\' >> char_("\\{}");
+    
+        auto unesc_char = x3::symbols<char>();
+        unesc_char.add
+            ("\\n", '\n') 
+            ("\\t", '\t')
+            ("\\\\", '\\') 
+            ("\\\"", '\"');
+
         const auto regular_char = char_ - '"';
-        const auto string_content = *(escape_char | regular_char);
+        const auto string_content
+            = x3::rule<class string_content_type, string>("string_content") 
+            = lexeme['"' >> *(unesc_char | regular_char) >> '"'];
+
         const auto convert_to_string_token = [] (auto ctx) {
             _val(ctx) = token_t(string_token_t(_attr(ctx)));
         };
 
         const auto string_token
             = x3::rule<class string_token_type, token_t>("string_token") 
-            = lexeme['"' >> *(char_ - '"') >> '"'][convert_to_string_token];
+            = string_content[convert_to_string_token];
 
         const auto tokens =  (    floating_point_token
                                 | integral_token

@@ -128,17 +128,27 @@ TEST_CASE("Tokenize: floats.", "[lexer/tokens]") {
 }
 
 TEST_CASE("Tokenize: strings.", "[lexer/tokens]") {
-    using namespace literal::numeric;
+    REQUIRE(
+        tokens(R"bt("")bt"sv) == 
+            token_list_t{token_t(string_token_t(""))});
     REQUIRE(
         tokens(R"bt("this is a test")bt"sv) == 
             token_list_t{token_t(string_token_t("this is a test"))});
     REQUIRE(
-        tokens(R"bt("this "is" a test")bt"sv) == 
+        tokens(R"bt("this \"is\" a test")bt"sv) == 
             token_list_t{token_t(string_token_t(R"raw(this "is" a test)raw"))});
 
     REQUIRE(
-        tokens(R"bt("backlash? \\")bt"sv) == 
+        tokens(R"bt("backslash? \\")bt"sv) == 
             token_list_t{token_t(string_token_t(R"raw(backslash? \)raw"))});
+
+    REQUIRE(
+        tokens(R"bt("newline? \nfoo")bt"sv) == 
+            token_list_t{token_t(string_token_t("newline? \nfoo"))});
+
+    REQUIRE(
+        tokens(R"bt("tab? \tfoo")bt"sv) == 
+            token_list_t{token_t(string_token_t("tab? \tfoo"))});
 }
 
 TEST_CASE("Tokenize: random shit.", "[lexer/tokens]") {
