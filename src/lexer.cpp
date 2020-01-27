@@ -96,7 +96,7 @@ namespace lexer {
             };
 
             constexpr auto ident_to_token = [](auto& ctx) {
-		std::cout << "FOUND A TOKEN!" << std::endl;
+                std::cout << "FOUND A TOKEN!" << std::endl;
                 const auto s = string(begin(_attr(ctx)), end(_attr(ctx)));
                 _val(ctx) = lexer::token_t(lexer::identifier_t(s));
             };
@@ -142,5 +142,5 @@ namespace lexer {
 
             return result;
         }
-    }
+    }  // namespace details
 }  // namespace lexer

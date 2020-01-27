@@ -633,8 +633,8 @@ namespace lexer {
         token_t token;
         location_t location;
 
-        //source_token_t(token_t&& t) noexcept: token(std::move(t)), location{0, 0, 0} {}
         source_token_t(const token_t& t): token(t), location{0, 0, 0} {}
+        source_token_t(const token_t& t, uint32_t line, uint16_t first_col, uint16_t last_col): token(t), location{line, first_col, last_col} {}
 
         source_token_t(): token{STAR}, location{0, 0, 0} {
             std::cout << "DEFAULT CONSTRUCTOR OF source_token_t" << std::endl;
@@ -644,7 +644,7 @@ namespace lexer {
     };
 
     auto operator<<(ostream& os, const source_token_t& t) -> ostream& {
-        os << "src[" << t.token << ']';
+        os << t.token;
         return os;
     }
 

@@ -107,8 +107,261 @@ namespace lexer {
         };
     }
 
+    namespace {
+        class tokenizer_t {
+            const string_view input;
+            const uint32_t input_length;
+
+            source_token_list_t tokens;
+            std::vector<uint32_t> start_of_line;
+            vector<pair<int16_t, bool>> margins{{0, true}};
+        public:
+            tokenizer_t(string_view input): input(input), input_length(size(input)) {}
+
+            auto process() -> output_t {
+                using namespace token;
+
+                uint32_t pos = 0;
+
+                while (!eoi(pos)) {
+                    const auto start_pos = pos;
+                    start_of_line.push_back(pos);
+
+                    if (eat_empty_line(pos)) continue;
+
+                    eat_margin(pos);
+
+                    while (eat_token(pos))
+                        eat_spaces(pos);
+
+                    eat_eol(pos);
+
+                    if (pos == start_pos) {
+                        const auto s = remaining_input(pos);
+                        auto q = s.find('\n');
+                        while (std::isspace(s[q]))
+                            --q;
+                        ++q;
+
+                        auto msg = stringstream();
+                        msg << "Unable to tokenize: \"" <<s.substr(0, q) << "\"" << endl;
+                        msg << "Managed to process: " << tokens << ". ";
+                        msg << "Input follows:\n--\n" << input << "[EOI]\n--\n";
+                        if (!start_of_line.empty()) {
+                            msg << "Start of lines: [";
+                            auto first = true;
+                            for (auto p: start_of_line) {
+                                if (first) first = false;
+                                else msg << ", ";
+                                msg << p;
+                            }
+                            msg << "]";
+                        }
+                            
+                        throw std::runtime_error(msg.str());
+                    }
+                } 
+
+                pop_dedents(pos);
+
+                return output_t{tokens, start_of_line};
+            }
+        private:
+            auto remaining_input(uint32_t pos) const -> string_view {
+                return input.substr(pos, input_length - pos);
+            }
+
+            auto eat_spaces(uint32_t& pos) -> void {
+                auto p = pos;
+                for (; p < input_length; ++p) {
+                    const auto c = input[p];
+                    if (c == '\t')
+                        throw std::runtime_error("Tabs are not fucking allowed.");
+                    if (c != ' ') break;
+                }
+                pos = p;
+            }
+
+            auto eat_token(uint32_t& pos) -> bool {
+                // step 1. *At compile time*, sort the tokens in order of decreasing
+                // token symbol length. We want to match "verbatim" before "==", and
+                // "==" before "=", and so on.
+                constexpr auto length_sorted_regular_tokens = hana::sort(
+                    hana::filter(
+                        token::types, 
+                        [] (auto t_c) { 
+                            using t = typename decltype(t_c)::type;
+                            return hana::bool_c<!t::token.empty()>;
+                        }
+                    ),
+                    [] (auto t_c, auto u_c) {
+                        using t = typename decltype(t_c)::type;
+                        using u = typename decltype(u_c)::type;
+                        constexpr auto result = t::token.size() > u::token.size();
+                        return hana::bool_c<result>;
+                    }
+                );
+
+                // sanity check: LINE_END token is empty, so it isn't regular.
+                static_assert(
+                    hana::find(
+                        length_sorted_regular_tokens, 
+                        hana::type_c<token::line_end_t>
+                    ) == hana::nothing
+                );
+
+                // step 2: following function, at least in theory, desugars into a
+                // statically-known series of if-then-else tests -- as many if-then
+                // constructs as there are token types. If any token type's symbol
+                // matches the input, we break early and eat that token.
+                // The reason the below decodes into a static set of if-then-else
+                // stmts is that length_sorted_regular_tokens is *constexpr*.
+
+                const auto eat_basic_token = hana::fix([&](auto self, auto token_types) -> bool {
+                    if constexpr (hana::is_empty(token_types)) 
+                        return false;
+                    else {
+                        constexpr auto first = hana::front(token_types);
+                        using token_t = typename decltype(first)::type;
+                        constexpr auto token_v = token_t{};
+
+                        if (token_v.token == input.substr(pos, token_v.token.size())) {
+                            const auto line = start_of_line.size();
+                            /*
+                            auto prev_line_last_non_eol_char = start_of_line.back() - 2;
+                            while (std::isspace(input[prev_line_last_non_eol_char]) )
+                                prev_line_last_non_eol_char--;
+                            */
+                            auto column = pos - start_of_line.back();
+
+                            tokens.emplace_back(
+                                token_v,
+                                line,
+                                column,
+                                column + token_v.token.size()
+                            );
+
+                            pos += token_v.token.size();
+
+                            return true;
+                        }
+
+                        return self(hana::drop_front(token_types));
+                    }
+                });
+
+                // step 3: apply it.
+                return eat_basic_token(length_sorted_regular_tokens);
+            }
+
+            auto pop_dedents(uint32_t pos) -> void {
+                while (size(margins) > 1) {
+                    if (get<bool>(back(margins))) {
+                        const auto line = start_of_line.size();
+                        const auto column = pos - start_of_line[line - 2];
+                        tokens.emplace_back(
+                            CPAREN,
+                            line,
+                            column,
+                            column
+                        );
+                    }
+                    margins.pop_back();
+                }
+            }
+
+            auto eat_eol(uint32_t& p) -> bool {
+                const auto c = input[p];
+                if (c == '\n') {
+                    p++;
+                    return true;
+                }
+                if (c == '\r' && input[p + 1] == '\n') {
+                    p += 2;
+                    return true;
+                }
+                return false;
+            }
+
+            inline auto eoi(uint32_t p) -> bool {
+                return p == input_length;
+            }
+
+            auto eat_margin(uint32_t& pos) -> void {
+                const auto s = remaining_input(pos);
+
+                const auto n_spaces = s.find_first_not_of(' ');
+                const auto [margin, real_indent] = back(margins);
+
+                const auto line = start_of_line.size();
+                const auto column = start_of_line.back() - 1;
+
+                const auto colon_indent = !tokens.empty() && tokens.back() == COLON;
+
+                if (n_spaces == margin) {
+                    if (colon_indent) throw runtime_error("Indent expected");
+                    if (!tokens.empty()) 
+                        tokens.emplace_back(
+                            LINE_END, 
+                            line,
+                            column,
+                            column
+                        );
+                } else if (n_spaces > margin) {
+                    if (colon_indent) 
+                        tokens.back() = source_token_t(
+                            OPAREN, 
+                            line,
+                            column,
+                            column
+                        );
+                    margins.emplace_back(n_spaces, colon_indent);
+                } else {
+                    if (colon_indent) throw runtime_error("Indent expected");
+
+                    while (!empty(margins) && n_spaces < get<int16_t>(back(margins))) {
+                        if (get<bool>(back(margins))) 
+                            tokens.emplace_back(
+                                CPAREN, 
+                                line,
+                                column,
+                                column
+                            );
+
+                        tokens.emplace_back(LINE_END, line, column, column);
+
+                        margins.pop_back();
+                    }
+                }
+                pos += n_spaces;
+            }
+
+            auto eat_empty_line(uint32_t& pos) -> bool {
+                for (auto p = pos; p < input_length; p++) {
+                    if (eat_eol(p)) {
+                        pos = p;
+                        return true;
+                    }
+                    const auto c = input[p];
+                    if (c == '\t')
+                        throw std::runtime_error("Tabs are manifestly not allowed.");
+                    if (c != ' ')
+                        return false;
+                }
+                pos = input_length;
+                return true;
+            }
+        };
+    }
+
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(
         tokenize) = boost::hof::pipable([](string_view input) -> output_t {
+        auto tokenizer = tokenizer_t(input);
+        return tokenizer.process();
+    });
+
+    BOOST_HOF_STATIC_LAMBDA_FUNCTION(
+        tokenize_old) = boost::hof::pipable([](string_view input) -> output_t {
         using namespace boost::spirit;
         using x3::alnum;
         using x3::alpha;
