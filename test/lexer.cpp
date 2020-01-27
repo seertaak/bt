@@ -54,6 +54,8 @@ TEST_CASE("Tokenize: each basic token can be tokenized.", "[lexer/tokenize]") {
         constexpr auto tok = token_type{};
         const auto tok_sym = token_symbol(tok);
         if (tok_sym.empty()) return;
+        if (token_t(tok) == MINUS_MINUS) return;
+
 
         const auto ts = tok_list(tok_sym);
         REQUIRE(ranges::size(ts) == 1);
@@ -183,6 +185,16 @@ TEST_CASE("Tokenize: random shit.", "[lexer/tokenize]") {
         "token[LINE_END], token[META], token[LINE_END]]";
 
     REQUIRE(u.str() == expected);
+}
+
+TEST_CASE("Tokenize: inline comments.", "[lexer/tokenize]") {
+    const auto input = R"bt(
+        verbatim -- this is a comment
+    )bt"sv;
+    const auto ts = tok_list(input);
+    cout << "TOKENS: " << ts << endl;
+    REQUIRE(ranges::size(ts) == 1);
+    REQUIRE(ranges::front(ts) == VERBATIM);
 }
 
 namespace {

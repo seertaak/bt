@@ -295,6 +295,7 @@ namespace lexer {
                                 | token(IN)
                                 | token(LEQ)
                                 | token(MINUS_EQUAL)
+                                //| token(MINUS_MINUS)
                                 | token(PERCENTAGE_EQUAL)
                                 | token(PLUS_EQUAL)
                                 | token(SLASH_EQUAL)
@@ -342,10 +343,12 @@ namespace lexer {
             = x3::rule<class empty_line_type, vector<token_t>>("empty_line") 
             = no_skip[*lit(' ')] >> x3::eol;
 
+        auto single_line_comment = lit("--") >> *(char_ - x3::eol) >> (x3::eol|x3::eoi);
+
         const auto non_empty_line = (
                 margin
-            >> +tokens
-            >> -lit(':')[on_colon] 
+            >> +(tokens - token(MINUS_MINUS))
+            >> -lit(':')[on_colon]
             >> x3::eol[on_line_end]
         );
 
@@ -360,7 +363,7 @@ namespace lexer {
         auto const tokenizer 
             = with<error_handler_tag>(std::ref(error_handler))[lines];
 
-        if (!phrase_parse(i, std::end(input), tokenizer, lit(' '), result))
+        if (!phrase_parse(i, std::end(input), tokenizer, lit(' ') | single_line_comment, result))
             throw runtime_error("Failed to tokenize.");
 
         while (size(margins) > 1) {
