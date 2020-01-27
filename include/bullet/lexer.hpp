@@ -189,6 +189,103 @@ namespace lexer {
             }
 
             auto eat_token(uint32_t& pos) -> bool {
+                return eat_numeric_literal(pos) || eat_basic_token(pos) ||
+                       eat_string_literal(pos) || eat_identifier(pos);
+            }
+
+            auto eat_numeric_literal(uint32_t& pos) -> bool {
+                using namespace literal::numeric;
+
+                const auto s = remaining_input(pos);
+
+                long double value;
+                const auto b = begin(input) + pos;
+                auto i = b;
+                if (phrase_parse(i, end(input), x3::long_double, x3::lit(' '), value)) {
+                    const auto start_col = pos - start_of_line.back();
+                    const auto line = start_of_line.size();
+
+                    pos += i - b;
+
+                    int width = 64;
+
+                    if (input[pos] == 'f') {
+                        const auto tmp = input.substr(pos + 1, 2);
+                        if (tmp == "32"sv) {
+                            width = 32;
+                            pos += 3;
+                        } else if (tmp != "64"sv) {
+                            throw std::runtime_error("Illegal floating point literal.");
+                        }
+                    }
+
+                    const auto last_col = pos - start_of_line.back();
+
+                    tokens.emplace_back(floating_point_t(value, width), line, start_col, last_col);
+                    return true;
+                }
+
+                return false;
+            }
+
+            auto eat_identifier(uint32_t& pos) -> bool {
+                auto c = input[pos];
+                if (std::isalpha(c) || c == '_') {
+                    const auto start_col = pos - start_of_line.back();
+                    auto s = string();
+                    do {
+                        s += c;
+                        c = input[++pos];
+                    } while (std::isalnum(c) || c == '_');
+
+                    const auto line = start_of_line.size();
+                    const auto last_col = pos - start_of_line.back() - 1;
+
+                    tokens.emplace_back(identifier_t(s), line, start_col, last_col);
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            auto eat_string_literal(uint32_t& pos) -> bool {
+                if (input[pos] != '"') return false;
+
+                bool escape = false;
+
+                auto s = string();
+
+                const auto start_col = pos - start_of_line.back();
+
+                for (auto p = pos + 1; p < input_length; ++p) {
+                    const auto c = input[p];
+
+                    if (!escape) {
+                        if (c == '\\')
+                            escape = true;
+                        else
+                            s += c;
+                    } else {
+                        switch (c) {
+                        case '\\': s += '\\'; break;
+                        case 'n': s += '\n'; break;
+                        case 't': s += '\t'; break;
+                        default: throw std::runtime_error("Unknown escaped string literal.");
+                        }
+                        escape = false;
+                    }
+                }
+
+                const auto line = start_of_line.size();
+                const auto last_col = pos - start_of_line.back() - 1;
+
+                tokens.emplace_back(identifier_t(s), line, start_col, last_col);
+
+                return false;
+            }
+
+            auto eat_basic_token(uint32_t& pos) -> bool {
                 // step 1. *At compile time*, sort the tokens in order of decreasing
                 // token symbol length. We want to match "verbatim" before "==", and
                 // "==" before "=", and so on.
@@ -216,7 +313,7 @@ namespace lexer {
                 // The reason the below decodes into a static set of if-then-else
                 // stmts is that length_sorted_regular_tokens is *constexpr*.
 
-                const auto eat_basic_token = hana::fix([&](auto self, auto token_types) -> bool {
+                const auto impl = hana::fix([&](auto self, auto token_types) -> bool {
                     if constexpr (hana::is_empty(token_types))
                         return false;
                     else {
@@ -255,7 +352,7 @@ namespace lexer {
                 });
 
                 // step 3: apply it.
-                return eat_basic_token(length_sorted_regular_tokens);
+                return impl(length_sorted_regular_tokens);
             }
 
             auto pop_dedents(uint32_t pos) -> void {
