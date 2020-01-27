@@ -214,7 +214,9 @@ namespace lexer {
                         if (tmp == "32"sv) {
                             width = 32;
                             pos += 3;
-                        } else if (tmp != "64"sv) {
+                        } else if (tmp == "64"sv) {
+                            pos += 3;
+                        } else {
                             throw std::runtime_error("Illegal floating point literal.");
                         }
                     }
@@ -258,16 +260,19 @@ namespace lexer {
 
                 const auto start_col = pos - start_of_line.back();
 
-                for (auto p = pos + 1; p < input_length; ++p) {
+                auto p = pos + 1;
+                for (; p < input_length; ++p) {
                     const auto c = input[p];
 
                     if (!escape) {
+                        if (c == '"') break;
                         if (c == '\\')
                             escape = true;
                         else
                             s += c;
                     } else {
                         switch (c) {
+                        case '"': s += '"'; break;
                         case '\\': s += '\\'; break;
                         case 'n': s += '\n'; break;
                         case 't': s += '\t'; break;
@@ -277,12 +282,14 @@ namespace lexer {
                     }
                 }
 
+                pos = std::min(p + 1, input_length);
+
                 const auto line = start_of_line.size();
                 const auto last_col = pos - start_of_line.back() - 1;
 
-                tokens.emplace_back(identifier_t(s), line, start_col, last_col);
+                tokens.emplace_back(string_token_t(s), line, start_col, last_col);
 
-                return false;
+                return true;
             }
 
             auto eat_basic_token(uint32_t& pos) -> bool {
