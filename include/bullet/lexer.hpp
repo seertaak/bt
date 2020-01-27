@@ -295,7 +295,6 @@ namespace lexer {
                                 | token(IN)
                                 | token(LEQ)
                                 | token(MINUS_EQUAL)
-                                //| token(MINUS_MINUS)
                                 | token(PERCENTAGE_EQUAL)
                                 | token(PLUS_EQUAL)
                                 | token(SLASH_EQUAL)
@@ -347,7 +346,7 @@ namespace lexer {
 
         const auto non_empty_line = (
                 margin
-            >> +(tokens - token(MINUS_MINUS))
+            >> +tokens
             >> -lit(':')[on_colon]
             >> x3::eol[on_line_end]
         );

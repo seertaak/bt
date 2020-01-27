@@ -54,8 +54,6 @@ TEST_CASE("Tokenize: each basic token can be tokenized.", "[lexer/tokenize]") {
         constexpr auto tok = token_type{};
         const auto tok_sym = token_symbol(tok);
         if (tok_sym.empty()) return;
-        if (token_t(tok) == MINUS_MINUS) return;
-
 
         const auto ts = tok_list(tok_sym);
         REQUIRE(ranges::size(ts) == 1);
