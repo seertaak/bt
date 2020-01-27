@@ -211,7 +211,10 @@ TEST_CASE("Tokenize: token positions.", "[lexer/tokenize]") {
                 const auto p_begin = std::begin(pos_rng) - std::begin(input);
                 const auto p_end = std::end(pos_rng) - std::begin(input);
 
-                std::cout << t << "; (" << p_begin << ", " << p_end << ")" << endl;
+                auto s = stringstream();
+                s << t << "; (" << p_begin << ", " << p_end << ")";
+
+                error_handler(t, s.str());
             },
             t);
     }

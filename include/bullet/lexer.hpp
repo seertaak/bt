@@ -142,7 +142,6 @@ namespace lexer {
             const auto push_tok = [&] (auto tok, auto b, auto e) {
                 std::visit([&] (auto& tok) {
                     error_handler.tag(tok, b, e);
-                    cout << "TAGGED: " << tok << "; " << tok.id_first << " -> "<< tok.id_last << endl;
                 }, tok);    
                 _val(ctx).push_back(tok);
             };
