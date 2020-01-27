@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cctype>
 #include <exception>
 #include <string>
 #include <string_view>
@@ -72,14 +73,17 @@ namespace lexer {
         }
 
         template <typename Context>
-        auto _located(Context& ctx, token_t tok, const_iterator b, const_iterator e) -> source_token_t {
+        auto _located(Context& ctx, token_t tok, const_iterator b, const_iterator e)
+            -> source_token_t {
             cout << "located token begin: " << tok << endl;
             auto src_tok = source_token_t(tok);
             const auto curr_line_pos = _eol_locations(ctx).back();
 
             src_tok.location.line = _eol_locations(ctx).size() + 1;
-            src_tok.location.first_col = static_cast<uint16_t>((b - _state(ctx).i_begin) - curr_line_pos + 1);
-            src_tok.location.last_col = static_cast<uint16_t>((e - _state(ctx).i_begin) - curr_line_pos + 1);
+            src_tok.location.first_col =
+                static_cast<uint16_t>((b - _state(ctx).i_begin) - curr_line_pos + 1);
+            src_tok.location.last_col =
+                static_cast<uint16_t>((e - _state(ctx).i_begin) - curr_line_pos + 1);
 
             cout << "located token end: " << src_tok << endl;
 
@@ -97,15 +101,16 @@ namespace lexer {
 
         struct token_locator_t {
             template <typename Iterator, typename Context>
-            inline void on_success(const Iterator& first, const Iterator& last
-              , source_token_t& src_tok, Context const& context)
-            {
+            inline void on_success(const Iterator& first,
+                                   const Iterator& last,
+                                   source_token_t& src_tok,
+                                   Context const& context) {
                 cout << "token_locator_t sees: " << src_tok << endl;
                 src_tok = _located(context, src_tok.token);
                 cout << "token_locator_t sees (end): " << src_tok << endl;
             }
         };
-    }
+    }  // namespace
 
     namespace {
         class tokenizer_t {
@@ -115,8 +120,9 @@ namespace lexer {
             source_token_list_t tokens;
             std::vector<uint32_t> start_of_line;
             vector<pair<int16_t, bool>> margins{{0, true}};
+
         public:
-            tokenizer_t(string_view input): input(input), input_length(size(input)) {}
+            tokenizer_t(string_view input) : input(input), input_length(size(input)) {}
 
             auto process() -> output_t {
                 using namespace token;
@@ -131,41 +137,42 @@ namespace lexer {
 
                     eat_margin(pos);
 
-                    while (eat_token(pos))
-                        eat_spaces(pos);
+                    while (eat_token(pos)) eat_spaces(pos);
 
                     eat_eol(pos);
 
                     if (pos == start_pos) {
                         const auto s = remaining_input(pos);
                         auto q = s.find('\n');
-                        while (std::isspace(s[q]))
-                            --q;
+                        while (std::isspace(s[q])) --q;
                         ++q;
 
                         auto msg = stringstream();
-                        msg << "Unable to tokenize: \"" <<s.substr(0, q) << "\"" << endl;
+                        msg << "Unable to tokenize: \"" << s.substr(0, q) << "\"" << endl;
                         msg << "Managed to process: " << tokens << ". ";
                         msg << "Input follows:\n--\n" << input << "[EOI]\n--\n";
                         if (!start_of_line.empty()) {
                             msg << "Start of lines: [";
                             auto first = true;
-                            for (auto p: start_of_line) {
-                                if (first) first = false;
-                                else msg << ", ";
+                            for (auto p : start_of_line) {
+                                if (first)
+                                    first = false;
+                                else
+                                    msg << ", ";
                                 msg << p;
                             }
                             msg << "]";
                         }
-                            
+
                         throw std::runtime_error(msg.str());
                     }
-                } 
+                }
 
                 pop_dedents(pos);
 
                 return output_t{tokens, start_of_line};
             }
+
         private:
             auto remaining_input(uint32_t pos) const -> string_view {
                 return input.substr(pos, input_length - pos);
@@ -175,8 +182,7 @@ namespace lexer {
                 auto p = pos;
                 for (; p < input_length; ++p) {
                     const auto c = input[p];
-                    if (c == '\t')
-                        throw std::runtime_error("Tabs are not fucking allowed.");
+                    if (c == '\t') throw std::runtime_error("Tabs are not fucking allowed.");
                     if (c != ' ') break;
                 }
                 pos = p;
@@ -186,29 +192,22 @@ namespace lexer {
                 // step 1. *At compile time*, sort the tokens in order of decreasing
                 // token symbol length. We want to match "verbatim" before "==", and
                 // "==" before "=", and so on.
-                constexpr auto length_sorted_regular_tokens = hana::sort(
-                    hana::filter(
-                        token::types, 
-                        [] (auto t_c) { 
-                            using t = typename decltype(t_c)::type;
-                            return hana::bool_c<!t::token.empty()>;
-                        }
-                    ),
-                    [] (auto t_c, auto u_c) {
-                        using t = typename decltype(t_c)::type;
-                        using u = typename decltype(u_c)::type;
-                        constexpr auto result = t::token.size() > u::token.size();
-                        return hana::bool_c<result>;
-                    }
-                );
+                constexpr auto length_sorted_regular_tokens =
+                    hana::sort(hana::filter(token::types,
+                                            [](auto t_c) {
+                                                using t = typename decltype(t_c)::type;
+                                                return hana::bool_c<!t::token.empty()>;
+                                            }),
+                               [](auto t_c, auto u_c) {
+                                   using t = typename decltype(t_c)::type;
+                                   using u = typename decltype(u_c)::type;
+                                   constexpr auto result = t::token.size() > u::token.size();
+                                   return hana::bool_c<result>;
+                               });
 
                 // sanity check: LINE_END token is empty, so it isn't regular.
-                static_assert(
-                    hana::find(
-                        length_sorted_regular_tokens, 
-                        hana::type_c<token::line_end_t>
-                    ) == hana::nothing
-                );
+                static_assert(hana::find(length_sorted_regular_tokens,
+                                         hana::type_c<token::line_end_t>) == hana::nothing);
 
                 // step 2: following function, at least in theory, desugars into a
                 // statically-known series of if-then-else tests -- as many if-then
@@ -218,15 +217,24 @@ namespace lexer {
                 // stmts is that length_sorted_regular_tokens is *constexpr*.
 
                 const auto eat_basic_token = hana::fix([&](auto self, auto token_types) -> bool {
-                    if constexpr (hana::is_empty(token_types)) 
+                    if constexpr (hana::is_empty(token_types))
                         return false;
                     else {
                         constexpr auto first = hana::front(token_types);
                         using token_t = typename decltype(first)::type;
                         constexpr auto token_v = token_t{};
 
-                        if (token_v.token == input.substr(pos, token_v.token.size())) {
+                        constexpr auto reserved_word = token_v.is_reserved_word;
+
+                        bool match = token_v.token == input.substr(pos, token_v.token.size());
+                        auto end_pos = pos + token_v.token.size();
+                        if (token_v.is_reserved_word && end_pos != input_length &&
+                            std::isalnum(input[end_pos]))
+                            match = false;
+
+                        if (match) {
                             const auto line = start_of_line.size();
+
                             /*
                             auto prev_line_last_non_eol_char = start_of_line.back() - 2;
                             while (std::isspace(input[prev_line_last_non_eol_char]) )
@@ -234,14 +242,10 @@ namespace lexer {
                             */
                             auto column = pos - start_of_line.back();
 
-                            tokens.emplace_back(
-                                token_v,
-                                line,
-                                column,
-                                column + token_v.token.size()
-                            );
+                            tokens.emplace_back(token_v, line, column,
+                                                column + token_v.token.size());
 
-                            pos += token_v.token.size();
+                            pos = end_pos;
 
                             return true;
                         }
@@ -259,12 +263,7 @@ namespace lexer {
                     if (get<bool>(back(margins))) {
                         const auto line = start_of_line.size();
                         const auto column = pos - start_of_line[line - 2];
-                        tokens.emplace_back(
-                            CPAREN,
-                            line,
-                            column,
-                            column
-                        );
+                        tokens.emplace_back(CPAREN, line, column, column);
                     }
                     margins.pop_back();
                 }
@@ -283,9 +282,7 @@ namespace lexer {
                 return false;
             }
 
-            inline auto eoi(uint32_t p) -> bool {
-                return p == input_length;
-            }
+            inline auto eoi(uint32_t p) -> bool { return p == input_length; }
 
             auto eat_margin(uint32_t& pos) -> void {
                 const auto s = remaining_input(pos);
@@ -300,33 +297,16 @@ namespace lexer {
 
                 if (n_spaces == margin) {
                     if (colon_indent) throw runtime_error("Indent expected");
-                    if (!tokens.empty()) 
-                        tokens.emplace_back(
-                            LINE_END, 
-                            line,
-                            column,
-                            column
-                        );
+                    if (!tokens.empty()) tokens.emplace_back(LINE_END, line, column, column);
                 } else if (n_spaces > margin) {
-                    if (colon_indent) 
-                        tokens.back() = source_token_t(
-                            OPAREN, 
-                            line,
-                            column,
-                            column
-                        );
+                    if (colon_indent) tokens.back() = source_token_t(OPAREN, line, column, column);
                     margins.emplace_back(n_spaces, colon_indent);
                 } else {
                     if (colon_indent) throw runtime_error("Indent expected");
 
                     while (!empty(margins) && n_spaces < get<int16_t>(back(margins))) {
-                        if (get<bool>(back(margins))) 
-                            tokens.emplace_back(
-                                CPAREN, 
-                                line,
-                                column,
-                                column
-                            );
+                        if (get<bool>(back(margins)))
+                            tokens.emplace_back(CPAREN, line, column, column);
 
                         tokens.emplace_back(LINE_END, line, column, column);
 
@@ -343,22 +323,20 @@ namespace lexer {
                         return true;
                     }
                     const auto c = input[p];
-                    if (c == '\t')
-                        throw std::runtime_error("Tabs are manifestly not allowed.");
-                    if (c != ' ')
-                        return false;
+                    if (c == '\t') throw std::runtime_error("Tabs are manifestly not allowed.");
+                    if (c != ' ') return false;
                 }
                 pos = input_length;
                 return true;
             }
         };
-    }
+    }  // namespace
 
-    BOOST_HOF_STATIC_LAMBDA_FUNCTION(
-        tokenize) = boost::hof::pipable([](string_view input) -> output_t {
-        auto tokenizer = tokenizer_t(input);
-        return tokenizer.process();
-    });
+    BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokenize) =
+        boost::hof::pipable([](string_view input) -> output_t {
+            auto tokenizer = tokenizer_t(input);
+            return tokenizer.process();
+        });
 
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(
         tokenize_old) = boost::hof::pipable([](string_view input) -> output_t {
@@ -386,14 +364,12 @@ namespace lexer {
         // and we emit open and close parentheses. Otherwise, the new lines are considered to be
         // an extension of the previous.
 
-        auto state = state_t{
-            .input = input, 
-            .i_begin = std::begin(input), 
-            .i_end = std::end(input), 
-            .b_ws = std::end(input), 
-            .i_line_end = std::end(input), 
-            .i_colon = std::end(input)
-        };
+        auto state = state_t{.input = input,
+                             .i_begin = std::begin(input),
+                             .i_end = std::end(input),
+                             .b_ws = std::end(input),
+                             .i_line_end = std::end(input),
+                             .i_colon = std::end(input)};
         auto output = output_t{};
         output.eol_locations.push_back(0);
 
@@ -413,10 +389,10 @@ namespace lexer {
             _eol_locations(ctx).push_back(i - st.i_begin);
         };
 
-        const auto on_colon = [](auto& ctx) { 
+        const auto on_colon = [](auto& ctx) {
             auto& st = _state(ctx);
 
-            st.colon_indent = true; 
+            st.colon_indent = true;
             st.i_colon = begin(_where(ctx));
         };
 
@@ -427,7 +403,7 @@ namespace lexer {
             const int n = e_ws - st.b_ws;
             const auto [margin, real_indent] = back(st.margins);
 
-            const auto push_tok = [&] (auto tok, auto b, auto e) {
+            const auto push_tok = [&](auto tok, auto b, auto e) {
                 _val(ctx).push_back(_located(ctx, tok, b, e));
             };
 
@@ -670,14 +646,8 @@ namespace lexer {
 
         using x3::with;
 
-        auto const tokenizer 
-            = with<state_tag>(std::ref(state))[
-                with<eol_locations_tag>(std::ref(output.eol_locations))[
-                    with<error_handler_tag>(std::ref(error_handler))[
-                        lines
-                    ]
-                ]
-              ];
+        auto const tokenizer = with<state_tag>(std::ref(state))[with<eol_locations_tag>(std::ref(
+            output.eol_locations))[with<error_handler_tag>(std::ref(error_handler))[lines]]];
 
         if (!phrase_parse(i, std::end(input), tokenizer, lit(' '), output.tokens))
             throw runtime_error("Failed to tokenize.");
@@ -686,7 +656,8 @@ namespace lexer {
             if (get<bool>(back(state.margins))) {
                 auto tok = source_token_t(CPAREN);
                 tok.location.line = output.eol_locations.size() + 1;
-                tok.location.first_col = static_cast<uint16_t>(input.size() - output.eol_locations.back());
+                tok.location.first_col =
+                    static_cast<uint16_t>(input.size() - output.eol_locations.back());
                 tok.location.last_col = tok.location.first_col;
                 output.tokens.emplace_back(tok);
             }
@@ -698,10 +669,8 @@ namespace lexer {
         return output;
     });
 
-    BOOST_HOF_STATIC_LAMBDA_FUNCTION(
-        tokens) = boost::hof::pipable([](const output_t& output) -> const source_token_list_t& {
-        return output.tokens;
-    });
+    BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens) = boost::hof::pipable(
+        [](const output_t& output) -> const source_token_list_t& { return output.tokens; });
 
     namespace op {
         using namespace boost::spirit;
