@@ -38,52 +38,77 @@ namespace lexer {
     using x3::error_handler_tag;
     using error_handler_type = x3::error_handler<string_view::iterator>;
 
-    struct annotate_on_success
-    {
-        template <typename Iterator, typename Context, typename... Types>
-        inline void on_success(Iterator const& first, Iterator const& last
-          , std::variant<Types...>& token, Context const& context)
-        {
-            std::visit([&](auto& tok) { 
-				this->on_success(first, last, tok, context);
-			}, token);
-        }
+    using iterator = string_view::iterator;
+    using const_iterator = string_view::const_iterator;
 
-        template <typename T, typename Iterator, typename Context>
-        inline void on_success(Iterator const& first, Iterator const& last
-          , T& ast, Context const& context)
-        {
-            auto& error_handler = get<error_handler_tag>(context).get();
-            error_handler.tag(ast, first, last);
-        }
+    struct output_t {
+        source_token_list_t tokens;
+        std::vector<uint32_t> eol_locations;
     };
 
-    struct error_handler {
-        template <typename Iterator, typename Exception, typename Context>
-        x3::error_handler_result on_error(
-            Iterator& first, Iterator const& last
-          , Exception const& x, Context const& context)
-        {
-            auto& error_handler = x3::get<x3::error_handler_tag>(context).get();
-            std::string message = "Error! Expecting: " + x.which() + " here:";
-            error_handler(x.where(), message);
-            return x3::error_handler_result::fail;
-        }
-    };
+    namespace {
+        struct state_tag {};
+        struct eol_locations_tag {};
 
-    template <typename T>
-        struct as_type {
-            template <typename E>
-            constexpr auto operator[](E e) const { return x3::rule<struct _, T> {} = e; }
+        struct state_t {
+            string_view input;
+            vector<pair<int16_t, bool>> margins{{0, true}};
+            bool colon_indent = false;
+            const_iterator i_begin;
+            const_iterator i_end;
+            const_iterator b_ws;
+            const_iterator i_colon;
+            const_iterator i_line_end;
         };
 
-    template <typename T>
-        static inline constexpr as_type<T> as;
-        
-    using located_tokens_t = std::tuple<vector<token_t>, error_handler_type>;
+        template <typename Context>
+        auto _state(Context& ctx) -> state_t& {
+            return x3::get<state_tag>(ctx).get();
+        }
+
+        template <typename Context>
+        auto _eol_locations(Context& ctx) -> std::vector<uint32_t>& {
+            return x3::get<eol_locations_tag>(ctx).get();
+        }
+
+        template <typename Context>
+        auto _located(Context& ctx, token_t tok, const_iterator b, const_iterator e) -> source_token_t {
+            cout << "located token begin: " << tok << endl;
+            auto src_tok = source_token_t(tok);
+            const auto curr_line_pos = _eol_locations(ctx).back();
+
+            src_tok.location.line = _eol_locations(ctx).size() + 1;
+            src_tok.location.first_col = static_cast<uint16_t>((b - _state(ctx).i_begin) - curr_line_pos + 1);
+            src_tok.location.last_col = static_cast<uint16_t>((e - _state(ctx).i_begin) - curr_line_pos + 1);
+
+            cout << "located token end: " << src_tok << endl;
+
+            return src_tok;
+        }
+
+        template <typename Context>
+        auto _located(Context& ctx, token_t t) -> source_token_t {
+            const auto rng = _where(ctx);
+            const auto b = std::begin(rng);
+            const auto e = std::end(rng);
+
+            return _located(ctx, t, b, e);
+        }
+
+        struct token_locator_t {
+            template <typename Iterator, typename Context>
+            inline void on_success(const Iterator& first, const Iterator& last
+              , source_token_t& src_tok, Context const& context)
+            {
+                cout << "token_locator_t sees: " << src_tok << endl;
+                src_tok = _located(context, src_tok.token);
+                cout << "token_locator_t sees (end): " << src_tok << endl;
+            }
+        };
+    }
 
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(
-        tokenize) = boost::hof::pipable([](string_view input) -> located_tokens_t {
+        tokenize) = boost::hof::pipable([](string_view input) -> output_t {
         using namespace boost::spirit;
         using x3::alnum;
         using x3::alpha;
@@ -108,78 +133,84 @@ namespace lexer {
         // and we emit open and close parentheses. Otherwise, the new lines are considered to be
         // an extension of the previous.
 
-        auto i = std::begin(input);
-        auto error_handler = error_handler_type(i, std::end(input), std::cerr);
+        auto state = state_t{
+            .input = input, 
+            .i_begin = std::begin(input), 
+            .i_end = std::end(input), 
+            .b_ws = std::end(input), 
+            .i_line_end = std::end(input), 
+            .i_colon = std::end(input)
+        };
+        auto output = output_t{};
+        output.eol_locations.push_back(0);
 
-        auto margins = vector<pair<int16_t, bool>>{{0, true}};
-        auto colon_indent = false;
-        auto b_ws = begin(input);
-        auto i_colon = begin(input);
-        auto i_line_end = begin(input);
-        auto pending_dedents = 0;
+        auto i = state.i_begin;
+        auto error_handler = error_handler_type(i, state.i_end, std::cerr);
 
-        const auto on_line_begin = [&](auto& ctx) {
+        const auto on_line_begin = [](auto& ctx) {
             _val(ctx) = {};
-            b_ws = begin(_where(ctx));
+            _state(ctx).b_ws = begin(_where(ctx));
         };
 
-        const auto on_line_end = [&](auto& ctx) {
-            i_line_end = begin(_where(ctx));
+        const auto on_line_end = [](auto& ctx) {
+            auto& st = _state(ctx);
+
+            const auto i = begin(_where(ctx));
+            st.i_line_end = i;
+            _eol_locations(ctx).push_back(i - st.i_begin);
         };
 
-        const auto on_colon = [&](auto& ctx) { 
-            colon_indent = true; 
-            i_colon = begin(_where(ctx));
+        const auto on_colon = [](auto& ctx) { 
+            auto& st = _state(ctx);
+
+            st.colon_indent = true; 
+            st.i_colon = begin(_where(ctx));
         };
 
-        const auto on_margin_end = [&margins, &colon_indent, &b_ws, &pending_dedents,
-                                    input, &error_handler, &i_colon, &i_line_end](auto& ctx) {
+        const auto on_margin_end = [](auto& ctx) {
+            auto& st = _state(ctx);
             const auto e_ws = begin(_where(ctx));
 
-            const int n = e_ws - b_ws;
-            const auto [margin, real_indent] = back(margins);
+            const int n = e_ws - st.b_ws;
+            const auto [margin, real_indent] = back(st.margins);
 
             const auto push_tok = [&] (auto tok, auto b, auto e) {
-                std::visit([&] (auto& tok) {
-                    error_handler.tag(tok, b, e);
-                    cout << "TAGGED: " << tok << "; " << tok.id_first << " -> "<< tok.id_last << endl;
-                }, tok);    
-                _val(ctx).push_back(tok);
+                _val(ctx).push_back(_located(ctx, tok, b, e));
             };
 
             if (n == margin) {
-                if (colon_indent) throw runtime_error("Indent expected");
-                if (b_ws != begin(input)) push_tok(LINE_END, i_line_end, b_ws);
+                if (st.colon_indent) throw runtime_error("Indent expected");
+                if (st.b_ws != st.i_begin) push_tok(LINE_END, st.i_line_end, st.b_ws);
             } else if (n > margin) {
-                if (colon_indent) push_tok(OPAREN, i_colon, i_line_end);
-                margins.emplace_back(n, colon_indent);
+                if (st.colon_indent) push_tok(OPAREN, st.i_colon, st.i_line_end);
+                st.margins.emplace_back(n, st.colon_indent);
             } else {
-                if (colon_indent) throw runtime_error("Indent expected");
+                if (st.colon_indent) throw runtime_error("Indent expected");
 
-                while (!empty(margins) && n < get<int16_t>(back(margins))) {
-                    if (get<bool>(back(margins))) push_tok(CPAREN, i_line_end, b_ws);
+                while (!empty(st.margins) && n < get<int16_t>(back(st.margins))) {
+                    if (get<bool>(back(st.margins))) push_tok(CPAREN, st.i_line_end, st.b_ws);
 
-                    push_tok(LINE_END, i_line_end, b_ws);
+                    push_tok(LINE_END, st.i_line_end, st.b_ws);
 
-                    margins.pop_back();
+                    st.margins.pop_back();
                 }
             }
 
-            colon_indent = false;
+            st.colon_indent = false;
         };
 
         // Lexer grammar definition:
 
         // clang-format off
 
-        auto margin = x3::rule<class margin_type, vector<token_t>>("margin") =
+        auto margin = x3::rule<class margin_type, source_token_list_t>("margin") =
             no_skip[
                 eps[on_line_begin] >> (*lit(' ')) [on_margin_end]
             ];
 
-        const auto convert_to_identifier = [] (auto ctx) {
+        const auto convert_to_identifier = [] (auto& ctx) {
             const string s = _attr(ctx);
-            _val(ctx) = token_t(identifier_t(s));
+            _val(ctx) = _located(ctx, token_t(identifier_t(s)));
         };
 
         auto identifier_pre 
@@ -190,12 +221,37 @@ namespace lexer {
 
         struct identifier_type;
         auto identifier 
-            = x3::rule<identifier_type, token_t>("identifier") 
+            = x3::rule<identifier_type, source_token_t>("identifier") 
             = identifier_pre[convert_to_identifier];
-        struct identifier_type : annotate_on_success {};
+        struct identifier_type : token_locator_t {};
 
         constexpr auto token = [](auto t) {
-            return lit(std::data(token_symbol(t))) >> attr(t);
+            const auto r
+                = x3::rule<struct _, source_token_t>("foo")
+                = (
+                       lit(std::data(token_symbol(t)))
+                    >> attr(source_token_t(t))
+                )/*[([](auto& ctx) {
+                        _attr(ctx) = _located(ctx, _attr(ctx).token);
+                        _val(ctx) = _attr(ctx);
+                        cout << "PARSED: " << _attr(ctx) << " at " << 
+                            _attr(ctx).location << "; value = " << 
+                            _val(ctx) << " at " << _val(ctx).location << endl;
+                })]*/;
+            return r;
+                /*
+            return lit(std::data(token_symbol(t)))[([&] (auto& ctx) {
+                        b = begin(_where(ctx));
+                        e = end(_where(ctx));
+                   })]
+                >> attr(source_token_t(t))[([=](auto& ctx) {
+                    cout << "PARSING: " << _attr(ctx) << " at " << 
+                        _attr(ctx).location << endl;
+                    _attr(ctx) = _located(ctx, _attr(ctx).token, b, e);
+                    cout << "PARSING DONE: " << _attr(ctx) << " at " << 
+                        _attr(ctx).location << endl;
+                })];
+                */
         };
 
         using namespace literal::numeric;
@@ -204,7 +260,7 @@ namespace lexer {
         const auto naked_integral_token 
             = x3::rule<naked_integral_type, integral_t>("integral") 
             = x3::ulong_long >> attr('i') >> attr(64);
-        struct naked_integral_type : annotate_on_success {};
+        struct naked_integral_type : token_locator_t {};
 
         const auto integral_token 
             = x3::rule<class integral_type, integral_t>("naked_integral") 
@@ -219,13 +275,13 @@ namespace lexer {
             =  !x3::no_skip[x3::ulong_long >> (" " | x3::eol | x3::eoi)] 
             >>  x3::long_double 
             >>  attr(64);
-        struct naked_floating_point_type : annotate_on_success {};
+        struct naked_floating_point_type : token_locator_t {};
 
         struct floating_point_type;
         const auto floating_point_token 
             = x3::rule<class floating_point_type, floating_point_t>("floating_point") 
             = x3::no_skip[x3::long_double >> "f" >> x3::int_];
-        struct floating_point_type : annotate_on_success {};
+        struct floating_point_type : token_locator_t {};
     
         auto unesc_char = x3::symbols<char>();
         unesc_char.add
@@ -239,25 +295,25 @@ namespace lexer {
             = x3::rule<class string_content_type, string>("string_content") 
             = lexeme['"' >> *(unesc_char | regular_char) >> '"'];
 
-        const auto convert_to_string_token = [] (auto ctx) {
-            _val(ctx) = token_t(string_token_t(_attr(ctx)));
+        const auto convert_to_string_token = [] (auto& ctx) {
+            _val(ctx) = _located(ctx, token_t(string_token_t(_attr(ctx))));
         };
 
         struct string_token_type;
         const auto string_token
-            = x3::rule<string_token_type, token_t>("string_token") 
+            = x3::rule<string_token_type, source_token_t>("string_token") 
             = string_content[convert_to_string_token];
-        struct string_token_type : annotate_on_success {};
+        struct string_token_type : token_locator_t {};
 
         struct basic_token_type;
 
         const auto tokens 
-            = x3::rule<class basic_token_type, token_t>("basic_token") 
-            =                   ( floating_point_token
+            = x3::rule<class basic_token_type, source_token_t>("basic_token") 
+            =                   ( /*floating_point_token
                                 | integral_token
                                 | naked_floating_point_token
                                 | naked_integral_token
-                                | token(VERBATIM)
+                                | */token(VERBATIM)
                                 | token(PRIVATE)
                                 | token(IMPORT)
                                 | token(OBJECT)
@@ -329,22 +385,28 @@ namespace lexer {
                                 | token(SLASH)
                                 | token(STAR)
                                 | token(TILDE)
-                                | string_token
-                                | identifier
-                );
+                                /*| string_token
+                                | identifier*/
+                )[([] (auto& ctx) {
+                    cout << "JUST PARSED tokens = ...: " << _attr(ctx) << endl;
+                    //_val(ctx) = _attr(ctx);
+                    cout << "JUST PARSED tokens = ...: " << _val(ctx) << endl;
+                })];
                 
-        struct basic_token_type : annotate_on_success {};
+        struct basic_token_type : token_locator_t {};
 
         // NB: we need to define a rule here in order to force the attribute type
-        // of this parser to be vector<token_t> (even though it will always return
+        // of this parser to be vector<source_token_t> (even though it will always return
         // an empty vector, because it matches empty lines!).
         auto empty_line 
-            = x3::rule<class empty_line_type, vector<token_t>>("empty_line") 
+            = x3::rule<class empty_line_type, source_token_list_t>("empty_line") 
             = no_skip[*lit(' ')] >> x3::eol;
 
         const auto non_empty_line = (
                 margin
-            >> +tokens
+            >> (+(tokens[([](auto& ctx){
+                    cout << "JUST PARSED +tokens: " << _attr(ctx) << endl;
+               })]))
             >> -lit(':')[on_colon] 
             >> x3::eol[on_line_end]
         );
@@ -355,31 +417,37 @@ namespace lexer {
 
         using x3::with;
 
-        auto result = vector<token_t>();
-
         auto const tokenizer 
-            = with<error_handler_tag>(std::ref(error_handler))[lines];
+            = with<state_tag>(std::ref(state))[
+                with<eol_locations_tag>(std::ref(output.eol_locations))[
+                    with<error_handler_tag>(std::ref(error_handler))[
+                        lines
+                    ]
+                ]
+              ];
 
-        if (!phrase_parse(i, std::end(input), tokenizer, lit(' '), result))
+        if (!phrase_parse(i, std::end(input), tokenizer, lit(' '), output.tokens))
             throw runtime_error("Failed to tokenize.");
 
-        while (size(margins) > 1) {
-            if (get<bool>(back(margins))) {
-                auto tok = CPAREN;
-                std::visit([&] (auto& tok) {
-                    error_handler.tag(tok, i, end(input));
-                }, tok);
-                result.emplace_back(tok);
+        while (size(state.margins) > 1) {
+            if (get<bool>(back(state.margins))) {
+                auto tok = source_token_t(CPAREN);
+                tok.location.line = output.eol_locations.size() + 1;
+                tok.location.first_col = static_cast<uint16_t>(input.size() - output.eol_locations.back());
+                tok.location.last_col = tok.location.first_col;
+                output.tokens.emplace_back(tok);
             }
-            margins.pop_back();
+            state.margins.pop_back();
         }
 
-        return {result, error_handler};
+        cout << "DOUBLE CHECK: " << output.tokens << endl;
+
+        return output;
     });
 
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(
-        tokens) = boost::hof::pipable([](const located_tokens_t& lts) -> const token_list_t& {
-        return std::get<token_list_t>(lts);
+        tokens) = boost::hof::pipable([](const output_t& output) -> const source_token_list_t& {
+        return output.tokens;
     });
 
     namespace op {
