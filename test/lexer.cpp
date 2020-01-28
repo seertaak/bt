@@ -193,24 +193,6 @@ TEST_CASE("Tokenize: inline comments.", "[lexer/tokenize]") {
     REQUIRE(ranges::front(ts) == VERBATIM);
 }
 
-namespace {
-    /*
-        auto position(const token_t& token, const error_handler_type& error_handler)
-            -> boost::iterator_range<string_view::iterator> {
-            std::visit([&] (auto t) {
-                cout << "TOKEN: " << t << endl;
-                const auto pos_rng = error_handler.position_of(t);
-
-                const auto p_begin = std::begin(pos_rng) - std::begin(input);
-                const auto p_end = std::end(pos_rng) - std::begin(input);
-
-                std::cout << t << "; (" << p_begin << ", " << p_end << ")" << endl;
-            }, t);
-
-        }
-    */
-}
-
 TEST_CASE("Tokenize: token positions.", "[lexer/tokenize]") {
     const auto input = R"bt(
         foo:
@@ -222,22 +204,3 @@ TEST_CASE("Tokenize: token positions.", "[lexer/tokenize]") {
     for (const auto& t : output.tokens) cout << t.token << " at " << t.location << endl;
 }
 
-/*
-TEST_CASE("Token variant parser", "[lexer::op::value]") {
-    const auto good_input = vector<token_t>{EOL};
-    auto i = begin(good_input);
-    token_t output;
-
-    auto success = parse(i, end(good_input), tlit(EOL), output);
-
-    REQUIRE(success);
-    REQUIRE(output == back(good_input));
-
-    const auto bad_input = vector<token_t>{EOL};
-    i = begin(bad_input);
-
-    success = parse(i, end(bad_input), tlit(OPAREN), output);
-
-    REQUIRE(!success);
-}
-*/
