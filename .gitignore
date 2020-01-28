@@ -9,3 +9,5 @@ out
 ctags
 tags
 .idea/*
+
+tools/tokens.hpp
