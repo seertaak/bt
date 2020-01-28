@@ -5,18 +5,10 @@
 #include <string>
 #include <string_view>
 
-#include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/fusion/include/io.hpp>
-#include <boost/spirit/home/x3.hpp>
-#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
-
-#include <bullet/util.hpp>
-
 namespace lexer {
     using namespace std;
-    namespace x3 = boost::spirit::x3;
 
-    struct identifier_t : x3::position_tagged {
+    struct identifier_t {
         string name;
         explicit identifier_t(string s) : name(s) {}
         identifier_t() = default;
@@ -58,5 +50,3 @@ namespace lexer {
         return l > r || l == r;
     }
 }  // namespace lexer
-
-BOOST_FUSION_ADAPT_STRUCT(lexer::identifier_t, name)

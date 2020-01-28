@@ -17,7 +17,10 @@ using namespace lexer;
 using namespace lexer::token;
 
 namespace {
-    auto tok_list(string_view input) -> token_list_t { return input | tokenize | tokens; }
+    auto tok_list(string_view input) -> source_token_list_t {
+        auto output = input | tokenize;
+        return output.tokens;
+    }
 }  // namespace
 
 TEST_CASE("Basic token functionality", "[token]") {
@@ -31,6 +34,20 @@ TEST_CASE("Basic token functionality", "[token]") {
     s << CASE;
 
     REQUIRE(s.str() == "token[CASE]");
+}
+
+TEST_CASE("Source token functionality", "[token]") {
+    auto src_tok = source_token_t(PRIVATE);
+
+    REQUIRE(src_tok.token == PRIVATE);
+    REQUIRE(src_tok == PRIVATE);
+
+    REQUIRE(src_tok.location == location_t{0, 0, 0});
+
+    auto src_tok2 = source_token_t(PRIVATE);
+    src_tok2.location.line = 5;
+
+    REQUIRE(src_tok != src_tok2);
 }
 
 TEST_CASE("Token list functionality", "[token]") {
@@ -54,9 +71,10 @@ TEST_CASE("Tokenize: each basic token can be tokenized.", "[lexer/tokenize]") {
         if (tok_sym.empty()) return;
 
         const auto ts = tok_list(tok_sym);
+
         REQUIRE(ranges::size(ts) == 1);
         REQUIRE(token_t(tok) == ranges::front(ts));
-        REQUIRE(std::holds_alternative<token_type>(ranges::front(ts)));
+        REQUIRE(std::holds_alternative<token_type>(ranges::front(ts).token));
     });
 }
 
@@ -66,8 +84,8 @@ TEST_CASE("Tokenize: identifiers.", "[lexer/tokenize]") {
         const auto ts = tok_list(input);
         REQUIRE(ranges::size(ts) == 1);
         const auto t = ranges::front(ts);
-        REQUIRE(std::holds_alternative<identifier_t>(t));
-        REQUIRE(std::get<identifier_t>(t).name == input);
+        REQUIRE(std::holds_alternative<identifier_t>(t.token));
+        REQUIRE(std::get<identifier_t>(t.token).name == input);
     }
 }
 
@@ -160,7 +178,7 @@ TEST_CASE("Tokenize: random shit.", "[lexer/tokenize]") {
         "token[LINE_END], token[VERBATIM], token[CPAREN], token[LINE_END], "
         "ident[x], token[ASSIGN], token[IF], token[LINE_END], ident[print], "
         "token[OPAREN], ident[x], token[PLUS], ident[x], token[CPAREN], "
-        "token[LINE_END], token[META], token[LINE_END]]";
+        "token[LINE_END], token[META]]";
 
     REQUIRE(u.str() == expected);
 }
@@ -199,25 +217,8 @@ TEST_CASE("Tokenize: token positions.", "[lexer/tokenize]") {
         23.5f64
         "hello"
     )bt"sv;
-    const auto tokens_error_handler = input | tokenize;
-    const auto& tokens = std::get<token_list_t>(tokens_error_handler);
-    const auto& error_handler = std::get<error_handler_type>(tokens_error_handler);
-    for (const auto& t : tokens) {
-        std::visit(
-            [&](auto t) {
-                std::cout << t << "; " << t.id_first << "; " << t.id_last << endl;
-                const auto pos_rng = error_handler.position_of(t);
-
-                const auto p_begin = std::begin(pos_rng) - std::begin(input);
-                const auto p_end = std::end(pos_rng) - std::begin(input);
-
-                auto s = stringstream();
-                s << t << "; (" << p_begin << ", " << p_end << ")";
-
-                error_handler(t, s.str());
-            },
-            t);
-    }
+    const auto output = input | tokenize;
+    for (const auto& t : output.tokens) cout << t.token << " at " << t.location << endl;
 }
 
 /*

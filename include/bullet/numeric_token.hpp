@@ -5,21 +5,12 @@
 #include <string>
 #include <string_view>
 
-#include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/fusion/include/io.hpp>
-#include <boost/spirit/home/x3.hpp>
-#include <boost/spirit/home/x3/support/ast/position_tagged.hpp>
-#include <boost/type_index.hpp>
-
-#include <bullet/util.hpp>
-
 namespace lexer {
     using namespace std;
-    namespace x3 = boost::spirit::x3;
 
     namespace literal {
         namespace numeric {
-            struct tag : x3::position_tagged {};
+            struct tag {};
 
             struct integral_t : tag {
                 unsigned long long value;
@@ -91,6 +82,3 @@ namespace lexer {
         }  // namespace numeric
     }      // namespace literal
 }  // namespace lexer
-
-BOOST_FUSION_ADAPT_STRUCT(lexer::literal::numeric::integral_t, value, type, width)
-BOOST_FUSION_ADAPT_STRUCT(lexer::literal::numeric::floating_point_t, value, width)

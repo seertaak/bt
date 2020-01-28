@@ -2,12 +2,9 @@
 
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <variant>
 
 #include <boost/hana.hpp>
-#include <range/v3/core.hpp>
-#include <range/v3/view/tail.hpp>
 
 #include <bullet/identifier.hpp>
 #include <bullet/string_token.hpp>
@@ -26,339 +23,414 @@ namespace lexer {
     namespace hana = boost::hana;
 
     namespace token {
-        struct token_tag : x3::position_tagged {};
+        struct token_tag {};
 
         template <typename T>
-        auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
+        inline auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
             os << "token[" << T::name << ']';
             return os;
         }
 
         template <typename T>
-        auto operator==(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
+        inline auto operator==(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
             return true;
         }
 
         template <typename T>
-        auto operator!=(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
+        inline auto operator!=(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
             return false;
         }
 
         template <typename T>
-        auto token_name(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
+        inline auto token_name(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
             return T::name;
         }
 
         template <typename T>
-        auto token_symbol(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
+        inline auto token_symbol(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
             return T::token;
         }
 
-        
-struct verbatim_t : token_tag {
-    static constexpr const std::string_view name{"VERBATIM"};
-    static constexpr const std::string_view token{"verbatim"};
-};
-struct private_t : token_tag {
-    static constexpr const std::string_view name{"PRIVATE"};
-    static constexpr const std::string_view token{"private"};
-};
-struct import_t : token_tag {
-    static constexpr const std::string_view name{"IMPORT"};
-    static constexpr const std::string_view token{"import"};
-};
-struct object_t : token_tag {
-    static constexpr const std::string_view name{"OBJECT"};
-    static constexpr const std::string_view token{"object"};
-};
-struct public_t : token_tag {
-    static constexpr const std::string_view name{"PUBLIC"};
-    static constexpr const std::string_view token{"public"};
-};
-struct repeat_t : token_tag {
-    static constexpr const std::string_view name{"REPEAT"};
-    static constexpr const std::string_view token{"repeat"};
-};
-struct break_t : token_tag {
-    static constexpr const std::string_view name{"BREAK"};
-    static constexpr const std::string_view token{"break"};
-};
-struct catch_t : token_tag {
-    static constexpr const std::string_view name{"CATCH"};
-    static constexpr const std::string_view token{"catch"};
-};
-struct const_t : token_tag {
-    static constexpr const std::string_view name{"CONST"};
-    static constexpr const std::string_view token{"const"};
-};
-struct false_t : token_tag {
-    static constexpr const std::string_view name{"FALSE"};
-    static constexpr const std::string_view token{"false"};
-};
-struct macro_t : token_tag {
-    static constexpr const std::string_view name{"MACRO"};
-    static constexpr const std::string_view token{"macro"};
-};
-struct throw_t : token_tag {
-    static constexpr const std::string_view name{"THROW"};
-    static constexpr const std::string_view token{"throw"};
-};
-struct until_t : token_tag {
-    static constexpr const std::string_view name{"UNTIL"};
-    static constexpr const std::string_view token{"until"};
-};
-struct while_t : token_tag {
-    static constexpr const std::string_view name{"WHILE"};
-    static constexpr const std::string_view token{"while"};
-};
-struct case_t : token_tag {
-    static constexpr const std::string_view name{"CASE"};
-    static constexpr const std::string_view token{"case"};
-};
-struct data_t : token_tag {
-    static constexpr const std::string_view name{"DATA"};
-    static constexpr const std::string_view token{"data"};
-};
-struct goto_t : token_tag {
-    static constexpr const std::string_view name{"GOTO"};
-    static constexpr const std::string_view token{"goto"};
-};
-struct help_t : token_tag {
-    static constexpr const std::string_view name{"HELP"};
-    static constexpr const std::string_view token{"help"};
-};
-struct meta_t : token_tag {
-    static constexpr const std::string_view name{"META"};
-    static constexpr const std::string_view token{"meta"};
-};
-struct note_t : token_tag {
-    static constexpr const std::string_view name{"NOTE"};
-    static constexpr const std::string_view token{"note"};
-};
-struct null_lit_t : token_tag {
-    static constexpr const std::string_view name{"NULL_LIT"};
-    static constexpr const std::string_view token{"null"};
-};
-struct post_t : token_tag {
-    static constexpr const std::string_view name{"POST"};
-    static constexpr const std::string_view token{"post"};
-};
-struct true_t : token_tag {
-    static constexpr const std::string_view name{"TRUE"};
-    static constexpr const std::string_view token{"true"};
-};
-struct type_t : token_tag {
-    static constexpr const std::string_view name{"TYPE"};
-    static constexpr const std::string_view token{"type"};
-};
-struct def_t : token_tag {
-    static constexpr const std::string_view name{"DEF"};
-    static constexpr const std::string_view token{"def"};
-};
-struct doc_t : token_tag {
-    static constexpr const std::string_view name{"DOC"};
-    static constexpr const std::string_view token{"doc"};
-};
-struct for_t : token_tag {
-    static constexpr const std::string_view name{"FOR"};
-    static constexpr const std::string_view token{"for"};
-};
-struct pre_t : token_tag {
-    static constexpr const std::string_view name{"PRE"};
-    static constexpr const std::string_view token{"pre"};
-};
-struct var_t : token_tag {
-    static constexpr const std::string_view name{"VAR"};
-    static constexpr const std::string_view token{"var"};
-};
-struct backslash_t : token_tag {
-    static constexpr const std::string_view name{"BACKSLASH"};
-    static constexpr const std::string_view token{"\\"};
-};
-struct equal_t : token_tag {
-    static constexpr const std::string_view name{"EQUAL"};
-    static constexpr const std::string_view token{"=="};
-};
-struct fn_t : token_tag {
-    static constexpr const std::string_view name{"FN"};
-    static constexpr const std::string_view token{"fn"};
-};
-struct geq_t : token_tag {
-    static constexpr const std::string_view name{"GEQ"};
-    static constexpr const std::string_view token{">="};
-};
-struct hat_equal_t : token_tag {
-    static constexpr const std::string_view name{"HAT_EQUAL"};
-    static constexpr const std::string_view token{"^="};
-};
-struct if_t : token_tag {
-    static constexpr const std::string_view name{"IF"};
-    static constexpr const std::string_view token{"if"};
-};
-struct in_t : token_tag {
-    static constexpr const std::string_view name{"IN"};
-    static constexpr const std::string_view token{"in"};
-};
-struct leq_t : token_tag {
-    static constexpr const std::string_view name{"LEQ"};
-    static constexpr const std::string_view token{"<="};
-};
-struct minus_equal_t : token_tag {
-    static constexpr const std::string_view name{"MINUS_EQUAL"};
-    static constexpr const std::string_view token{"-="};
-};
-struct percentage_equal_t : token_tag {
-    static constexpr const std::string_view name{"PERCENTAGE_EQUAL"};
-    static constexpr const std::string_view token{"%="};
-};
-struct plus_equal_t : token_tag {
-    static constexpr const std::string_view name{"PLUS_EQUAL"};
-    static constexpr const std::string_view token{"+="};
-};
-struct slash_equal_t : token_tag {
-    static constexpr const std::string_view name{"SLASH_EQUAL"};
-    static constexpr const std::string_view token{"/="};
-};
-struct star_equal_t : token_tag {
-    static constexpr const std::string_view name{"STAR_EQUAL"};
-    static constexpr const std::string_view token{"*="};
-};
-struct thick_arrow_t : token_tag {
-    static constexpr const std::string_view name{"THICK_ARROW"};
-    static constexpr const std::string_view token{"=>"};
-};
-struct thin_arrow_t : token_tag {
-    static constexpr const std::string_view name{"THIN_ARROW"};
-    static constexpr const std::string_view token{"->"};
-};
-struct ampersand_t : token_tag {
-    static constexpr const std::string_view name{"AMPERSAND"};
-    static constexpr const std::string_view token{"&"};
-};
-struct assign_t : token_tag {
-    static constexpr const std::string_view name{"ASSIGN"};
-    static constexpr const std::string_view token{"="};
-};
-struct atsign_t : token_tag {
-    static constexpr const std::string_view name{"ATSIGN"};
-    static constexpr const std::string_view token{"@"};
-};
-struct backtick_t : token_tag {
-    static constexpr const std::string_view name{"BACKTICK"};
-    static constexpr const std::string_view token{"`"};
-};
-struct bang_t : token_tag {
-    static constexpr const std::string_view name{"BANG"};
-    static constexpr const std::string_view token{"!"};
-};
-struct bar_t : token_tag {
-    static constexpr const std::string_view name{"BAR"};
-    static constexpr const std::string_view token{"|"};
-};
-struct cbraces_t : token_tag {
-    static constexpr const std::string_view name{"CBRACES"};
-    static constexpr const std::string_view token{"}"};
-};
-struct cbracket_t : token_tag {
-    static constexpr const std::string_view name{"CBRACKET"};
-    static constexpr const std::string_view token{"]"};
-};
-struct colon_t : token_tag {
-    static constexpr const std::string_view name{"COLON"};
-    static constexpr const std::string_view token{":"};
-};
-struct comma_t : token_tag {
-    static constexpr const std::string_view name{"COMMA"};
-    static constexpr const std::string_view token{","};
-};
-struct cparen_t : token_tag {
-    static constexpr const std::string_view name{"CPAREN"};
-    static constexpr const std::string_view token{")"};
-};
-struct dollar_t : token_tag {
-    static constexpr const std::string_view name{"DOLLAR"};
-    static constexpr const std::string_view token{"$"};
-};
-struct dot_t : token_tag {
-    static constexpr const std::string_view name{"DOT"};
-    static constexpr const std::string_view token{"."};
-};
-struct gt_t : token_tag {
-    static constexpr const std::string_view name{"GT"};
-    static constexpr const std::string_view token{">"};
-};
-struct hash_t : token_tag {
-    static constexpr const std::string_view name{"HASH"};
-    static constexpr const std::string_view token{"#"};
-};
-struct hat_t : token_tag {
-    static constexpr const std::string_view name{"HAT"};
-    static constexpr const std::string_view token{"^"};
-};
-struct lt_t : token_tag {
-    static constexpr const std::string_view name{"LT"};
-    static constexpr const std::string_view token{"<"};
-};
-struct minus_t : token_tag {
-    static constexpr const std::string_view name{"MINUS"};
-    static constexpr const std::string_view token{"-"};
-};
-struct obraces_t : token_tag {
-    static constexpr const std::string_view name{"OBRACES"};
-    static constexpr const std::string_view token{"{"};
-};
-struct obracket_t : token_tag {
-    static constexpr const std::string_view name{"OBRACKET"};
-    static constexpr const std::string_view token{"["};
-};
-struct oparen_t : token_tag {
-    static constexpr const std::string_view name{"OPAREN"};
-    static constexpr const std::string_view token{"("};
-};
-struct percentage_t : token_tag {
-    static constexpr const std::string_view name{"PERCENTAGE"};
-    static constexpr const std::string_view token{"%"};
-};
-struct plus_t : token_tag {
-    static constexpr const std::string_view name{"PLUS"};
-    static constexpr const std::string_view token{"+"};
-};
-struct question_mark_t : token_tag {
-    static constexpr const std::string_view name{"QUESTION_MARK"};
-    static constexpr const std::string_view token{"?"};
-};
-struct semicolon_t : token_tag {
-    static constexpr const std::string_view name{"SEMICOLON"};
-    static constexpr const std::string_view token{";"};
-};
-struct slash_t : token_tag {
-    static constexpr const std::string_view name{"SLASH"};
-    static constexpr const std::string_view token{"/"};
-};
-struct star_t : token_tag {
-    static constexpr const std::string_view name{"STAR"};
-    static constexpr const std::string_view token{"*"};
-};
-struct tilde_t : token_tag {
-    static constexpr const std::string_view name{"TILDE"};
-    static constexpr const std::string_view token{"~"};
-};
-struct dedent_t : token_tag {
-    static constexpr const std::string_view name{"DEDENT"};
-    static constexpr const std::string_view token{""};
-};
-struct eol_t : token_tag {
-    static constexpr const std::string_view name{"EOL"};
-    static constexpr const std::string_view token{""};
-};
-struct indent_t : token_tag {
-    static constexpr const std::string_view name{"INDENT"};
-    static constexpr const std::string_view token{""};
-};
-struct line_end_t : token_tag {
-    static constexpr const std::string_view name{"LINE_END"};
-    static constexpr const std::string_view token{""};
-};
+        struct verbatim_t : token_tag {
+            static constexpr const std::string_view name{"VERBATIM"};
+            static constexpr const std::string_view token{"verbatim"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct private_t : token_tag {
+            static constexpr const std::string_view name{"PRIVATE"};
+            static constexpr const std::string_view token{"private"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct import_t : token_tag {
+            static constexpr const std::string_view name{"IMPORT"};
+            static constexpr const std::string_view token{"import"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct object_t : token_tag {
+            static constexpr const std::string_view name{"OBJECT"};
+            static constexpr const std::string_view token{"object"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct public_t : token_tag {
+            static constexpr const std::string_view name{"PUBLIC"};
+            static constexpr const std::string_view token{"public"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct repeat_t : token_tag {
+            static constexpr const std::string_view name{"REPEAT"};
+            static constexpr const std::string_view token{"repeat"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct break_t : token_tag {
+            static constexpr const std::string_view name{"BREAK"};
+            static constexpr const std::string_view token{"break"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct catch_t : token_tag {
+            static constexpr const std::string_view name{"CATCH"};
+            static constexpr const std::string_view token{"catch"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct const_t : token_tag {
+            static constexpr const std::string_view name{"CONST"};
+            static constexpr const std::string_view token{"const"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct false_t : token_tag {
+            static constexpr const std::string_view name{"FALSE"};
+            static constexpr const std::string_view token{"false"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct macro_t : token_tag {
+            static constexpr const std::string_view name{"MACRO"};
+            static constexpr const std::string_view token{"macro"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct throw_t : token_tag {
+            static constexpr const std::string_view name{"THROW"};
+            static constexpr const std::string_view token{"throw"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct until_t : token_tag {
+            static constexpr const std::string_view name{"UNTIL"};
+            static constexpr const std::string_view token{"until"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct while_t : token_tag {
+            static constexpr const std::string_view name{"WHILE"};
+            static constexpr const std::string_view token{"while"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct case_t : token_tag {
+            static constexpr const std::string_view name{"CASE"};
+            static constexpr const std::string_view token{"case"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct data_t : token_tag {
+            static constexpr const std::string_view name{"DATA"};
+            static constexpr const std::string_view token{"data"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct goto_t : token_tag {
+            static constexpr const std::string_view name{"GOTO"};
+            static constexpr const std::string_view token{"goto"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct help_t : token_tag {
+            static constexpr const std::string_view name{"HELP"};
+            static constexpr const std::string_view token{"help"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct meta_t : token_tag {
+            static constexpr const std::string_view name{"META"};
+            static constexpr const std::string_view token{"meta"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct note_t : token_tag {
+            static constexpr const std::string_view name{"NOTE"};
+            static constexpr const std::string_view token{"note"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct null_lit_t : token_tag {
+            static constexpr const std::string_view name{"NULL_LIT"};
+            static constexpr const std::string_view token{"null"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct post_t : token_tag {
+            static constexpr const std::string_view name{"POST"};
+            static constexpr const std::string_view token{"post"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct true_t : token_tag {
+            static constexpr const std::string_view name{"TRUE"};
+            static constexpr const std::string_view token{"true"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct type_t : token_tag {
+            static constexpr const std::string_view name{"TYPE"};
+            static constexpr const std::string_view token{"type"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct def_t : token_tag {
+            static constexpr const std::string_view name{"DEF"};
+            static constexpr const std::string_view token{"def"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct doc_t : token_tag {
+            static constexpr const std::string_view name{"DOC"};
+            static constexpr const std::string_view token{"doc"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct for_t : token_tag {
+            static constexpr const std::string_view name{"FOR"};
+            static constexpr const std::string_view token{"for"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct pre_t : token_tag {
+            static constexpr const std::string_view name{"PRE"};
+            static constexpr const std::string_view token{"pre"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct var_t : token_tag {
+            static constexpr const std::string_view name{"VAR"};
+            static constexpr const std::string_view token{"var"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct backslash_t : token_tag {
+            static constexpr const std::string_view name{"BACKSLASH"};
+            static constexpr const std::string_view token{"\\"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct equal_t : token_tag {
+            static constexpr const std::string_view name{"EQUAL"};
+            static constexpr const std::string_view token{"=="};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct fn_t : token_tag {
+            static constexpr const std::string_view name{"FN"};
+            static constexpr const std::string_view token{"fn"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct geq_t : token_tag {
+            static constexpr const std::string_view name{"GEQ"};
+            static constexpr const std::string_view token{">="};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct hat_equal_t : token_tag {
+            static constexpr const std::string_view name{"HAT_EQUAL"};
+            static constexpr const std::string_view token{"^="};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct if_t : token_tag {
+            static constexpr const std::string_view name{"IF"};
+            static constexpr const std::string_view token{"if"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct in_t : token_tag {
+            static constexpr const std::string_view name{"IN"};
+            static constexpr const std::string_view token{"in"};
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct leq_t : token_tag {
+            static constexpr const std::string_view name{"LEQ"};
+            static constexpr const std::string_view token{"<="};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct minus_equal_t : token_tag {
+            static constexpr const std::string_view name{"MINUS_EQUAL"};
+            static constexpr const std::string_view token{"-="};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct percentage_equal_t : token_tag {
+            static constexpr const std::string_view name{"PERCENTAGE_EQUAL"};
+            static constexpr const std::string_view token{"%="};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct plus_equal_t : token_tag {
+            static constexpr const std::string_view name{"PLUS_EQUAL"};
+            static constexpr const std::string_view token{"+="};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct slash_equal_t : token_tag {
+            static constexpr const std::string_view name{"SLASH_EQUAL"};
+            static constexpr const std::string_view token{"/="};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct star_equal_t : token_tag {
+            static constexpr const std::string_view name{"STAR_EQUAL"};
+            static constexpr const std::string_view token{"*="};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct thick_arrow_t : token_tag {
+            static constexpr const std::string_view name{"THICK_ARROW"};
+            static constexpr const std::string_view token{"=>"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct thin_arrow_t : token_tag {
+            static constexpr const std::string_view name{"THIN_ARROW"};
+            static constexpr const std::string_view token{"->"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct ampersand_t : token_tag {
+            static constexpr const std::string_view name{"AMPERSAND"};
+            static constexpr const std::string_view token{"&"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct assign_t : token_tag {
+            static constexpr const std::string_view name{"ASSIGN"};
+            static constexpr const std::string_view token{"="};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct atsign_t : token_tag {
+            static constexpr const std::string_view name{"ATSIGN"};
+            static constexpr const std::string_view token{"@"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct backtick_t : token_tag {
+            static constexpr const std::string_view name{"BACKTICK"};
+            static constexpr const std::string_view token{"`"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct bang_t : token_tag {
+            static constexpr const std::string_view name{"BANG"};
+            static constexpr const std::string_view token{"!"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct bar_t : token_tag {
+            static constexpr const std::string_view name{"BAR"};
+            static constexpr const std::string_view token{"|"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct cbraces_t : token_tag {
+            static constexpr const std::string_view name{"CBRACES"};
+            static constexpr const std::string_view token{"}"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct cbracket_t : token_tag {
+            static constexpr const std::string_view name{"CBRACKET"};
+            static constexpr const std::string_view token{"]"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct colon_t : token_tag {
+            static constexpr const std::string_view name{"COLON"};
+            static constexpr const std::string_view token{":"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct comma_t : token_tag {
+            static constexpr const std::string_view name{"COMMA"};
+            static constexpr const std::string_view token{","};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct cparen_t : token_tag {
+            static constexpr const std::string_view name{"CPAREN"};
+            static constexpr const std::string_view token{")"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct dollar_t : token_tag {
+            static constexpr const std::string_view name{"DOLLAR"};
+            static constexpr const std::string_view token{"$"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct dot_t : token_tag {
+            static constexpr const std::string_view name{"DOT"};
+            static constexpr const std::string_view token{"."};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct gt_t : token_tag {
+            static constexpr const std::string_view name{"GT"};
+            static constexpr const std::string_view token{">"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct hash_t : token_tag {
+            static constexpr const std::string_view name{"HASH"};
+            static constexpr const std::string_view token{"#"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct hat_t : token_tag {
+            static constexpr const std::string_view name{"HAT"};
+            static constexpr const std::string_view token{"^"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct lt_t : token_tag {
+            static constexpr const std::string_view name{"LT"};
+            static constexpr const std::string_view token{"<"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct minus_t : token_tag {
+            static constexpr const std::string_view name{"MINUS"};
+            static constexpr const std::string_view token{"-"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct obraces_t : token_tag {
+            static constexpr const std::string_view name{"OBRACES"};
+            static constexpr const std::string_view token{"{"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct obracket_t : token_tag {
+            static constexpr const std::string_view name{"OBRACKET"};
+            static constexpr const std::string_view token{"["};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct oparen_t : token_tag {
+            static constexpr const std::string_view name{"OPAREN"};
+            static constexpr const std::string_view token{"("};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct percentage_t : token_tag {
+            static constexpr const std::string_view name{"PERCENTAGE"};
+            static constexpr const std::string_view token{"%"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct plus_t : token_tag {
+            static constexpr const std::string_view name{"PLUS"};
+            static constexpr const std::string_view token{"+"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct question_mark_t : token_tag {
+            static constexpr const std::string_view name{"QUESTION_MARK"};
+            static constexpr const std::string_view token{"?"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct semicolon_t : token_tag {
+            static constexpr const std::string_view name{"SEMICOLON"};
+            static constexpr const std::string_view token{";"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct slash_t : token_tag {
+            static constexpr const std::string_view name{"SLASH"};
+            static constexpr const std::string_view token{"/"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct star_t : token_tag {
+            static constexpr const std::string_view name{"STAR"};
+            static constexpr const std::string_view token{"*"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct tilde_t : token_tag {
+            static constexpr const std::string_view name{"TILDE"};
+            static constexpr const std::string_view token{"~"};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct dedent_t : token_tag {
+            static constexpr const std::string_view name{"DEDENT"};
+            static constexpr const std::string_view token{""};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct eol_t : token_tag {
+            static constexpr const std::string_view name{"EOL"};
+            static constexpr const std::string_view token{""};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct indent_t : token_tag {
+            static constexpr const std::string_view name{"INDENT"};
+            static constexpr const std::string_view token{""};
+            static constexpr const bool is_reserved_word = false;
+        };
+        struct line_end_t : token_tag {
+            static constexpr const std::string_view name{"LINE_END"};
+            static constexpr const std::string_view token{""};
+            static constexpr const bool is_reserved_word = false;
+        };
 
         constexpr auto types = hana::tuple_t<
             verbatim_t,private_t,import_t,object_t,public_t,repeat_t,break_t,catch_t,const_t,false_t,macro_t,throw_t,until_t,while_t,case_t,data_t,goto_t,help_t,meta_t,note_t,null_lit_t,post_t,true_t,type_t,def_t,doc_t,for_t,pre_t,var_t,backslash_t,equal_t,fn_t,geq_t,hat_equal_t,if_t,in_t,leq_t,minus_equal_t,percentage_equal_t,plus_equal_t,slash_equal_t,star_equal_t,thick_arrow_t,thin_arrow_t,ampersand_t,assign_t,atsign_t,backtick_t,bang_t,bar_t,cbraces_t,cbracket_t,colon_t,comma_t,cparen_t,dollar_t,dot_t,gt_t,hash_t,hat_t,lt_t,minus_t,obraces_t,obracket_t,oparen_t,percentage_t,plus_t,question_mark_t,semicolon_t,slash_t,star_t,tilde_t,dedent_t,eol_t,indent_t,line_end_t
@@ -373,16 +445,16 @@ struct line_end_t : token_tag {
         literal::numeric::floating_point_t
     >;
 
-    auto operator<<(ostream& os, const token_t& t) -> ostream& {
+    inline auto operator<<(ostream& os, const token_t& t) -> ostream& {
         visit([&](auto t) { os << t; }, t);
         return os;
     }
 
-    auto token_name(const token_t& t) -> string_view { 
+    inline auto token_name(const token_t& t) -> string_view {
         return visit([&](auto t) { return token_name(t); }, t);
     }
 
-    auto token_symbol(const token_t& t) -> string_view { 
+    inline auto token_symbol(const token_t& t) -> string_view {
         return visit([&](auto t) { return token_symbol(t); }, t);
     }
 
@@ -464,7 +536,101 @@ const token_t EOL {token::eol_t{}};
 const token_t INDENT {token::indent_t{}};
 const token_t LINE_END {token::line_end_t{}};
 
+    struct location_t {
+        uint32_t line;
+        uint16_t first_col;
+        uint16_t last_col;
+    };
+
+    inline auto operator==(const location_t& lhs, const location_t& rhs) -> bool {
+        return lhs.line == rhs.line && lhs.first_col == rhs.first_col &&
+               lhs.last_col == rhs.last_col;
+    }
+
+    inline auto operator!=(const location_t& lhs, const location_t& rhs) -> bool {
+        return !(lhs == rhs);
+    }
+
+    inline auto operator<<(ostream& os, const location_t& l) -> ostream& {
+        os << l.line << ':' << l.first_col;
+        return os;
+    }
+
+    struct source_token_t {
+        token_t token;
+        location_t location;
+
+        source_token_t(const token_t& t) : token(t), location{0, 0, 0} {}
+        source_token_t(const token_t& t, uint32_t line, uint16_t first_col, uint16_t last_col)
+            : token(t), location{line, first_col, last_col} {}
+
+        source_token_t() = default;
+        source_token_t(const source_token_t&) = default;
+        source_token_t& operator=(const source_token_t&) = default;
+    };
+
+    inline auto operator<<(ostream& os, const source_token_t& t) -> ostream& {
+        os << t.token;
+        return os;
+    }
+
+    inline auto operator==(const source_token_t& lhs, const source_token_t& rhs) -> bool {
+        return lhs.token == rhs.token && lhs.location == rhs.location;
+    }
+
+    inline auto operator==(const source_token_t& lhs, const token_t& rhs) -> bool {
+        return lhs.token == rhs;
+    }
+    inline auto operator==(const token_t& lhs, const source_token_t& rhs) -> bool {
+        return rhs == lhs;
+    }
+    inline auto operator!=(const source_token_t& lhs, const token_t& rhs) -> bool {
+        return !(lhs == rhs);
+    }
+    inline auto operator!=(const token_t& lhs, const source_token_t& rhs) -> bool {
+        return !(lhs == rhs);
+    }
+
+    inline auto operator!=(const source_token_t& lhs, const source_token_t& rhs) -> bool {
+        return !(lhs == rhs);
+    }
+
+    using source_token_list_t = std::vector<source_token_t>;
     using token_list_t = std::vector<token_t>;
+
+    inline auto operator==(const source_token_list_t& lhs, const source_token_list_t& rhs) -> bool {
+        if (lhs.size() != rhs.size()) return false;
+        const auto n = lhs.size();
+        for (auto i = 0; i < n; i++)
+            if (lhs[i] != rhs[i]) return false;
+        return true;
+    }
+
+    inline auto operator==(const source_token_list_t& lhs, const token_list_t& rhs) -> bool {
+        if (lhs.size() != rhs.size()) return false;
+        const auto n = lhs.size();
+        for (auto i = 0; i < n; i++)
+            if (lhs[i] != rhs[i]) return false;
+        return true;
+    }
+
+    inline auto operator==(const token_list_t& lhs, const source_token_list_t& rhs) -> bool {
+        return rhs == lhs;
+    }
+
+    inline auto operator<<(std::ostream& os, const source_token_list_t& t) -> std::ostream& {
+        os << '[';
+        if (!t.empty()) {
+            auto first = true;
+            for (const auto& v : t) {
+                if (first) first = false;
+                else os << ", ";
+                os << v;
+            }
+        }
+        os << ']';
+        return os;
+    }
 
     inline auto operator==(const token_list_t& lhs, const token_list_t& rhs) -> bool {
         if (lhs.size() != rhs.size()) return false;
@@ -477,10 +643,13 @@ const token_t LINE_END {token::line_end_t{}};
 
     inline auto operator<<(std::ostream& os, const token_list_t& t) -> std::ostream& {
         os << '[';
-        if (!ranges::empty(t)) {
-            os << ranges::front(t);
-            for (const auto& v: t | ranges::views::tail)
-                os << ", " << v;
+        if (!t.empty()) {
+            auto first = true;
+            for (const auto& v : t) {
+                if (first) first = false;
+                else os << ", ";
+                os << v;
+            }
         }
         os << ']';
         return os;
