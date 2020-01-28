@@ -1,10 +1,11 @@
 #pragma once
 
+#include <bullet/lexer/token.hpp>
+
 #include <string_view>
 #include <vector>
 
 #include <boost/hof.hpp>
-#include <bullet/token.hpp>
 
 namespace lexer {
     struct output_t {

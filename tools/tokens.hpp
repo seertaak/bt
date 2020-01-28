@@ -2,16 +2,14 @@
 
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <variant>
+#include <vector>
 
 #include <boost/hana.hpp>
-#include <range/v3/core.hpp>
-#include <range/v3/view/tail.hpp>
 
-#include <bullet/identifier.hpp>
-#include <bullet/numeric_token.hpp>
-#include <bullet/string_token.hpp>
+#include <bullet/lexer/identifier.hpp>
+#include <bullet/lexer/numeric_token.hpp>
+#include <bullet/lexer/string_token.hpp>
 
 //-------------------------------------------
 // Note: this file was generated based on:
@@ -594,18 +592,9 @@ namespace lexer {
                             literal::numeric::integral_t,
                             literal::numeric::floating_point_t>;
 
-    auto operator<<(ostream& os, const token_t& t) -> ostream& {
-        visit([&](auto t) { os << t; }, t);
-        return os;
-    }
-
-    auto token_name(const token_t& t) -> string_view {
-        return visit([&](auto t) { return token_name(t); }, t);
-    }
-
-    auto token_symbol(const token_t& t) -> string_view {
-        return visit([&](auto t) { return token_symbol(t); }, t);
-    }
+    auto operator<<(ostream& os, const token_t& t) -> ostream&;
+    auto token_name(const token_t& t) -> string_view;
+    auto token_symbol(const token_t& t) -> string_view;
 
     const token_t VERBATIM{token::verbatim_t{}};
     const token_t PRIVATE{token::private_t{}};
@@ -690,19 +679,9 @@ namespace lexer {
         uint16_t last_col;
     };
 
-    inline auto operator==(const location_t& lhs, const location_t& rhs) -> bool {
-        return lhs.line == rhs.line && lhs.first_col == rhs.first_col &&
-               lhs.last_col == rhs.last_col;
-    }
-
-    inline auto operator!=(const location_t& lhs, const location_t& rhs) -> bool {
-        return !(lhs == rhs);
-    }
-
-    auto operator<<(ostream& os, const location_t& l) -> ostream& {
-        os << l.line << ':' << l.first_col;
-        return os;
-    }
+    auto operator==(const location_t& lhs, const location_t& rhs) -> bool;
+    auto operator!=(const location_t& lhs, const location_t& rhs) -> bool;
+    auto operator<<(ostream& os, const location_t& l) -> ostream&;
 
     struct source_token_t {
         token_t token;
@@ -717,80 +696,21 @@ namespace lexer {
         source_token_t& operator=(const source_token_t&) = default;
     };
 
-    auto operator<<(ostream& os, const source_token_t& t) -> ostream& {
-        os << t.token;
-        return os;
-    }
-
-    inline auto operator==(const source_token_t& lhs, const source_token_t& rhs) -> bool {
-        return lhs.token == rhs.token && lhs.location == rhs.location;
-    }
-
-    inline auto operator==(const source_token_t& lhs, const token_t& rhs) -> bool {
-        return lhs.token == rhs;
-    }
-    inline auto operator==(const token_t& lhs, const source_token_t& rhs) -> bool {
-        return rhs == lhs;
-    }
-    inline auto operator!=(const source_token_t& lhs, const token_t& rhs) -> bool {
-        return !(lhs == rhs);
-    }
-    inline auto operator!=(const token_t& lhs, const source_token_t& rhs) -> bool {
-        return !(lhs == rhs);
-    }
-
-    inline auto operator!=(const source_token_t& lhs, const source_token_t& rhs) -> bool {
-        return !(lhs == rhs);
-    }
+    auto operator<<(ostream& os, const source_token_t& t) -> ostream&;
+    auto operator==(const source_token_t& lhs, const source_token_t& rhs) -> bool;
+    auto operator==(const source_token_t& lhs, const token_t& rhs) -> bool;
+    auto operator==(const token_t& lhs, const source_token_t& rhs) -> bool;
+    auto operator!=(const source_token_t& lhs, const token_t& rhs) -> bool;
+    auto operator!=(const token_t& lhs, const source_token_t& rhs) -> bool;
+    auto operator!=(const source_token_t& lhs, const source_token_t& rhs) -> bool;
 
     using source_token_list_t = std::vector<source_token_t>;
     using token_list_t = std::vector<token_t>;
 
-    inline auto operator==(const source_token_list_t& lhs, const source_token_list_t& rhs) -> bool {
-        if (lhs.size() != rhs.size()) return false;
-        const auto n = lhs.size();
-        for (auto i = 0; i < n; i++)
-            if (lhs[i] != rhs[i]) return false;
-        return true;
-    }
-
-    inline auto operator==(const source_token_list_t& lhs, const token_list_t& rhs) -> bool {
-        if (lhs.size() != rhs.size()) return false;
-        const auto n = lhs.size();
-        for (auto i = 0; i < n; i++)
-            if (lhs[i] != rhs[i]) return false;
-        return true;
-    }
-
-    inline auto operator==(const token_list_t& lhs, const source_token_list_t& rhs) -> bool {
-        return rhs == lhs;
-    }
-
-    inline auto operator<<(std::ostream& os, const source_token_list_t& t) -> std::ostream& {
-        os << '[';
-        if (!ranges::empty(t)) {
-            os << ranges::front(t);
-            for (const auto& v : t | ranges::views::tail) os << ", " << v;
-        }
-        os << ']';
-        return os;
-    }
-
-    inline auto operator==(const token_list_t& lhs, const token_list_t& rhs) -> bool {
-        if (lhs.size() != rhs.size()) return false;
-        const auto n = lhs.size();
-        for (auto i = 0; i < n; i++)
-            if (lhs[i] != rhs[i]) return false;
-        return true;
-    }
-
-    inline auto operator<<(std::ostream& os, const token_list_t& t) -> std::ostream& {
-        os << '[';
-        if (!ranges::empty(t)) {
-            os << ranges::front(t);
-            for (const auto& v : t | ranges::views::tail) os << ", " << v;
-        }
-        os << ']';
-        return os;
-    }
+    auto operator==(const source_token_list_t& lhs, const source_token_list_t& rhs) -> bool;
+    auto operator==(const source_token_list_t& lhs, const token_list_t& rhs) -> bool;
+    auto operator==(const token_list_t& lhs, const source_token_list_t& rhs) -> bool;
+    auto operator<<(std::ostream& os, const source_token_list_t& t) -> std::ostream&;
+    auto operator==(const token_list_t& lhs, const token_list_t& rhs) -> bool;
+    auto operator<<(std::ostream& os, const token_list_t& t) -> std::ostream&;
 }  // namespace lexer

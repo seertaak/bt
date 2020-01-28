@@ -9,8 +9,8 @@
 
 #include <catch2/catch.hpp>
 
-#include <bullet/lexer.hpp>
-#include <bullet/token.hpp>
+#include <bullet/lexer/lexer.hpp>
+#include <bullet/lexer/token.hpp>
 
 using namespace std;
 using namespace lexer;

@@ -1,4 +1,4 @@
-#include <bullet/lexer.hpp>
+#include <bullet/lexer/lexer.hpp>
 
 #include <cctype>
 #include <exception>
@@ -185,7 +185,6 @@ namespace lexer {
                 if (p == input_length) goto emit_integral_token;
 
                 c = input[p];
-                cout << input << ": c = " << c << endl;
 
                 if (c == 'e' || c == 'E') {
                 parse_exponent:
