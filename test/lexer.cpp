@@ -188,6 +188,7 @@ TEST_CASE("Tokenize: inline comments.", "[lexer/tokenize]") {
         verbatim -- this is a comment
     )bt"sv;
     const auto ts = tok_list(input);
+    cout << "TEST WHITESPACE: " << ts << endl;
     REQUIRE(ranges::size(ts) == 1);
     REQUIRE(ranges::front(ts) == VERBATIM);
 }

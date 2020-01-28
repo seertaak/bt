@@ -41,7 +41,10 @@ namespace lexer {
 
                     eat_margin(pos);
 
-                    while (eat_token(pos)) eat_spaces(pos);
+                    for (;;) {
+                        eat_spaces(pos);
+                        if (!eat_token(pos)) break;
+                    }
 
                     if (eoi(pos)) break;
 
@@ -85,11 +88,29 @@ namespace lexer {
             }
 
             auto eat_spaces(uint32_t& pos) -> void {
+                auto comment = false;
                 auto p = pos;
                 for (; p < input_length; ++p) {
                     const auto c = input[p];
-                    if (c == '\t') throw std::runtime_error("Tabs are not fucking allowed.");
-                    if (c != ' ') break;
+                    if (comment) {
+                        if (c == '\n') break;
+                        const auto c_next = p + 1 < input_length ? input[p + 1] : 0;
+                        if (c == '\r' && c_next == '\n') break;
+                    } else {
+                        if (c == '-') {
+                            const auto c_next = p + 1 < input_length ? input[p + 1] : 0;
+                            if (c_next == '-') {
+                                comment = true;
+                                ++p;
+                            } else {
+                                break;
+                            }
+                        } else if (c == '\t') {
+                            throw std::runtime_error("Tabs are not fucking allowed.");
+                        } else if (c != ' ') {
+                            break;
+                        }
+                    }
                 }
                 pos = p;
             }
