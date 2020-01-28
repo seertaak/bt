@@ -178,7 +178,7 @@ TEST_CASE("Tokenize: random shit.", "[lexer/tokenize]") {
         "token[LINE_END], token[VERBATIM], token[CPAREN], token[LINE_END], "
         "ident[x], token[ASSIGN], token[IF], token[LINE_END], ident[print], "
         "token[OPAREN], ident[x], token[PLUS], ident[x], token[CPAREN], "
-        "token[LINE_END], token[META], token[LINE_END]]";
+        "token[LINE_END], token[META]]";
 
     REQUIRE(u.str() == expected);
 }
