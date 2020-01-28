@@ -2,12 +2,9 @@
 
 #include <string>
 #include <string_view>
-#include <type_traits>
 #include <variant>
 
 #include <boost/hana.hpp>
-#include <range/v3/core.hpp>
-#include <range/v3/view/tail.hpp>
 
 #include <bullet/identifier.hpp>
 #include <bullet/numeric_token.hpp>
@@ -29,28 +26,28 @@ namespace lexer {
         struct token_tag {};
 
         template <typename T>
-        auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
+        inline auto operator<<(ostream& os, T) -> enable_if_t<is_base_of_v<token_tag, T>, ostream&> {
             os << "token[" << T::name << ']';
             return os;
         }
 
         template <typename T>
-        auto operator==(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
+        inline auto operator==(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
             return true;
         }
 
         template <typename T>
-        auto operator!=(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
+        inline auto operator!=(T, T) -> enable_if_t<is_base_of_v<token_tag, T>, bool> {
             return false;
         }
 
         template <typename T>
-        auto token_name(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
+        inline auto token_name(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
             return T::name;
         }
 
         template <typename T>
-        auto token_symbol(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
+        inline auto token_symbol(T) -> enable_if_t<is_base_of_v<token_tag, T>, string_view> {
             return T::token;
         }
 
@@ -594,16 +591,16 @@ namespace lexer {
                             literal::numeric::integral_t,
                             literal::numeric::floating_point_t>;
 
-    auto operator<<(ostream& os, const token_t& t) -> ostream& {
+    inline auto operator<<(ostream& os, const token_t& t) -> ostream& {
         visit([&](auto t) { os << t; }, t);
         return os;
     }
 
-    auto token_name(const token_t& t) -> string_view {
+    inline auto token_name(const token_t& t) -> string_view {
         return visit([&](auto t) { return token_name(t); }, t);
     }
 
-    auto token_symbol(const token_t& t) -> string_view {
+    inline auto token_symbol(const token_t& t) -> string_view {
         return visit([&](auto t) { return token_symbol(t); }, t);
     }
 
@@ -699,7 +696,7 @@ namespace lexer {
         return !(lhs == rhs);
     }
 
-    auto operator<<(ostream& os, const location_t& l) -> ostream& {
+    inline auto operator<<(ostream& os, const location_t& l) -> ostream& {
         os << l.line << ':' << l.first_col;
         return os;
     }
@@ -717,7 +714,7 @@ namespace lexer {
         source_token_t& operator=(const source_token_t&) = default;
     };
 
-    auto operator<<(ostream& os, const source_token_t& t) -> ostream& {
+    inline auto operator<<(ostream& os, const source_token_t& t) -> ostream& {
         os << t.token;
         return os;
     }
@@ -768,9 +765,13 @@ namespace lexer {
 
     inline auto operator<<(std::ostream& os, const source_token_list_t& t) -> std::ostream& {
         os << '[';
-        if (!ranges::empty(t)) {
-            os << ranges::front(t);
-            for (const auto& v : t | ranges::views::tail) os << ", " << v;
+        if (!t.empty()) {
+            auto first = true;
+            for (const auto& v : t) {
+                if (first) first = false;
+                else os << ", ";
+                os << v;
+            }
         }
         os << ']';
         return os;
@@ -786,9 +787,13 @@ namespace lexer {
 
     inline auto operator<<(std::ostream& os, const token_list_t& t) -> std::ostream& {
         os << '[';
-        if (!ranges::empty(t)) {
-            os << ranges::front(t);
-            for (const auto& v : t | ranges::views::tail) os << ", " << v;
+        if (!t.empty()) {
+            auto first = true;
+            for (const auto& v : t) {
+                if (first) first = false;
+                else os << ", ";
+                os << v;
+            }
         }
         os << ']';
         return os;

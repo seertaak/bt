@@ -5,12 +5,6 @@
 #include <string>
 #include <string_view>
 
-#include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/fusion/include/io.hpp>
-#include <boost/type_index.hpp>
-
-#include <bullet/util.hpp>
-
 namespace lexer {
     using namespace std;
 
@@ -88,6 +82,3 @@ namespace lexer {
         }  // namespace numeric
     }      // namespace literal
 }  // namespace lexer
-
-BOOST_FUSION_ADAPT_STRUCT(lexer::literal::numeric::integral_t, value, type, width)
-BOOST_FUSION_ADAPT_STRUCT(lexer::literal::numeric::floating_point_t, value, width)

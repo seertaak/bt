@@ -7,12 +7,10 @@ project(bullet  VERSION 0.1
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
-set(sources "")
-
 add_executable(
     bt 
     src/main.cpp
-    ${sources}
+    src/lexer.cpp
 )
 
 conan_target_link_libraries(bt)
@@ -24,11 +22,14 @@ target_include_directories(bt PRIVATE include)
 # TESTS
 enable_testing()
 
-add_executable(test_lexer test/lexer.cpp)
+add_executable(
+    test_lexer 
+    src/lexer.cpp 
+    test/lexer.cpp
+)
 conan_target_link_libraries(test_lexer)
 target_compile_features(test_lexer PRIVATE cxx_std_17)
-target_compile_options(test_lexer PRIVATE -Wno-logical-op-parentheses -g -O0)
-target_link_options(test_lexer PRIVATE -g -O0)
+target_compile_options(test_lexer PRIVATE -Wno-logical-op-parentheses)
 target_include_directories(test_lexer PRIVATE include)
-target_compile_definitions(test_lexer PRIVATE BOOST_HANA_CONFIG_ENABLE_STRING_UDL DBOOST_STACKTRACE_USE_ADDR2LINE)
+target_compile_definitions(test_lexer PRIVATE BOOST_HANA_CONFIG_ENABLE_STRING_UDL)
 add_test(NAME Lexer COMMAND test_lexer)

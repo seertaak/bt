@@ -5,11 +5,6 @@
 #include <string>
 #include <string_view>
 
-#include <boost/fusion/include/adapt_struct.hpp>
-#include <boost/fusion/include/io.hpp>
-
-#include <bullet/util.hpp>
-
 namespace lexer {
     using namespace std;
 
@@ -55,5 +50,3 @@ namespace lexer {
         return l > r || l == r;
     }
 }  // namespace lexer
-
-BOOST_FUSION_ADAPT_STRUCT(lexer::identifier_t, name)
