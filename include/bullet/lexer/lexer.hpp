@@ -7,7 +7,7 @@
 
 #include <boost/hof.hpp>
 
-namespace lexer {
+namespace bt { namespace lexer {
     struct output_t {
         source_token_list_t tokens;
         std::vector<uint32_t> eol_locations;
@@ -25,3 +25,4 @@ namespace lexer {
     BOOST_HOF_STATIC_LAMBDA_FUNCTION(tokens) = boost::hof::pipable(
         [](const output_t& output) -> const source_token_list_t& { return output.tokens; });
 }  // namespace lexer
+}

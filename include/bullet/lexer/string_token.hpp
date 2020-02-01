@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace lexer {
+namespace bt { namespace lexer {
     struct string_token_t {
         std::string value;
         explicit string_token_t(std::string s) : value(s) {}
@@ -27,3 +27,4 @@ namespace lexer {
     auto operator>(const string_token_t& l, const string_token_t& r) -> bool;
     auto operator>=(const string_token_t& l, const string_token_t& r) -> bool;
 }  // namespace lexer
+}

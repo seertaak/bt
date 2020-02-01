@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace lexer {
+namespace bt { namespace lexer {
     struct identifier_t {
         std::string name;
         explicit identifier_t(std::string s) : name(s) {}
@@ -25,3 +25,4 @@ namespace lexer {
     auto operator>(const identifier_t& l, const identifier_t& r) -> bool;
     auto operator>=(const identifier_t& l, const identifier_t& r) -> bool;
 }  // namespace lexer
+}

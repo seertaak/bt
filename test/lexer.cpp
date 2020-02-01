@@ -13,6 +13,7 @@
 #include <bullet/lexer/token.hpp>
 
 using namespace std;
+using namespace bt;
 using namespace lexer;
 using namespace lexer::token;
 
@@ -203,4 +204,3 @@ TEST_CASE("Tokenize: token positions.", "[lexer/tokenize]") {
     const auto output = input | tokenize;
     for (const auto& t : output.tokens) cout << t.token << " at " << t.location << endl;
 }
-

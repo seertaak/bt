@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-namespace lexer {
+namespace bt { namespace lexer {
     namespace literal {
         namespace numeric {
             struct tag {};
@@ -48,3 +48,4 @@ namespace lexer {
         }  // namespace numeric
     }      // namespace literal
 }  // namespace lexer
+}

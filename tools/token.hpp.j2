@@ -19,7 +19,7 @@
 // Token table is stored in tools/tokens.csv.
 //-------------------------------------------
 
-namespace lexer {
+namespace bt { namespace lexer {
     using namespace std;
     namespace hana = boost::hana;
 
@@ -112,4 +112,4 @@ namespace lexer {
     auto operator<<(std::ostream& os, const source_token_list_t& t) -> std::ostream&;
     auto operator==(const token_list_t& lhs, const token_list_t& rhs) -> bool;
     auto operator<<(std::ostream& os, const token_list_t& t) -> std::ostream&;
-}  // namespace lexer
+} }
