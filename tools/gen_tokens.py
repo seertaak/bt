@@ -8,7 +8,7 @@ def_class = Template("""
 struct {{ class_name }} : token_tag {
     static constexpr const std::string_view name{"{{ name }}"};
     static constexpr const std::string_view token{"{{ symbol }}"};
-    static constexpr const bool is_reserved_word = {{ is_reserved_word }};
+    static constexpr const category category = {{ category }};
 };""");
 
 def_token = Template("""
@@ -27,13 +27,27 @@ def run():
             name = parts[0]
             symbol = "" if len(parts) == 1 else parts[1]
             if name == 'comma': symbol = ','
-            tab.append((name, symbol, str(symbol.isalpha()).lower()))
+            tab.append((name, symbol))
 
     tab.sort(key=lambda p: (-len(p[1]), p[0]))
 
     class_defs, def_tokens, token_type_list, token_type_list_ns = [], [], [], []
+    
+    for name, symbol in tab:
+        category = ''
+        if symbol.lower().isalpha():
+            category = 'reserved_word'
+        elif symbol in "{}[]()":
+            category = 'grouping_token'
+        elif symbol in ".,;":
+            category = 'puncuation'
+        elif symbol == 'not' or symbol in '~*&@!':
+            category = 'unary_prefix_op'
+        elif symbol in '?':
+            category = 'unary_postfix_op'
+        else:
+            category = 'unary_op'
 
-    for name, symbol, is_reserved_word in tab:
         class_defs.append(def_class.render(
                 class_name="{}_t".format(name), 
                 name=name.upper(),

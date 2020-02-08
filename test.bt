@@ -1,0 +1,246 @@
+
+
+type dog:
+    def bark(): "Woofwoof"
+
+type cat:
+    def miaow(): "miaow"
+
+def animal_sound(d: dog): bark()
+def animal_sound(c: cat): miaow()
+
+type animal = dog or cat
+
+var x: cat
+print("{x.animal_sound}")
+
+var y: dog
+print("{y.animal_sound}")
+
+type point:
+    x, y: int 
+
+var p: point
+p.x = 5
+
+def '[(i: i32)]' :
+
+def '(i: int)->(j: int)':
+    ...
+
+def '(v: float)m' -> float.centimeters:
+    return v * 1000.0
+    
+def '(x: simd) * (y:simd)' -> simd:
+    xxx
+
+def '(xs: string.list) excluding (s: string)...' -> simd:
+    xxx
+
+var xs = list:
+    "martin"
+    "alex"
+    "foo"
+
+print(xs excluding "martin")
+print(xs where size > 10 and is alpha)
+
+"foo" is alpha:
+
+def alpha(s: string) -> bool:
+    return is alpha 
+    
+    
+type box:
+    w, h: int
+
+    def empty -> box:
+        return box:
+            w: 0
+            h: 0
+
+    def empty() -> bool:
+        return w == 0 and h == 0
+
+    def empty(): 
+        w = 0
+        h = 0
+
+    def '(b: predicate.list) -> bool) starts with (s: string)
+
+    for xs where name starts with "j":
+        
+
+    var x: box = empty      -- calls the first version!
+
+    def clear(x: @box):
+        if x is not empty:  -- calls the second version
+            x.empty         -- calls the third version!
+        
+        
+    if x is not empty:
+        x.
+        
+        
+
+        
+var b = box:
+    w: 0
+    h: 0
+
+print("{b is empty}") 
+
+
+        
+
+
+
+
+
+
+
+    
+
+
+    
+
+var l: centimeters = 5m
+    
+
+var x = 20cm
+
+entry: 45 |-> 10
+
+
+    
+
+def z(p: point):
+    
+
+def age(t: turtle): (today - c.dob).years
+def age(d: dog): 7 * (today - c.dob).years
+
+
+def age(a: turtle or dog): 
+    match type:
+        turtle(s): 
+            print("weldcome dosdfjals")
+            
+
+type point(number: number, size: int):
+    match size:
+        0: ()
+
+        1: number 
+        nb: 
+            Number is a *concept*, not a *type*. 
+            This means that point itself is a *meta*
+            type able to generate for example:
+
+            code:
+                var p: fp64.point(2)
+                p.x = 5
+                p[0] = 10
+                p[0] = 10
+                p[1] = 1
+
+                p[1] = 1  -- this is simply p.y
+
+
+                note:
+                    sdfsadf asdfasdf a sdfs adf 
+
+
+                    
+
+                -- => point(fp32, 2) => 
+        2: struct:
+            x, y: number
+
+            def at(i: int) -> E:
+                match i:
+                    0: x
+                    1: y
+                    --
+                    throw out_of_bounds
+
+        _: number.array = size
+
+    x, y: E
+
+record.field            --> field(record)
+record.field = value    --> field(record, value)
+
+
+binop (x: simd) sdfsa (y: simd) -> simd:
+    return ...
+
+type person:
+    name: string
+    country
+    dob: date
+
+    def age -> int:
+        return today - dob
+
+def start_app -> app:
+
+binop (x: int.vector) select 
+
+binop:
+    x: person.vector
+    select
+    y: predicate
+    --
+    for x:
+        if x.y:
+            yield x
+        
+for row in db.employees select age where age > 25
+
+defop (db:employees) select (idents: identifier.list) where 
+
+defop (db:employees) select (idents: identifier.list) where 
+
+defop:
+    db: employees
+    select
+    fields: identifier*
+    where each employee.predicate
+
+
+def write_report(db: db.connection):
+    print("Young employee report")
+    print("---------------------")
+
+    db.employees select name, country where age < 25:
+        print("{name}, from {country}", end: "\n")
+
+    select name, country from db.employees where age < 25:
+        print("{name}, from {country}", end: "\n")
+
+
+xs = db.employees select name, country where age > 25
+    
+ 
+
+
+
+
+
+
+module list(E):
+    struct cell:
+        value: E
+        next: t*
+
+    union t:
+        empty
+        cell
+
+    def size(xs: t*) -> int: 
+        match xs:
+            empty: 0
+            cell(next: n): 
+                return 1 + size(n)
+

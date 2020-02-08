@@ -25,6 +25,15 @@ namespace bt {
         namespace hana = boost::hana;
 
         namespace token {
+            enum category {
+                reserved_word,
+                grouping_token,
+                punctuation,
+                unary_prefix_op,
+                unary_postfix_op,
+                binary_op
+            };
+
             struct token_tag {};
 
             template <typename T>

@@ -1,175 +1,166 @@
 #pragma once
 
 #include <memory>
-#include <variant>
 #include <optional>
+#include <variant>
+#include <iostream>
+
+#include <bullet/lexer/token.hpp>
 
 namespace bt {
+    namespace parser {
+        namespace syntax {
+            template <typename T>
+            using ptr = std::shared_ptr<T>;
 
-    namespace ast {
-        namespace type {
-            struct void_t {};
-            constexpr auto void_c = hana::type_c<void_t>;
+            template <typename T>
+            struct ref {
+                ptr<T> value;
 
-            template <bool S, int W>
-            struct integral_t {
-                constexpr const static bool is_signed = S;
-                constexpr const static int width = W;
+                ref(T&& t): value{std::forward(t)} {}
+
+                ref() = default;
+                ref(const ref&) = default;
+                ref(ref&&) noexcept = default;
+                ref& operator=(const ref&) = default;
+                ref& operator=(ref&&) noexcept = default;
+                ref& operator=(const T& t) {
+                    *value = t;
+                }
+                ref& operator=(T&& t) noexcept {
+                    value.emplace(std::forward(t));
+                }
+                
+                T& get() { return *value; }
+                const T& get() const { return *value; }
+
+                operator T&() { return *value; }
+                operator const T&() const { return *value; }
             };
 
-            template struct integral_t<true, 8>;
-            template struct integral_t<true, 16>;
-            template struct integral_t<true, 32>;
-            template struct integral_t<true, 64>;
+            struct tree_t;
+            using node_t = ref<tree_t>;
 
-            template struct integral_t<false, 8>;
-            template struct integral_t<false, 16>;
-            template struct integral_t<false, 32>;
-            template struct integral_t<false, 64>;
+            struct group_t: std::vector<node_t> {
+                using base_t = std::vector<node_t>;
+                using base_t::base_t;
+            };
+            auto operator<<(std::ostream& os, const group_t& g) -> std::ostream&;
 
-            using i8_t = integral_t<true, 8>;
-            using i16_t = integral_t<true, 16>;
-            using i32_t = integral_t<true, 32>;
-            using i64_t = integral_t<true, 64>;
+            using named_node_t = std::pair<lexer::identifier_t, node_t>;
+            using named_tree_vector_t = std::vector<named_node_t>;
 
-            constexpr auto i8_c = hana::type_c<i8_t>;
-            constexpr auto i16_c = hana::type_c<i16_t>;
-            constexpr auto i32_c = hana::type_c<i32_t>;
-            constexpr auto i64_c = hana::type_c<i64_t>;
-
-            using u8_t = integral_t<false, 8>;
-            using u16_t = integral_t<false, 16>;
-            using u32_t = integral_t<false, 32>;
-            using u64_t = integral_t<false, 64>;
-
-            constexpr auto u8_c = hana::type_c<u8_t>;
-            constexpr auto u16_c = hana::type_c<u16_t>;
-            constexpr auto u32_c = hana::type_c<u32_t>;
-            constexpr auto u64_c = hana::type_c<u64_t>;
-
-            template <int W>
-            struct floating_point_t {
-                constexpr const static int width = W;
+            struct named_group_t: named_tree_vector_t {
+                using base_t = named_tree_vector_t;
+                using base_t::base_t;
             };
 
-            template struct floating_point_t<32>;
-            template struct floating_point_t<64>;
+            auto operator<<(std::ostream& os, const named_group_t& g) -> std::ostream&;
 
-            using f32_t = floating_point_t<32>;
-            using f64_t = floating_point_t<64>;
-
-            struct void_t {};
-
-            template <int W>
-            struct floating_point_t {
-                constexpr const static bool is_signed = true;
-                constexpr const static int width = W;
+            struct unary_op_t {
+                lexer::token_t op;
+                node_t operand;
             };
 
-            struct boolean_t {
-                constexpr const static bool is_signed = false;
-                constexpr const static int width = 8;
+            auto operator<<(std::ostream& os, const unary_op_t& uop) -> std::ostream&;
+
+            struct bin_op_t {
+                lexer::token_t op;
+                node_t lhs, rhs;
             };
 
-            struct character_t {
-                constexpr const static bool is_signed = false;
-                constexpr const static int width = 32;
+            auto operator<<(std::ostream& os, const bin_op_t& binop) -> std::ostream&;
+
+            struct invoc_t {
+                lexer::identifier_t target;
+                group_t arguments;
             };
 
-            // def foo(x: float, xs..: int):
-            //    ...
+            auto operator<<(std::ostream& os, const invoc_t& invoc)  -> std::ostream&;
 
-            using primitive_types = std::variant<
-                i8_t,
-                i16_t,
-                i32_t,
-                i64_t,
-                u8_t,
-                u16_t,
-                u32_t,
-                u64_t,
-                f32_t,
-                f64_t,
-                boolean_t,
-                character_t
+            struct if_t {
+                node_t test;
+                node_t then_branch;
+                std::optional<node_t> else_branch;
+            };
+
+            auto operator<<(std::ostream& os, const if_t& if_) -> std::ostream&;
+
+            struct assign_t {
+                node_t lhs, rhs;
+            };
+            
+            auto operator<<(std::ostream& os, const assign_t& a) -> std::ostream&;
+
+            struct fn_def_t {
+                lexer::identifier_t name;
+                named_group_t arguments;
+                node_t result_type;
+            };
+            
+            auto operator<<(std::ostream& os, const fn_def_t& a) -> std::ostream&;
+
+            struct repeat_t {
+                group_t body;
+            };
+
+            auto operator<<(std::ostream& os, const repeat_t& repeat) -> std::ostream&;
+
+            struct struct_t: named_tree_vector_t {
+                using base_t = named_tree_vector_t;
+                using base_t::base_t;
+            };
+
+            auto operator<<(std::ostream& os, const named_tree_vector_t& t) -> std::ostream&;
+
+            struct def_type_t {
+                lexer::identifier_t name;
+                node_t type;
+            };
+
+            auto operator<<(std::ostream& os, const def_type_t& d) -> std::ostream&;
+
+            struct let_type_t {
+                lexer::identifier_t name;
+                node_t type;
+            };
+
+            auto operator<<(std::ostream& os, const let_type_t& d) -> std::ostream&;
+
+            struct template_t {
+                named_group_t arguments;
+                node_t body;
+            };
+
+            auto operator<<(std::ostream& os, const template_t& t) -> std::ostream&;
+
+
+            using node_base_t = std::variant<
+                lexer::token_t,
+                unary_op_t,
+                bin_op_t,
+                invoc_t,
+                if_t,
+                assign_t,
+                fn_def_t,
+                repeat_t,
+                struct_t,
+                def_type_t,
+                let_type_t,
+                template_t,
+                node_t
             >;
 
-            struct type;
-            using any_type_t = std::shared_ptr<type>;
-
-            struct name_and_type_t {
-                std::string name;
-                any_type type;
+            struct tree_t : node_base_t {
+                using base_t = node_base_t;
+                using base_t::base_t;
             };
 
-            using name_and_type_vector_t = std::vector<name_and_type_t>;
+            auto operator<<(std::ostream& os, const node_t& t) -> std::ostream&;
+            auto operator<<(std::ostream& os, const tree_t& pt) -> std::ostream&;
+            auto operator<<(std::ostream& os, const group_t& g) -> std::ostream&;
+            auto operator<<(std::ostream& os, const if_t& if_) -> std::ostream&;
 
-            struct function_t {
-                any_type_t result_type;
-                name_and_type_vector_t arguments;
-            };
-
-            struct record_t : name_and_type_vector_t { 
-                using name_and_type_vector_t::name_and_type_vector_t;
-            };
-
-            using kinds = hana::tuple_t<
-                void_t,
-                i8_t,
-                i16_t,
-                i32_t,
-                i64_t,
-                u8_t,
-                u16_t,
-                u32_t,
-                u64_t,
-                f32_t,
-                f64_t,
-                boolean_t,
-                character_t,
-                function_t,
-                record_t
-            >;
-
-            using kind_t = decltype(hana::unpack(all_types, hana::template_<std::variant>))::type;
-        }
-
-
-        struct unary_op_t {
-            BOOST_HANA_DEFINE_STRUCT(unary_op_t,
-                (lexer::token_t, operand)
-                (lexer::token_t, operand)
-            )
-        };
-        
-        /*
-
-        */
-
-        struct bin_op_t {};
-        struct bool_op_t {};
-        struct compare_op_t {};
-        struct fn_call_t {};
-        struct if_expr_t {};
-        struct assign_t {};
-        struct raise_t {};
-        struct assert_t {};
-        struct pass_t {};
-        struct import_t {};
-        struct import_from_t {};
-        struct if_statement_t {};
-        struct for_statement_t {};
-        struct while_statement_t {};
-        struct break_t {};
-        struct continue_t{};
-        struct try_t {};
-        struct fn_def_t {};
-        struct fn_lambda_t {};
-        struct fn_args_t {};
-        struct fn_arg_t {};
-        struct return_t {};
-        struct struct_t {} ;
-        struct union_t {};
-        struct array_t {};
-    }  // namespace ast
+        }  // namespace ast
+    }      // namespace parser
 }  // namespace bt

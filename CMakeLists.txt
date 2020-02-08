@@ -13,6 +13,7 @@ set(sources
     src/lexer/numeric_token.cpp
     src/lexer/string_token.cpp
     src/lexer/identifier.cpp
+    src/parser/ast.cpp
 )
 
 add_executable(
@@ -41,3 +42,15 @@ target_compile_options(test_lexer PRIVATE -Wno-logical-op-parentheses)
 target_include_directories(test_lexer PRIVATE include)
 target_compile_definitions(test_lexer PRIVATE BOOST_HANA_CONFIG_ENABLE_STRING_UDL)
 add_test(NAME Lexer COMMAND test_lexer)
+
+add_executable(
+    test_parser 
+    test/parser.cpp
+    ${sources}
+)
+conan_target_link_libraries(test_parser)
+target_compile_features(test_parser PRIVATE cxx_std_17)
+target_compile_options(test_parser PRIVATE -Wno-logical-op-parentheses)
+target_include_directories(test_parser PRIVATE include)
+target_compile_definitions(test_parser PRIVATE BOOST_HANA_CONFIG_ENABLE_STRING_UDL)
+add_test(NAME Parser COMMAND test_parser)

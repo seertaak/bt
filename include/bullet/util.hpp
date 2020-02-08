@@ -14,11 +14,7 @@ namespace bt {
     using namespace std::literals;
     using clock = std::chrono::system_clock;
 
-    BOOST_HOF_STATIC_LAMBDA_FUNCTION(match) = boost::hof::pipable([](auto&& x, auto&&... fn) {
-        return std::visit(boost::hana::overload(std::forward(fn)...), std::forward(x));
-    });
-
-    auto match2 = [](auto&& x, auto&&... fn) {
+    auto match = [](auto&& x, auto&&... fn) {
         return std::visit(boost::hana::overload(std::forward(fn)...), std::forward(x));
     };
 
