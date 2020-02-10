@@ -1,7 +1,7 @@
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <variant>
-#include <iostream>
 
 #include <bullet/parser/ast.hpp>
 #include <bullet/util.hpp>
@@ -15,7 +15,7 @@ namespace bt {
             auto operator<<(ostream& os, const named_group_t& g) -> ostream& {
                 auto first = false;
                 os << "named_group[";
-                for (const auto& [ident, subtree]: g) {
+                for (const auto& [ident, subtree] : g) {
                     if (first)
                         first = false;
                     else
@@ -34,8 +34,7 @@ namespace bt {
 
             auto operator<<(ostream& os, const bin_op_t& binop) -> ostream& {
                 auto first = false;
-                os << "binary_op[" << binop.op << ", " << binop.lhs
-                 << ", " << binop.rhs << "]";
+                os << "binary_op[" << binop.op << ", " << binop.lhs << ", " << binop.rhs << "]";
                 return os;
             }
 
@@ -85,36 +84,35 @@ namespace bt {
             // type foo (...)
             // union type foo:
 
-
-            auto operator<<(ostream& os, const def_type_t& d) -> ostream&  {
+            auto operator<<(ostream& os, const def_type_t& d) -> ostream& {
                 os << "def_type[" << d.name << "=" << d.type << "]";
                 return os;
             }
 
-            auto operator<<(ostream& os, const let_type_t& d) -> ostream&  {
+            auto operator<<(ostream& os, const let_type_t& d) -> ostream& {
                 os << "let_type[" << d.name << "=" << d.type << "]";
                 return os;
             }
 
-            auto operator<<(ostream& os, const template_t& t) -> ostream&  {
+            auto operator<<(ostream& os, const template_t& t) -> ostream& {
                 os << "template[args=" << t.arguments << ", body=" << t.body << "]";
                 return os;
             }
 
-            auto operator<<(ostream& os, const tree_t& n) -> ostream&  {
-                visit([&] (const auto& e) { os << e; }, n); 
+            auto operator<<(ostream& os, const tree_t& n) -> ostream& {
+                visit([&](const auto& e) { os << e; }, n);
                 return os;
             }
 
-            auto operator<<(ostream& os, const node_t& t) -> ostream&  {
+            auto operator<<(ostream& os, const node_t& t) -> ostream& {
                 os << t.get();
                 return os;
             }
 
-            auto operator<<(ostream& os, const group_t& g) -> ostream&  {
+            auto operator<<(ostream& os, const group_t& g) -> ostream& {
                 auto first = false;
                 os << "group[";
-                for (const auto& pt: g) {
+                for (const auto& pt : g) {
                     if (first)
                         first = false;
                     else
@@ -125,16 +123,14 @@ namespace bt {
                 return os;
             }
 
-            auto operator<<(ostream& os, const if_t& if_) -> ostream&  {
+            auto operator<<(ostream& os, const if_t& if_) -> ostream& {
                 auto first = false;
                 os << "if[" << if_.test << ", " << if_.then_branch;
-                if (const auto& e = if_.else_branch)
-                    os << ", " << *e;
+                if (const auto& e = if_.else_branch) os << ", " << *e;
                 os << "]";
                 return os;
             }
 
-        }  // namespace ast
+        }  // namespace syntax
     }      // namespace parser
 }  // namespace bt
-

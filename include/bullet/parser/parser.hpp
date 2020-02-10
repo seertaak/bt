@@ -37,7 +37,9 @@ namespace bt {
 
                 template <typename... Fn>
                 auto eat(Fn&&... fns) -> decltype(auto) {
-                    return std::visit(
+                    return match(
+                        forward<source_token_t>(eat()),
+                        forward(fns)...,
                         [](auto t) {
                             auto msg = stringstream();
 
@@ -48,14 +50,19 @@ namespace bt {
                                 << "possibilities: TODO!";
 
                             throw runtime_error(msg.str());
-                        },
-                        fns..., eat());
+                        }
+                        );
                 }
+
+                auto literal
 
             public:
                 parser(lexer::output_t input) : input(input), it(begin(input.tokens)) {}
 
-                auto parse() -> syntax::tree_t { return syntax::tree_t(eat().token); }
+                auto parse() -> syntax::tree_t { 
+                    // stop clang-format
+                    return syntax::tree_t();
+                }
             };
 
             auto parse(lexer::output_t input) -> syntax::tree_t {

@@ -136,7 +136,7 @@ namespace bt {
 
 
             using node_base_t = std::variant<
-                lexer::token_t,
+                std::monostate,
                 unary_op_t,
                 bin_op_t,
                 invoc_t,
