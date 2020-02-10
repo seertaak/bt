@@ -693,27 +693,41 @@ namespace bt {
         auto operator!=(const location_t& lhs, const location_t& rhs) -> bool;
         auto operator<<(ostream& os, const location_t& l) -> ostream&;
 
-        struct source_token_t {
-            token_t token;
+        template<typename T>
+        struct located {
+            T token;
             location_t location;
 
-            source_token_t(const token_t& t) : token(t), location{0, 0, 0} {}
-            source_token_t(const token_t& t, uint32_t line, uint16_t first_col, uint16_t last_col)
+            located(const T& t) : token(t), location{0, 0, 0} {}
+            located(const T& t, uint32_t line, uint16_t first_col, uint16_t last_col)
                 : token(t), location{line, first_col, last_col} {}
 
-            source_token_t() = default;
-            source_token_t(const source_token_t&) = default;
-            source_token_t& operator=(const source_token_t&) = default;
+            located() = default;
+            located(const located&) = default;
+            located& operator=(const located&) = default;
         };
 
-        auto operator<<(ostream& os, const source_token_t& t) -> ostream&;
-        auto operator==(const source_token_t& lhs, const source_token_t& rhs) -> bool;
-        auto operator==(const source_token_t& lhs, const token_t& rhs) -> bool;
-        auto operator==(const token_t& lhs, const source_token_t& rhs) -> bool;
-        auto operator!=(const source_token_t& lhs, const token_t& rhs) -> bool;
-        auto operator!=(const token_t& lhs, const source_token_t& rhs) -> bool;
-        auto operator!=(const source_token_t& lhs, const source_token_t& rhs) -> bool;
+        template <typename T>
+        auto operator<<(std::ostream& os, const located<T>& t) -> std::ostream& {
+            os << t.token;
+            return os;
+        }
 
+        template <typename T>
+        auto operator==(const located<T>& lhs, const located<T>& rhs) -> bool {
+            return lhs.token == rhs.token && lhs.location == rhs.location;
+        }
+        template <typename T>
+        auto operator!=(const located<T>& lhs, const located<T>& rhs) -> bool {
+            return !(lhs == rhs);
+        }
+
+        auto operator==(const located<token_t>& lhs, const token_t& rhs) -> bool;
+        auto operator==(const token_t& lhs, const located<token_t>& rhs) -> bool;
+        auto operator!=(const located<token_t>& lhs, const token_t& rhs) -> bool;
+        auto operator!=(const token_t& lhs, const located<token_t>& rhs) -> bool;
+
+        using source_token_t = located<token_t>;
         using source_token_list_t = std::vector<source_token_t>;
         using token_list_t = std::vector<token_t>;
 

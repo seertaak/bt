@@ -32,34 +32,18 @@ namespace bt {
             return os;
         }
 
-        auto operator<<(ostream& os, const source_token_t& t) -> ostream& {
-            os << t.token;
-            return os;
-        }
-
-        auto operator==(const source_token_t& lhs, const source_token_t& rhs) -> bool {
-            return lhs.token == rhs.token && lhs.location == rhs.location;
-        }
-
-        auto operator==(const source_token_t& lhs, const token_t& rhs) -> bool {
+        auto operator==(const located<token_t>& lhs, const token_t& rhs) -> bool {
             return lhs.token == rhs;
         }
-        auto operator==(const token_t& lhs, const source_token_t& rhs) -> bool {
+        auto operator==(const token_t& lhs, const located<token_t>& rhs) -> bool {
             return rhs == lhs;
         }
-        auto operator!=(const source_token_t& lhs, const token_t& rhs) -> bool {
+        auto operator!=(const located<token_t>& lhs, const token_t& rhs) -> bool {
             return !(lhs == rhs);
         }
-        auto operator!=(const token_t& lhs, const source_token_t& rhs) -> bool {
+        auto operator!=(const token_t& lhs, const located<token_t>& rhs) -> bool {
             return !(lhs == rhs);
         }
-
-        auto operator!=(const source_token_t& lhs, const source_token_t& rhs) -> bool {
-            return !(lhs == rhs);
-        }
-
-        using source_token_list_t = std::vector<source_token_t>;
-        using token_list_t = std::vector<token_t>;
 
         auto operator==(const source_token_list_t& lhs, const source_token_list_t& rhs) -> bool {
             if (lhs.size() != rhs.size()) return false;

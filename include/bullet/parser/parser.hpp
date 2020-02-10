@@ -13,22 +13,27 @@
 
 namespace bt {
     namespace parser {
+
+        using input_t = lexer::output_t;
+
         namespace details {
+
             using namespace std;
             using namespace lexer;
+            using namespace syntax;
 
             class parser {
                 using source_token_list_t = decltype(lexer::output_t().tokens);
                 using iterator = typename source_token_list_t::const_iterator;
 
-                lexer::output_t input;
+                input_t input;
                 iterator it;
 
-                auto peek() -> lexer::source_token_t { return *it; }
+                auto peek() -> source_token_t { return *it; }
 
-                auto eat() -> lexer::source_token_t { return *it++; }
+                auto eat() -> source_token_t { return *it++; }
 
-                auto eat(token_t&& token) -> lexer::source_token_t {
+                auto eat(token_t&& token) -> source_token_t {
                     const auto t = peek();
                     if (t != token) throw runtime_error("FUCK RUASDFASDF");
                     ++it;
@@ -36,42 +41,57 @@ namespace bt {
                 }
 
                 template <typename... Fn>
-                auto eat(Fn&&... fns) -> decltype(auto) {
-                    return match(
-                        forward<source_token_t>(eat()),
-                        forward(fns)...,
-                        [](auto t) {
-                            auto msg = stringstream();
+                auto eat(Fn&&... fns) -> tree_t {
+                    auto loc_tok = eat();
+                    return std::visit(
+                        boost::hana::overload(
+                            fns...,
+                            [](auto t) -> tree_t {
+                                auto msg = stringstream();
 
-                            // TODO: the possibilities are simply the argument types
-                            // of the supplied functors!!!!
+                                // TODO: the possibilities are simply the argument types
+                                // of the supplied functors!!!!
 
-                            msg << "Couldn't match token: " << t << " against "
-                                << "possibilities: TODO!";
+                                msg << "Couldn't match token: " << t << " against "
+                                    << "possibilities: TODO!";
 
-                            throw runtime_error(msg.str());
-                        }
-                        );
+                                throw runtime_error(msg.str());
+                            }
+                        ),
+                        std::forward<token_t>(loc_tok.token)
+                    );
                 }
 
-                auto literal
-
             public:
-                parser(lexer::output_t input) : input(input), it(begin(input.tokens)) {}
+                parser(const input_t& in) : input(in) {
+                    it = begin(input.tokens);
+                }
+                parser(input_t&& in) noexcept : input(std::move(in)) {
+                    it = begin(input.tokens);
+                }
 
-                auto parse() -> syntax::tree_t { 
-                    // stop clang-format
-                    return syntax::tree_t();
+                auto parse() -> tree_t { 
+                    return eat(
+                        [] (string_literal_t l) {
+                            return tree_t(l);
+                        },
+                        [] (integral_literal_t l) {
+                            return tree_t(l);
+                        },
+                        [] (floating_point_literal_t l) {
+                            return tree_t(l);
+                        }
+                    );
                 }
             };
 
-            auto parse(lexer::output_t input) -> syntax::tree_t {
-                auto p = parser(input);
+            auto parse(input_t&& input) -> tree_t {
+                auto p = parser(forward<input_t>(input));
                 return p.parse();
             }
         }  // namespace details
 
         BOOST_HOF_STATIC_LAMBDA_FUNCTION(parse) = boost::hof::pipable(
-            [](lexer::output_t input) -> syntax::tree_t { return details::parse(input); });
+            [](input_t&& input) -> syntax::tree_t { return details::parse(std::forward<input_t>(input)); });
     }  // namespace parser
 }  // namespace bt

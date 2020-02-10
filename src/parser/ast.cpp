@@ -13,7 +13,7 @@ namespace bt {
             using namespace lexer;
 
             auto operator<<(ostream& os, const named_group_t& g) -> ostream& {
-                auto first = false;
+                auto first = true;
                 os << "named_group[";
                 for (const auto& [ident, subtree] : g) {
                     if (first)
@@ -33,13 +33,13 @@ namespace bt {
             }
 
             auto operator<<(ostream& os, const bin_op_t& binop) -> ostream& {
-                auto first = false;
+                auto first = true;
                 os << "binary_op[" << binop.op << ", " << binop.lhs << ", " << binop.rhs << "]";
                 return os;
             }
 
             auto operator<<(ostream& os, const invoc_t& invoc) -> ostream& {
-                auto first = false;
+                auto first = true;
                 os << "invoc[" << invoc.target << ": " << invoc.arguments << "]";
                 return os;
             }
@@ -110,7 +110,7 @@ namespace bt {
             }
 
             auto operator<<(ostream& os, const group_t& g) -> ostream& {
-                auto first = false;
+                auto first = true;
                 os << "group[";
                 for (const auto& pt : g) {
                     if (first)
@@ -124,13 +124,91 @@ namespace bt {
             }
 
             auto operator<<(ostream& os, const if_t& if_) -> ostream& {
-                auto first = false;
+                auto first = true;
                 os << "if[" << if_.test << ", " << if_.then_branch;
                 if (const auto& e = if_.else_branch) os << ", " << *e;
                 os << "]";
                 return os;
             }
 
+            auto operator==(const group_t& l, const group_t& r) -> bool {
+                if (l.size() != r.size()) return false;
+                for (auto i = 0; i < l.size(); i++)
+                    if (l[i] != r[i]) return false;
+                return true;
+            }
+            auto operator!=(const group_t& l, const group_t& r) -> bool { return !(l == r); }
+
+            auto operator==(const named_group_t& l, const named_group_t& r) -> bool {
+                if (l.size() != r.size()) return false;
+                for (auto i = 0; i < l.size(); i++)
+                    if (l[i] != r[i]) return false;
+                return true;
+            }
+            auto operator!=(const named_group_t& l, const named_group_t& r) -> bool {
+                return !(l == r);
+            }
+
+            auto operator==(const unary_op_t& l, const unary_op_t& r) -> bool {
+                return l.op == r.op && l.operand == r.operand;
+            }
+
+            auto operator!=(const unary_op_t& l, const unary_op_t& r) -> bool { return !(l == r); }
+
+            auto operator==(const bin_op_t& l, const bin_op_t& r) -> bool {
+                return l.op == r.op && l.lhs == r.lhs && l.rhs == r.rhs;
+            }
+
+            auto operator!=(const bin_op_t& l, const bin_op_t& r) -> bool { return !(l == r); }
+
+            auto operator==(const invoc_t& l, const invoc_t& r) -> bool {
+                return l.target == r.target && l.arguments == r.arguments;
+            }
+            auto operator!=(const invoc_t& l, const invoc_t& r) -> bool { return !(l == r); }
+
+            auto operator==(const if_t& l, const if_t& r) -> bool {
+                return l.test == r.test && l.then_branch == r.then_branch &&
+                       l.else_branch == r.else_branch;
+            }
+            auto operator!=(const if_t& l, const if_t& r) -> bool { return !(l == r); }
+
+            auto operator==(const assign_t& l, const assign_t& r) -> bool {
+                return l.lhs == r.lhs && l.rhs == r.rhs;
+            }
+            auto operator!=(const assign_t& l, const assign_t& r) -> bool { return !(l == r); }
+
+            auto operator==(const fn_def_t& l, const fn_def_t& r) -> bool {
+                return l.name == r.name && l.arguments == r.arguments &&
+                       l.result_type == r.result_type;
+            }
+            auto operator!=(const fn_def_t& l, const fn_def_t& r) -> bool { return !(l == r); }
+
+            auto operator==(const repeat_t& l, const repeat_t& r) -> bool {
+                return l.body == r.body;
+            }
+            auto operator!=(const repeat_t& l, const repeat_t& r) -> bool { return !(l == r); }
+
+            auto operator==(const struct_t& l, const struct_t& r) -> bool {
+                if (l.size() != r.size()) return false;
+                for (auto i = 0; i < l.size(); i++)
+                    if (l[i] != r[i]) return false;
+                return true;
+            }
+            auto operator!=(const struct_t& l, const struct_t& r) -> bool { return !(l == r); }
+
+            auto operator==(const def_type_t& l, const def_type_t& r) -> bool {
+                return l.name == r.name && l.type == r.type;
+            }
+            auto operator!=(const def_type_t& l, const def_type_t& r) -> bool { return !(l == r); }
+            auto operator==(const let_type_t& l, const let_type_t& r) -> bool {
+                return l.name == r.name && l.type == r.type;
+            }
+            auto operator!=(const let_type_t& l, const let_type_t& r) -> bool { return !(l == r); }
+            auto operator==(const template_t& l, const template_t& r) -> bool {
+                return l.arguments == r.arguments && l.body == r.body;
+            }
+
+            auto operator!=(const template_t& l, const template_t& r) -> bool { return !(l == r); }
         }  // namespace syntax
     }      // namespace parser
 }  // namespace bt
