@@ -25,7 +25,8 @@ namespace bt {
         namespace hana = boost::hana;
 
         namespace token {
-            enum category {
+            enum category : uint32_t {
+                synthetic,
                 reserved_word,
                 grouping_token,
                 punctuation,
@@ -65,381 +66,494 @@ namespace bt {
             struct verbatim_t : token_tag {
                 static constexpr const std::string_view name{"VERBATIM"};
                 static constexpr const std::string_view token{"verbatim"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct private_t : token_tag {
                 static constexpr const std::string_view name{"PRIVATE"};
                 static constexpr const std::string_view token{"private"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct import_t : token_tag {
                 static constexpr const std::string_view name{"IMPORT"};
                 static constexpr const std::string_view token{"import"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct object_t : token_tag {
                 static constexpr const std::string_view name{"OBJECT"};
                 static constexpr const std::string_view token{"object"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct public_t : token_tag {
                 static constexpr const std::string_view name{"PUBLIC"};
                 static constexpr const std::string_view token{"public"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct repeat_t : token_tag {
                 static constexpr const std::string_view name{"REPEAT"};
                 static constexpr const std::string_view token{"repeat"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct break_t : token_tag {
                 static constexpr const std::string_view name{"BREAK"};
                 static constexpr const std::string_view token{"break"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct catch_t : token_tag {
                 static constexpr const std::string_view name{"CATCH"};
                 static constexpr const std::string_view token{"catch"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct const_t : token_tag {
                 static constexpr const std::string_view name{"CONST"};
                 static constexpr const std::string_view token{"const"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct false_t : token_tag {
                 static constexpr const std::string_view name{"FALSE"};
                 static constexpr const std::string_view token{"false"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct macro_t : token_tag {
                 static constexpr const std::string_view name{"MACRO"};
                 static constexpr const std::string_view token{"macro"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct throw_t : token_tag {
                 static constexpr const std::string_view name{"THROW"};
                 static constexpr const std::string_view token{"throw"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct until_t : token_tag {
                 static constexpr const std::string_view name{"UNTIL"};
                 static constexpr const std::string_view token{"until"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct while_t : token_tag {
                 static constexpr const std::string_view name{"WHILE"};
                 static constexpr const std::string_view token{"while"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct case_t : token_tag {
                 static constexpr const std::string_view name{"CASE"};
                 static constexpr const std::string_view token{"case"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct data_t : token_tag {
                 static constexpr const std::string_view name{"DATA"};
                 static constexpr const std::string_view token{"data"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct goto_t : token_tag {
                 static constexpr const std::string_view name{"GOTO"};
                 static constexpr const std::string_view token{"goto"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct help_t : token_tag {
                 static constexpr const std::string_view name{"HELP"};
                 static constexpr const std::string_view token{"help"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct meta_t : token_tag {
                 static constexpr const std::string_view name{"META"};
                 static constexpr const std::string_view token{"meta"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct note_t : token_tag {
                 static constexpr const std::string_view name{"NOTE"};
                 static constexpr const std::string_view token{"note"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct null_lit_t : token_tag {
                 static constexpr const std::string_view name{"NULL_LIT"};
                 static constexpr const std::string_view token{"null"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct post_t : token_tag {
                 static constexpr const std::string_view name{"POST"};
                 static constexpr const std::string_view token{"post"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct true_t : token_tag {
                 static constexpr const std::string_view name{"TRUE"};
                 static constexpr const std::string_view token{"true"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct type_t : token_tag {
                 static constexpr const std::string_view name{"TYPE"};
                 static constexpr const std::string_view token{"type"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
+            struct and_t : token_tag {
+                static constexpr const std::string_view name{"AND"};
+                static constexpr const std::string_view token{"and"};
+                static constexpr const uint32_t categories = reserved_word | binary_op;
                 static constexpr const bool is_reserved_word = true;
             };
             struct def_t : token_tag {
                 static constexpr const std::string_view name{"DEF"};
                 static constexpr const std::string_view token{"def"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct doc_t : token_tag {
                 static constexpr const std::string_view name{"DOC"};
                 static constexpr const std::string_view token{"doc"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct for_t : token_tag {
                 static constexpr const std::string_view name{"FOR"};
                 static constexpr const std::string_view token{"for"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
+            struct not_t : token_tag {
+                static constexpr const std::string_view name{"NOT"};
+                static constexpr const std::string_view token{"not"};
+                static constexpr const uint32_t categories =
+                    reserved_word | unary_prefix_op | binary_op;
                 static constexpr const bool is_reserved_word = true;
             };
             struct pre_t : token_tag {
                 static constexpr const std::string_view name{"PRE"};
                 static constexpr const std::string_view token{"pre"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct var_t : token_tag {
                 static constexpr const std::string_view name{"VAR"};
                 static constexpr const std::string_view token{"var"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
+            struct xor_t : token_tag {
+                static constexpr const std::string_view name{"XOR"};
+                static constexpr const std::string_view token{"xor"};
+                static constexpr const uint32_t categories = reserved_word | binary_op;
                 static constexpr const bool is_reserved_word = true;
             };
             struct backslash_t : token_tag {
                 static constexpr const std::string_view name{"BACKSLASH"};
                 static constexpr const std::string_view token{"\\"};
+                static constexpr const uint32_t categories = punctuation;
                 static constexpr const bool is_reserved_word = false;
             };
             struct equal_t : token_tag {
                 static constexpr const std::string_view name{"EQUAL"};
                 static constexpr const std::string_view token{"=="};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct fn_t : token_tag {
                 static constexpr const std::string_view name{"FN"};
                 static constexpr const std::string_view token{"fn"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct geq_t : token_tag {
                 static constexpr const std::string_view name{"GEQ"};
                 static constexpr const std::string_view token{">="};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct hat_equal_t : token_tag {
                 static constexpr const std::string_view name{"HAT_EQUAL"};
                 static constexpr const std::string_view token{"^="};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct if_t : token_tag {
                 static constexpr const std::string_view name{"IF"};
                 static constexpr const std::string_view token{"if"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct in_t : token_tag {
                 static constexpr const std::string_view name{"IN"};
                 static constexpr const std::string_view token{"in"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
+            struct is_t : token_tag {
+                static constexpr const std::string_view name{"IS"};
+                static constexpr const std::string_view token{"is"};
+                static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
             struct leq_t : token_tag {
                 static constexpr const std::string_view name{"LEQ"};
                 static constexpr const std::string_view token{"<="};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct minus_equal_t : token_tag {
                 static constexpr const std::string_view name{"MINUS_EQUAL"};
                 static constexpr const std::string_view token{"-="};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
+            };
+            struct or_t : token_tag {
+                static constexpr const std::string_view name{"OR"};
+                static constexpr const std::string_view token{"or"};
+                static constexpr const uint32_t categories = reserved_word | binary_op;
+                static constexpr const bool is_reserved_word = true;
             };
             struct percentage_equal_t : token_tag {
                 static constexpr const std::string_view name{"PERCENTAGE_EQUAL"};
                 static constexpr const std::string_view token{"%="};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct plus_equal_t : token_tag {
                 static constexpr const std::string_view name{"PLUS_EQUAL"};
                 static constexpr const std::string_view token{"+="};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct slash_equal_t : token_tag {
                 static constexpr const std::string_view name{"SLASH_EQUAL"};
                 static constexpr const std::string_view token{"/="};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct star_equal_t : token_tag {
                 static constexpr const std::string_view name{"STAR_EQUAL"};
                 static constexpr const std::string_view token{"*="};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct thick_arrow_t : token_tag {
                 static constexpr const std::string_view name{"THICK_ARROW"};
                 static constexpr const std::string_view token{"=>"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct thin_arrow_t : token_tag {
                 static constexpr const std::string_view name{"THIN_ARROW"};
                 static constexpr const std::string_view token{"->"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct ampersand_t : token_tag {
                 static constexpr const std::string_view name{"AMPERSAND"};
                 static constexpr const std::string_view token{"&"};
+                static constexpr const uint32_t categories = unary_prefix_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct assign_t : token_tag {
                 static constexpr const std::string_view name{"ASSIGN"};
                 static constexpr const std::string_view token{"="};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct atsign_t : token_tag {
                 static constexpr const std::string_view name{"ATSIGN"};
                 static constexpr const std::string_view token{"@"};
+                static constexpr const uint32_t categories = unary_prefix_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct backtick_t : token_tag {
                 static constexpr const std::string_view name{"BACKTICK"};
                 static constexpr const std::string_view token{"`"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct bang_t : token_tag {
                 static constexpr const std::string_view name{"BANG"};
                 static constexpr const std::string_view token{"!"};
+                static constexpr const uint32_t categories = unary_postfix_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct bar_t : token_tag {
                 static constexpr const std::string_view name{"BAR"};
                 static constexpr const std::string_view token{"|"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct cbraces_t : token_tag {
                 static constexpr const std::string_view name{"CBRACES"};
                 static constexpr const std::string_view token{"}"};
+                static constexpr const uint32_t categories = grouping_token;
                 static constexpr const bool is_reserved_word = false;
             };
             struct cbracket_t : token_tag {
                 static constexpr const std::string_view name{"CBRACKET"};
                 static constexpr const std::string_view token{"]"};
+                static constexpr const uint32_t categories = grouping_token;
                 static constexpr const bool is_reserved_word = false;
             };
             struct colon_t : token_tag {
                 static constexpr const std::string_view name{"COLON"};
                 static constexpr const std::string_view token{":"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct comma_t : token_tag {
                 static constexpr const std::string_view name{"COMMA"};
                 static constexpr const std::string_view token{","};
+                static constexpr const uint32_t categories = punctuation;
                 static constexpr const bool is_reserved_word = false;
             };
             struct cparen_t : token_tag {
                 static constexpr const std::string_view name{"CPAREN"};
                 static constexpr const std::string_view token{")"};
+                static constexpr const uint32_t categories = grouping_token;
                 static constexpr const bool is_reserved_word = false;
             };
             struct dollar_t : token_tag {
                 static constexpr const std::string_view name{"DOLLAR"};
                 static constexpr const std::string_view token{"$"};
+                static constexpr const uint32_t categories = unary_prefix_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct dot_t : token_tag {
                 static constexpr const std::string_view name{"DOT"};
                 static constexpr const std::string_view token{"."};
+                static constexpr const uint32_t categories = punctuation;
                 static constexpr const bool is_reserved_word = false;
             };
             struct gt_t : token_tag {
                 static constexpr const std::string_view name{"GT"};
                 static constexpr const std::string_view token{">"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct hash_t : token_tag {
                 static constexpr const std::string_view name{"HASH"};
                 static constexpr const std::string_view token{"#"};
+                static constexpr const uint32_t categories = unary_prefix_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct hat_t : token_tag {
                 static constexpr const std::string_view name{"HAT"};
                 static constexpr const std::string_view token{"^"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct lt_t : token_tag {
                 static constexpr const std::string_view name{"LT"};
                 static constexpr const std::string_view token{"<"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct minus_t : token_tag {
                 static constexpr const std::string_view name{"MINUS"};
                 static constexpr const std::string_view token{"-"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct obraces_t : token_tag {
                 static constexpr const std::string_view name{"OBRACES"};
                 static constexpr const std::string_view token{"{"};
+                static constexpr const uint32_t categories = grouping_token;
                 static constexpr const bool is_reserved_word = false;
             };
             struct obracket_t : token_tag {
                 static constexpr const std::string_view name{"OBRACKET"};
                 static constexpr const std::string_view token{"["};
+                static constexpr const uint32_t categories = grouping_token;
                 static constexpr const bool is_reserved_word = false;
             };
             struct oparen_t : token_tag {
                 static constexpr const std::string_view name{"OPAREN"};
                 static constexpr const std::string_view token{"("};
+                static constexpr const uint32_t categories = grouping_token;
                 static constexpr const bool is_reserved_word = false;
             };
             struct percentage_t : token_tag {
                 static constexpr const std::string_view name{"PERCENTAGE"};
                 static constexpr const std::string_view token{"%"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct plus_t : token_tag {
                 static constexpr const std::string_view name{"PLUS"};
                 static constexpr const std::string_view token{"+"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct question_mark_t : token_tag {
                 static constexpr const std::string_view name{"QUESTION_MARK"};
                 static constexpr const std::string_view token{"?"};
+                static constexpr const uint32_t categories = unary_postfix_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct semicolon_t : token_tag {
                 static constexpr const std::string_view name{"SEMICOLON"};
                 static constexpr const std::string_view token{";"};
+                static constexpr const uint32_t categories = punctuation;
                 static constexpr const bool is_reserved_word = false;
             };
             struct slash_t : token_tag {
                 static constexpr const std::string_view name{"SLASH"};
                 static constexpr const std::string_view token{"/"};
+                static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct star_t : token_tag {
                 static constexpr const std::string_view name{"STAR"};
                 static constexpr const std::string_view token{"*"};
+                static constexpr const uint32_t categories = unary_prefix_op | binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct tilde_t : token_tag {
                 static constexpr const std::string_view name{"TILDE"};
                 static constexpr const std::string_view token{"~"};
+                static constexpr const uint32_t categories = unary_prefix_op;
                 static constexpr const bool is_reserved_word = false;
             };
             struct dedent_t : token_tag {
                 static constexpr const std::string_view name{"DEDENT"};
                 static constexpr const std::string_view token{""};
+                static constexpr const uint32_t categories = synthetic;
+                static constexpr const bool is_reserved_word = false;
+            };
+            struct eoi_t : token_tag {
+                static constexpr const std::string_view name{"EOI"};
+                static constexpr const std::string_view token{""};
+                static constexpr const uint32_t categories = synthetic;
                 static constexpr const bool is_reserved_word = false;
             };
             struct eol_t : token_tag {
                 static constexpr const std::string_view name{"EOL"};
                 static constexpr const std::string_view token{""};
+                static constexpr const uint32_t categories = synthetic;
                 static constexpr const bool is_reserved_word = false;
             };
             struct indent_t : token_tag {
                 static constexpr const std::string_view name{"INDENT"};
                 static constexpr const std::string_view token{""};
+                static constexpr const uint32_t categories = synthetic;
                 static constexpr const bool is_reserved_word = false;
             };
             struct line_end_t : token_tag {
                 static constexpr const std::string_view name{"LINE_END"};
                 static constexpr const std::string_view token{""};
+                static constexpr const uint32_t categories = synthetic;
                 static constexpr const bool is_reserved_word = false;
             };
 
@@ -467,11 +581,14 @@ namespace bt {
                                                  post_t,
                                                  true_t,
                                                  type_t,
+                                                 and_t,
                                                  def_t,
                                                  doc_t,
                                                  for_t,
+                                                 not_t,
                                                  pre_t,
                                                  var_t,
+                                                 xor_t,
                                                  backslash_t,
                                                  equal_t,
                                                  fn_t,
@@ -479,8 +596,10 @@ namespace bt {
                                                  hat_equal_t,
                                                  if_t,
                                                  in_t,
+                                                 is_t,
                                                  leq_t,
                                                  minus_equal_t,
+                                                 or_t,
                                                  percentage_equal_t,
                                                  plus_equal_t,
                                                  slash_equal_t,
@@ -516,6 +635,7 @@ namespace bt {
                                                  star_t,
                                                  tilde_t,
                                                  dedent_t,
+                                                 eoi_t,
                                                  eol_t,
                                                  indent_t,
                                                  line_end_t>;
@@ -545,11 +665,14 @@ namespace bt {
                                 token::post_t,
                                 token::true_t,
                                 token::type_t,
+                                token::and_t,
                                 token::def_t,
                                 token::doc_t,
                                 token::for_t,
+                                token::not_t,
                                 token::pre_t,
                                 token::var_t,
+                                token::xor_t,
                                 token::backslash_t,
                                 token::equal_t,
                                 token::fn_t,
@@ -557,8 +680,10 @@ namespace bt {
                                 token::hat_equal_t,
                                 token::if_t,
                                 token::in_t,
+                                token::is_t,
                                 token::leq_t,
                                 token::minus_equal_t,
+                                token::or_t,
                                 token::percentage_equal_t,
                                 token::plus_equal_t,
                                 token::slash_equal_t,
@@ -594,6 +719,7 @@ namespace bt {
                                 token::star_t,
                                 token::tilde_t,
                                 token::dedent_t,
+                                token::eoi_t,
                                 token::eol_t,
                                 token::indent_t,
                                 token::line_end_t,
@@ -630,11 +756,14 @@ namespace bt {
         const token_t POST{token::post_t{}};
         const token_t TRUE{token::true_t{}};
         const token_t TYPE{token::type_t{}};
+        const token_t AND{token::and_t{}};
         const token_t DEF{token::def_t{}};
         const token_t DOC{token::doc_t{}};
         const token_t FOR{token::for_t{}};
+        const token_t NOT{token::not_t{}};
         const token_t PRE{token::pre_t{}};
         const token_t VAR{token::var_t{}};
+        const token_t XOR{token::xor_t{}};
         const token_t BACKSLASH{token::backslash_t{}};
         const token_t EQUAL{token::equal_t{}};
         const token_t FN{token::fn_t{}};
@@ -642,8 +771,10 @@ namespace bt {
         const token_t HAT_EQUAL{token::hat_equal_t{}};
         const token_t IF{token::if_t{}};
         const token_t IN{token::in_t{}};
+        const token_t IS{token::is_t{}};
         const token_t LEQ{token::leq_t{}};
         const token_t MINUS_EQUAL{token::minus_equal_t{}};
+        const token_t OR{token::or_t{}};
         const token_t PERCENTAGE_EQUAL{token::percentage_equal_t{}};
         const token_t PLUS_EQUAL{token::plus_equal_t{}};
         const token_t SLASH_EQUAL{token::slash_equal_t{}};
@@ -679,6 +810,7 @@ namespace bt {
         const token_t STAR{token::star_t{}};
         const token_t TILDE{token::tilde_t{}};
         const token_t DEDENT{token::dedent_t{}};
+        const token_t EOI{token::eoi_t{}};
         const token_t EOL{token::eol_t{}};
         const token_t INDENT{token::indent_t{}};
         const token_t LINE_END{token::line_end_t{}};
@@ -693,41 +825,27 @@ namespace bt {
         auto operator!=(const location_t& lhs, const location_t& rhs) -> bool;
         auto operator<<(ostream& os, const location_t& l) -> ostream&;
 
-        template<typename T>
-        struct located {
-            T token;
+        struct source_token_t {
+            token_t token;
             location_t location;
 
-            located(const T& t) : token(t), location{0, 0, 0} {}
-            located(const T& t, uint32_t line, uint16_t first_col, uint16_t last_col)
+            source_token_t(const token_t& t) : token(t), location{0, 0, 0} {}
+            source_token_t(const token_t& t, uint32_t line, uint16_t first_col, uint16_t last_col)
                 : token(t), location{line, first_col, last_col} {}
 
-            located() = default;
-            located(const located&) = default;
-            located& operator=(const located&) = default;
+            source_token_t() = default;
+            source_token_t(const source_token_t&) = default;
+            source_token_t& operator=(const source_token_t&) = default;
         };
 
-        template <typename T>
-        auto operator<<(std::ostream& os, const located<T>& t) -> std::ostream& {
-            os << t.token;
-            return os;
-        }
+        auto operator<<(ostream& os, const source_token_t& t) -> ostream&;
+        auto operator==(const source_token_t& lhs, const source_token_t& rhs) -> bool;
+        auto operator==(const source_token_t& lhs, const token_t& rhs) -> bool;
+        auto operator==(const token_t& lhs, const source_token_t& rhs) -> bool;
+        auto operator!=(const source_token_t& lhs, const token_t& rhs) -> bool;
+        auto operator!=(const token_t& lhs, const source_token_t& rhs) -> bool;
+        auto operator!=(const source_token_t& lhs, const source_token_t& rhs) -> bool;
 
-        template <typename T>
-        auto operator==(const located<T>& lhs, const located<T>& rhs) -> bool {
-            return lhs.token == rhs.token && lhs.location == rhs.location;
-        }
-        template <typename T>
-        auto operator!=(const located<T>& lhs, const located<T>& rhs) -> bool {
-            return !(lhs == rhs);
-        }
-
-        auto operator==(const located<token_t>& lhs, const token_t& rhs) -> bool;
-        auto operator==(const token_t& lhs, const located<token_t>& rhs) -> bool;
-        auto operator!=(const located<token_t>& lhs, const token_t& rhs) -> bool;
-        auto operator!=(const token_t& lhs, const located<token_t>& rhs) -> bool;
-
-        using source_token_t = located<token_t>;
         using source_token_list_t = std::vector<source_token_t>;
         using token_list_t = std::vector<token_t>;
 

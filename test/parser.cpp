@@ -39,4 +39,12 @@ TEST_CASE("String literal parsing.", "[parser]") {
     REQUIRE(ast == tree_t(string_literal_t(R"(a literal string)")));
 }
 
-// TODO: check that if we don't match anything, we get the good error messages (in eat(Fn...)).
+TEST_CASE("Error message", "[parser]") {
+    const auto input = R"(|)";
+    try {
+        const auto ast = input | tokenize | parse;
+    } catch (std::runtime_error& e) {
+        cout << e.what() << endl;
+    }
+    REQUIRE_THROWS(input | tokenize | parse);
+}

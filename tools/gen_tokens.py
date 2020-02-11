@@ -8,7 +8,8 @@ def_class = Template("""
 struct {{ class_name }} : token_tag {
     static constexpr const std::string_view name{"{{ name }}"};
     static constexpr const std::string_view token{"{{ symbol }}"};
-    static constexpr const category category = {{ category }};
+    static constexpr const uint32_t categories = {{ categories }};
+    static constexpr const bool is_reserved_word = {{ is_reserved_word }};
 };""");
 
 def_token = Template("""
@@ -32,27 +33,35 @@ def run():
     tab.sort(key=lambda p: (-len(p[1]), p[0]))
 
     class_defs, def_tokens, token_type_list, token_type_list_ns = [], [], [], []
-    
+
     for name, symbol in tab:
-        category = ''
-        if symbol.lower().isalpha():
-            category = 'reserved_word'
+        is_reserved_word = False
+        categories = []
+        if len(symbol) == 0:
+            categories.append('synthetic')
+        elif symbol.lower().isalpha():
+            categories.append('reserved_word')
+            is_reserved_word = True
         elif symbol in "{}[]()":
-            category = 'grouping_token'
-        elif symbol in ".,;":
-            category = 'puncuation'
-        elif symbol == 'not' or symbol in '~*&@!':
-            category = 'unary_prefix_op'
-        elif symbol in '?':
-            category = 'unary_postfix_op'
-        else:
-            category = 'unary_op'
+            categories.append('grouping_token')
+        elif symbol in r'.,;\\':
+            categories.append('punctuation')
+
+        if symbol:
+            if symbol == 'not' or symbol in '~*&@#$':
+                categories.append('unary_prefix_op')
+            elif symbol in '?!':
+                categories = ['unary_postfix_op']
+
+            if symbol in '+,-,*,/,%,^,=,==,!=,<=,>=,<,>,and,not,or,xor,+=,-=,*=,/=,%=,^=,=>,->,`,|,|=,:'.split(','):
+                categories.append('binary_op')
 
         class_defs.append(def_class.render(
                 class_name="{}_t".format(name), 
                 name=name.upper(),
                 symbol=symbol,
-                is_reserved_word=is_reserved_word))
+                categories=' | '.join(categories),
+                is_reserved_word=str(is_reserved_word).lower()))
 
         token_type = "{}_t".format(name)
 

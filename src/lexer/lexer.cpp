@@ -273,7 +273,7 @@ namespace bt {
 
                     emit_fp_token:
                         pos = p;
-                        const auto last_col = pos - start_of_line.back() - 1;
+                        const auto last_col = pos - start_of_line.back();
                         tokens.emplace_back(floating_point_t(fpval, width), line, start_col,
                                             last_col);
                     } else {
@@ -320,7 +320,7 @@ namespace bt {
                         if (signedness == 0) signedness = 'i';
 
                         pos = p;
-                        const auto last_col = pos - start_of_line.back() - 1;
+                        const auto last_col = pos - start_of_line.back();
                         tokens.emplace_back(integral_t(intval, signedness, width), line, start_col,
                                             last_col);
                     }
@@ -330,7 +330,7 @@ namespace bt {
                 auto eat_identifier(uint32_t& pos) -> bool {
                     auto c = input[pos];
                     if (std::isalpha(c) || c == '_') {
-                        const auto start_col = pos - start_of_line.back();
+                        const auto start_col = pos - start_of_line.back() + 1;
                         auto s = string();
                         do {
                             s += c;
@@ -338,7 +338,7 @@ namespace bt {
                         } while (std::isalnum(c) || c == '_');
 
                         const auto line = start_of_line.size();
-                        const auto last_col = pos - start_of_line.back() - 1;
+                        const auto last_col = pos - start_of_line.back();
 
                         tokens.emplace_back(identifier_t(s), line, start_col, last_col);
 
@@ -382,7 +382,7 @@ namespace bt {
                     pos = std::min(p + 1, input_length);
 
                     const auto line = start_of_line.size();
-                    const auto last_col = pos - start_of_line.back() - 1;
+                    const auto last_col = pos - start_of_line.back();
 
                     tokens.emplace_back(string_token_t(s), line, start_col, last_col);
 

@@ -1,4 +1,5 @@
 eol,
+eoi,
 indent,
 dedent,
 import,import
@@ -12,6 +13,11 @@ post,post
 meta,meta
 verbatim,verbatim
 note,note
+not,not
+and,and
+or,or
+is,is
+xor,xor
 var,var
 data,data
 object,object

@@ -17,7 +17,8 @@ namespace bt {
             struct ref {
                 ptr<T> value;
 
-                ref(T&& t): value{std::forward(t)} {}
+                ref(const T& t): value{std::make_shared<T>(t)} {}
+                ref(T&& t) noexcept: value{std::make_shared<T>(std::move(t))} {}
 
                 ref() = default;
                 ref(const ref&) = default;
@@ -135,6 +136,16 @@ namespace bt {
             auto operator!=(const assign_t&, const assign_t&) -> bool;
             auto operator<<(std::ostream& os, const assign_t& a) -> std::ostream&;
 
+            struct var_def_t {
+                lexer::identifier_t name;
+                std::optional<node_t> type;
+                node_t rhs;
+            };
+            
+            auto operator==(const var_def_t&, const var_def_t&) -> bool;
+            auto operator!=(const var_def_t&, const var_def_t&) -> bool;
+            auto operator<<(std::ostream& os, const var_def_t& a) -> std::ostream&;
+
             struct fn_def_t {
                 lexer::identifier_t name;
                 named_group_t arguments;
@@ -198,12 +209,16 @@ namespace bt {
                 string_literal_t,
                 integral_literal_t,
                 floating_point_literal_t,
+                lexer::identifier_t,
+                lexer::token::true_t,
+                lexer::token::false_t,
                 unary_op_t,
                 bin_op_t,
                 invoc_t,
                 if_t,
                 assign_t,
                 fn_def_t,
+                var_def_t,
                 repeat_t,
                 struct_t,
                 def_type_t,

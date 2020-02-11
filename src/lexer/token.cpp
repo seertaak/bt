@@ -10,6 +10,11 @@ namespace bt {
             return os;
         }
 
+        auto operator<<(ostream& os, const source_token_t& t) -> ostream& {
+            os << t.token;
+            return os;
+        }
+
         auto token_name(const token_t& t) -> string_view {
             return visit([&](auto t) { return token_name(t); }, t);
         }
@@ -32,16 +37,22 @@ namespace bt {
             return os;
         }
 
-        auto operator==(const located<token_t>& lhs, const token_t& rhs) -> bool {
-            return lhs.token == rhs;
+        auto operator==(const source_token_t& lhs, const source_token_t& rhs) -> bool {
+            return lhs.token == rhs.token && lhs.location == rhs.location;
         }
-        auto operator==(const token_t& lhs, const located<token_t>& rhs) -> bool {
-            return rhs == lhs;
-        }
-        auto operator!=(const located<token_t>& lhs, const token_t& rhs) -> bool {
+        auto operator!=(const source_token_t& lhs, const source_token_t& rhs) -> bool {
             return !(lhs == rhs);
         }
-        auto operator!=(const token_t& lhs, const located<token_t>& rhs) -> bool {
+        auto operator==(const source_token_t& lhs, const token_t& rhs) -> bool {
+            return lhs.token == rhs;
+        }
+        auto operator==(const token_t& lhs, const source_token_t& rhs) -> bool {
+            return rhs == lhs;
+        }
+        auto operator!=(const source_token_t& lhs, const token_t& rhs) -> bool {
+            return !(lhs == rhs);
+        }
+        auto operator!=(const token_t& lhs, const source_token_t& rhs) -> bool {
             return !(lhs == rhs);
         }
 

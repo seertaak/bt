@@ -24,7 +24,8 @@ namespace bt { namespace lexer {
     namespace hana = boost::hana;
 
     namespace token {
-        enum category {
+        enum category : uint32_t {
+            synthetic,
             reserved_word,
             grouping_token,
             punctuation,

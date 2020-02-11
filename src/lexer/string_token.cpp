@@ -7,7 +7,7 @@ namespace bt {
         using namespace std;
 
         auto token_value(const string_token_t& i) -> string_view { return i.value; }
-        auto token_symbol(const string_token_t& i) -> string_view { return i.value; }
+        auto token_symbol(const string_token_t& i) -> string_view { return "STRING_LITERAL"sv; }
 
         auto operator<<(ostream& os, const string_token_t& t) -> ostream& {
             os << '"' << token_value(t) << '"';

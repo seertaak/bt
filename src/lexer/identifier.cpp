@@ -7,7 +7,7 @@ namespace bt {
         using namespace std;
 
         auto token_name(const identifier_t& i) -> string_view { return i.name; }
-        auto token_symbol(const identifier_t& i) -> string_view { return i.name; }
+        auto token_symbol(const identifier_t& i) -> string_view { return "IDENTIFIER"sv; }
 
         auto operator<<(ostream& os, const identifier_t& t) -> ostream& {
             os << "ident[" << token_name(t) << "]";

@@ -7,7 +7,7 @@ namespace bt {
             namespace numeric {
                 auto token_name(const integral_t& i) -> string_view { return "integral_t"; }
 
-                auto token_symbol(const integral_t& i) -> string_view { return "integral_t"; }
+                auto token_symbol(const integral_t& i) -> string_view { return "INTEGRAL_LITERAL"; }
 
                 auto operator<<(ostream& os, const integral_t& t) -> ostream& {
                     os << token_name(t) << '[' << t.value << (t.type ? t.type : '?') << t.width
@@ -28,7 +28,7 @@ namespace bt {
                 }
 
                 auto token_symbol(const floating_point_t& i) -> string_view {
-                    return "floating_point_t";
+                    return "FLOATING_POINT_LITERAL";
                 }
 
                 auto operator<<(ostream& os, const floating_point_t& t) -> ostream& {
