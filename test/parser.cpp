@@ -21,30 +21,41 @@ using namespace lexer::token;
 using namespace parser;
 using namespace syntax;
 
+namespace {
+    auto ast(string_view input) -> syntax::tree_t { return input | tokenize | parse; }
+}  // namespace
+
 TEST_CASE("Integral literal parsing.", "[parser]") {
-    const auto input = "42"sv;
-    const auto ast = input | tokenize | parse;
-    REQUIRE(ast == tree_t(integral_literal_t(42, 'i', 64)));
+    REQUIRE(ast("42"sv) == tree_t(integral_literal_t(42, 'i', 64)));
 }
 
 TEST_CASE("Floating point parsing.", "[parser]") {
-    const auto input = "42.0f32"sv;
-    const auto ast = input | tokenize | parse;
-    REQUIRE(ast == tree_t(floating_point_literal_t(42.0, 32)));
+    REQUIRE(ast("42.0f32"sv) == tree_t(floating_point_literal_t(42.0, 32)));
 }
 
 TEST_CASE("String literal parsing.", "[parser]") {
-    const auto input = R"("a literal string")";
-    const auto ast = input | tokenize | parse;
-    REQUIRE(ast == tree_t(string_literal_t(R"(a literal string)")));
+    REQUIRE(ast(R"("a literal string")") == tree_t(string_literal_t(R"(a literal string)")));
 }
 
 TEST_CASE("Error message", "[parser]") {
-    const auto input = R"(|)";
-    try {
-        const auto ast = input | tokenize | parse;
-    } catch (std::runtime_error& e) {
-        cout << e.what() << endl;
-    }
-    REQUIRE_THROWS(input | tokenize | parse);
+    REQUIRE_THROWS(ast(R"(|)"));
+}
+
+TEST_CASE("Group", "[parser]") {
+    // FIXME: there is a bug in integral token lexing (surprise, surprise)
+    // which means spaces need to surround the `5' in order for it to be parsed
+    // correctly.
+    REQUIRE(ast("( 5 )") == tree_t(integral_literal_t(5, 'i', 64)));
+}
+
+TEST_CASE("Boolean literals", "[parser]") {
+    REQUIRE(ast("true") == tree_t(token::true_t{}));
+    REQUIRE(ast("false") == tree_t(token::false_t{}));
+}
+
+TEST_CASE("Boolean operations", "[parser]") {
+    REQUIRE(ast("true or false") ==
+            tree_t(bin_op_t{token::or_t{}, node_t(token::true_t{}), node_t(token::false_t{})}));
+    REQUIRE(ast("false and true") ==
+            tree_t(bin_op_t{token::and_t{}, node_t(token::false_t{}), node_t(token::true_t{})}));
 }

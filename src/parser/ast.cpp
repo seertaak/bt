@@ -56,8 +56,7 @@ namespace bt {
 
             auto operator<<(ostream& os, const var_def_t& v) -> ostream& {
                 os << "var[" << v;
-                if (auto t = v.type)
-                    os << ": " << *t;
+                if (auto t = v.type) os << ": " << *t;
                 os << " = " << v.rhs << "]";
                 return os;
             }
@@ -192,8 +191,7 @@ namespace bt {
             auto operator!=(const fn_def_t& l, const fn_def_t& r) -> bool { return !(l == r); }
 
             auto operator==(const var_def_t& l, const var_def_t& r) -> bool {
-                return l.name == r.name && l.type == r.type &&
-                       l.rhs == r.rhs;
+                return l.name == r.name && l.type == r.type && l.rhs == r.rhs;
             }
             auto operator!=(const var_def_t& l, const var_def_t& r) -> bool { return !(l == r); }
 
