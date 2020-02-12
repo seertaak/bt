@@ -59,3 +59,24 @@ TEST_CASE("Boolean operations", "[parser]") {
     REQUIRE(ast("false and true") ==
             tree_t(bin_op_t{token::and_t{}, node_t(token::false_t{}), node_t(token::true_t{})}));
 }
+
+TEST_CASE("Boolean comparisons", "[parser]") {
+    REQUIRE(ast("x > 5") ==
+            tree_t(bin_op_t{token::gt_t{}, node_t(identifier_t("x")), 
+                node_t(integral_literal_t(5, 'i', 64))}));
+              
+    REQUIRE(ast("x<5.0") ==
+            tree_t(bin_op_t{token::lt_t{}, node_t(identifier_t("x")), 
+                node_t(floating_point_literal_t(5, 64))}));
+
+    REQUIRE(ast("10.0f32 >= 5") ==
+            tree_t(bin_op_t{token::geq_t{}, 
+                node_t(floating_point_literal_t(10, 32)),
+                node_t(integral_literal_t(5, 'i', 64))}));
+
+    REQUIRE(ast("x == y") ==
+            tree_t(bin_op_t{token::equal_t{}, node_t(identifier_t("x")), node_t(identifier_t("y"))}));
+
+    REQUIRE(ast("x!=y") ==
+            tree_t(bin_op_t{token::not_equal_t{}, node_t(identifier_t("x")), node_t(identifier_t("y"))}));
+}

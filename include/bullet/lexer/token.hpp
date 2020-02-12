@@ -316,6 +316,12 @@ namespace bt {
                 static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
+            struct not_equal_t : token_tag {
+                static constexpr const std::string_view name{"NOT_EQUAL"};
+                static constexpr const std::string_view token{"!="};
+                static constexpr const uint32_t categories = binary_op;
+                static constexpr const bool is_reserved_word = false;
+            };
             struct or_t : token_tag {
                 static constexpr const std::string_view name{"OR"};
                 static constexpr const std::string_view token{"or"};
@@ -599,6 +605,7 @@ namespace bt {
                                                  is_t,
                                                  leq_t,
                                                  minus_equal_t,
+                                                 not_equal_t,
                                                  or_t,
                                                  percentage_equal_t,
                                                  plus_equal_t,
@@ -683,6 +690,7 @@ namespace bt {
                                 token::is_t,
                                 token::leq_t,
                                 token::minus_equal_t,
+                                token::not_equal_t,
                                 token::or_t,
                                 token::percentage_equal_t,
                                 token::plus_equal_t,
@@ -774,6 +782,7 @@ namespace bt {
         const token_t IS{token::is_t{}};
         const token_t LEQ{token::leq_t{}};
         const token_t MINUS_EQUAL{token::minus_equal_t{}};
+        const token_t NOT_EQUAL{token::not_equal_t{}};
         const token_t OR{token::or_t{}};
         const token_t PERCENTAGE_EQUAL{token::percentage_equal_t{}};
         const token_t PLUS_EQUAL{token::plus_equal_t{}};

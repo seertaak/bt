@@ -45,6 +45,7 @@ percentage_equal,%=
 leq,<=
 geq,>=
 equal,==
+not_equal,!=
 thick_arrow,=>
 thin_arrow,->
 question_mark,?

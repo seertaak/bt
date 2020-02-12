@@ -51,6 +51,28 @@ namespace bt {
                     return *it++; 
                 }
 
+                
+                template <typename...T>
+                auto eat_if() -> optional<source_token_t> { 
+                    const auto t = peek();
+
+                    const auto f = hana::fix([&] (auto f, auto types) -> optional<source_token_t> {
+                        if constexpr (hana::is_empty(types))
+                            return nullopt;
+                        else {
+                            constexpr auto first = hana::front(types);
+                            using T_i = typename decltype(first)::type;
+
+                            if (holds_alternative<T_i>(t.token))
+                                return eat();
+
+                            return f(hana::drop_front(types));
+                        }
+                    });
+
+                    return f(hana::tuple_t<T...>);
+                }
+
                 template <typename T>
                 auto maybe() -> std::optional<T> {
                     const auto t = peek();
@@ -80,7 +102,14 @@ namespace bt {
                 }
 
                 template <typename... Fn>
-                auto eat(Fn&&... fns) -> tree_t {
+                auto eat_if(Fn&&... fns) -> decltype(auto) {
+                    auto loc_tok = eat();
+                    return std::visit(boost::hana::overload(fns...),
+                                      std::forward<token_t>(loc_tok.token));
+                }
+
+                template <typename... Fn>
+                auto eat_or_error(Fn&&... fns) -> tree_t {
                     auto loc_tok = eat();
                     const auto on_error = [&](auto t) -> tree_t {
                         auto msg = stringstream();
@@ -116,12 +145,12 @@ namespace bt {
                 parser(input_t&& in) noexcept : input(std::move(in)) { it = begin(input.tokens); }
 
                 auto top_level() -> tree_t {
-                    cout << __PRETTY_FUNCTION__ << endl;
+                    //cout << __PRETTY_FUNCTION__ << endl;
                     return or_test();
                 }   
 
                 auto or_test() -> tree_t {
-                    cout << __PRETTY_FUNCTION__ << endl;
+                    //cout << __PRETTY_FUNCTION__ << endl;
                     const auto lhs = and_test();
 
                     const auto or_ = maybe<token::or_t>();
@@ -133,7 +162,7 @@ namespace bt {
                 }
 
                 auto and_test() -> tree_t {
-                    cout << __PRETTY_FUNCTION__ << endl;
+                    //cout << __PRETTY_FUNCTION__ << endl;
                     const auto lhs = not_test();
 
                     const auto and_ = maybe<token::and_t>();
@@ -145,13 +174,25 @@ namespace bt {
                 }
 
                 auto not_test() -> tree_t {
-                    cout << __PRETTY_FUNCTION__ << endl;
+                    //cout << __PRETTY_FUNCTION__ << endl;
                     const auto not_ = maybe<token::not_t>();
-                    //if (!not_) return comparison();
-                    if (!not_) return atom();
+                    if (!not_) return comparison();
                     eat();
                     
                     return unary_op_t{*not_, not_test()};
+                }
+
+                auto comparison() -> tree_t {
+                    const auto lhs = atom();
+
+                    using namespace token;
+
+                    auto cmp = eat_if<leq_t, geq_t, lt_t, gt_t, equal_t, not_equal_t>();
+                    if (!cmp) return lhs;
+
+                    const auto rhs = atom();
+
+                    return bin_op_t{cmp->token, lhs, rhs};
                 }
 
                 /*
@@ -164,8 +205,8 @@ namespace bt {
                 */
 
                 auto atom() -> tree_t {
-                    cout << __PRETTY_FUNCTION__ << endl;
-                    return eat(
+                    //cout << __PRETTY_FUNCTION__ << endl;
+                    return eat_or_error(
                         [this](token::oparen_t) -> tree_t {
                             const auto e = top_level();
                             expect<token::cparen_t>();
@@ -181,7 +222,7 @@ namespace bt {
                 }
 
                 auto parse() -> tree_t { 
-                    cout << __PRETTY_FUNCTION__ << endl;
+                    //cout << __PRETTY_FUNCTION__ << endl;
                     return top_level(); 
                 }
             };
