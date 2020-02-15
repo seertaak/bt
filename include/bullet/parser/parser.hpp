@@ -41,30 +41,28 @@ namespace bt {
                 input_t input;
                 iterator it;
 
-                auto peek() -> source_token_t { 
+                auto peek() -> source_token_t {
                     if (it == end(input.tokens)) return EOI;
-                    return *it; 
+                    return *it;
                 }
 
-                auto eat() -> source_token_t { 
+                auto eat() -> source_token_t {
                     if (it == end(input.tokens)) throw std::runtime_error("End of input.");
-                    return *it++; 
+                    return *it++;
                 }
 
-                
-                template <typename...T>
-                auto eat_if() -> optional<source_token_t> { 
+                template <typename... T>
+                auto eat_if() -> optional<source_token_t> {
                     const auto t = peek();
 
-                    const auto f = hana::fix([&] (auto f, auto types) -> optional<source_token_t> {
+                    const auto f = hana::fix([&](auto f, auto types) -> optional<source_token_t> {
                         if constexpr (hana::is_empty(types))
                             return nullopt;
                         else {
                             constexpr auto first = hana::front(types);
                             using T_i = typename decltype(first)::type;
 
-                            if (holds_alternative<T_i>(t.token))
-                                return eat();
+                            if (holds_alternative<T_i>(t.token)) return eat();
 
                             return f(hana::drop_front(types));
                         }
@@ -76,8 +74,7 @@ namespace bt {
                 template <typename T>
                 auto maybe() -> std::optional<T> {
                     const auto t = peek();
-                    if (auto pt = get_if<T>(&t.token))
-                        return {*pt};
+                    if (auto pt = get_if<T>(&t.token)) return {*pt};
                     return std::nullopt;
                 }
 
@@ -145,40 +142,40 @@ namespace bt {
                 parser(input_t&& in) noexcept : input(std::move(in)) { it = begin(input.tokens); }
 
                 auto top_level() -> tree_t {
-                    //cout << __PRETTY_FUNCTION__ << endl;
+                    // cout << __PRETTY_FUNCTION__ << endl;
                     return or_test();
-                }   
+                }
 
                 auto or_test() -> tree_t {
-                    //cout << __PRETTY_FUNCTION__ << endl;
+                    // cout << __PRETTY_FUNCTION__ << endl;
                     const auto lhs = and_test();
 
                     const auto or_ = maybe<token::or_t>();
 
                     if (!or_) return lhs;
                     eat();
-                        
+
                     return bin_op_t{*or_, lhs, or_test()};
                 }
 
                 auto and_test() -> tree_t {
-                    //cout << __PRETTY_FUNCTION__ << endl;
+                    // cout << __PRETTY_FUNCTION__ << endl;
                     const auto lhs = not_test();
 
                     const auto and_ = maybe<token::and_t>();
 
                     if (!and_) return lhs;
                     eat();
-                        
+
                     return bin_op_t{*and_, lhs, and_test()};
                 }
 
                 auto not_test() -> tree_t {
-                    //cout << __PRETTY_FUNCTION__ << endl;
+                    // cout << __PRETTY_FUNCTION__ << endl;
                     const auto not_ = maybe<token::not_t>();
                     if (!not_) return comparison();
                     eat();
-                    
+
                     return unary_op_t{*not_, not_test()};
                 }
 
@@ -187,12 +184,21 @@ namespace bt {
 
                     using namespace token;
 
-                    auto cmp = eat_if<leq_t, geq_t, lt_t, gt_t, equal_t, not_equal_t>();
+                    auto cmp =
+                        eat_if<leq_t, geq_t, lt_t, gt_t, equal_t, not_equal_t, in_t, is_t, not_t>();
                     if (!cmp) return lhs;
 
-                    const auto rhs = atom();
+                    if (cmp->token == NOT)
+                        return unary_op_t{cmp->token,
+                                          node_t(bin_op_t{expect<in_t>(), lhs, atom()})};
+                    else if (cmp->token == IS) {
+                        if (auto not_ = eat_if<not_t>()) {
+                            return unary_op_t{not_->token,
+                                              node_t(bin_op_t{cmp->token, lhs, atom()})};
+                        }
+                    }
 
-                    return bin_op_t{cmp->token, lhs, rhs};
+                    return bin_op_t{cmp->token, lhs, atom()};
                 }
 
                 /*
@@ -205,7 +211,7 @@ namespace bt {
                 */
 
                 auto atom() -> tree_t {
-                    //cout << __PRETTY_FUNCTION__ << endl;
+                    // cout << __PRETTY_FUNCTION__ << endl;
                     return eat_or_error(
                         [this](token::oparen_t) -> tree_t {
                             const auto e = top_level();
@@ -217,13 +223,12 @@ namespace bt {
                         [](integral_literal_t i) { return tree_t(i); },
                         [](floating_point_literal_t x) { return tree_t(x); },
                         [](token::true_t b) { return tree_t(b); },
-                        [](token::false_t b) { return tree_t(b); }
-                    );
+                        [](token::false_t b) { return tree_t(b); });
                 }
 
-                auto parse() -> tree_t { 
-                    //cout << __PRETTY_FUNCTION__ << endl;
-                    return top_level(); 
+                auto parse() -> tree_t {
+                    // cout << __PRETTY_FUNCTION__ << endl;
+                    return top_level();
                 }
             };
 

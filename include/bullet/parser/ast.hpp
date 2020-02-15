@@ -1,9 +1,9 @@
 #pragma once
 
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <variant>
-#include <iostream>
 
 #include <bullet/lexer/token.hpp>
 
@@ -17,21 +17,17 @@ namespace bt {
             struct ref {
                 ptr<T> value;
 
-                ref(const T& t): value{std::make_shared<T>(t)} {}
-                ref(T&& t) noexcept: value{std::make_shared<T>(std::move(t))} {}
+                ref(const T& t) : value{std::make_shared<T>(t)} {}
+                ref(T&& t) noexcept : value{std::make_shared<T>(std::move(t))} {}
 
                 ref() = default;
                 ref(const ref&) = default;
                 ref(ref&&) noexcept = default;
                 ref& operator=(const ref&) = default;
                 ref& operator=(ref&&) noexcept = default;
-                ref& operator=(const T& t) {
-                    *value = t;
-                }
-                ref& operator=(T&& t) noexcept {
-                    value.emplace(std::forward(t));
-                }
-                
+                ref& operator=(const T& t) { *value = t; }
+                ref& operator=(T&& t) noexcept { value.emplace(std::forward(t)); }
+
                 T& get() { return *value; }
                 const T& get() const { return *value; }
 
@@ -72,7 +68,7 @@ namespace bt {
             struct tree_t;
             using node_t = ref<tree_t>;
 
-            struct group_t: std::vector<node_t> {
+            struct group_t : std::vector<node_t> {
                 using base_t = std::vector<node_t>;
                 using base_t::base_t;
             };
@@ -83,7 +79,7 @@ namespace bt {
             using named_node_t = std::pair<lexer::identifier_t, node_t>;
             using named_tree_vector_t = std::vector<named_node_t>;
 
-            struct named_group_t: named_tree_vector_t {
+            struct named_group_t : named_tree_vector_t {
                 using base_t = named_tree_vector_t;
                 using base_t::base_t;
             };
@@ -116,7 +112,7 @@ namespace bt {
 
             auto operator==(const invoc_t&, const invoc_t&) -> bool;
             auto operator!=(const invoc_t&, const invoc_t&) -> bool;
-            auto operator<<(std::ostream& os, const invoc_t& invoc)  -> std::ostream&;
+            auto operator<<(std::ostream& os, const invoc_t& invoc) -> std::ostream&;
 
             struct if_t {
                 node_t test;
@@ -131,7 +127,7 @@ namespace bt {
             struct assign_t {
                 node_t lhs, rhs;
             };
-            
+
             auto operator==(const assign_t&, const assign_t&) -> bool;
             auto operator!=(const assign_t&, const assign_t&) -> bool;
             auto operator<<(std::ostream& os, const assign_t& a) -> std::ostream&;
@@ -141,7 +137,7 @@ namespace bt {
                 std::optional<node_t> type;
                 node_t rhs;
             };
-            
+
             auto operator==(const var_def_t&, const var_def_t&) -> bool;
             auto operator!=(const var_def_t&, const var_def_t&) -> bool;
             auto operator<<(std::ostream& os, const var_def_t& a) -> std::ostream&;
@@ -151,7 +147,7 @@ namespace bt {
                 named_group_t arguments;
                 node_t result_type;
             };
-            
+
             auto operator==(const fn_def_t&, const fn_def_t&) -> bool;
             auto operator!=(const fn_def_t&, const fn_def_t&) -> bool;
             auto operator<<(std::ostream& os, const fn_def_t& a) -> std::ostream&;
@@ -164,7 +160,7 @@ namespace bt {
             auto operator!=(const repeat_t&, const repeat_t&) -> bool;
             auto operator<<(std::ostream& os, const repeat_t& repeat) -> std::ostream&;
 
-            struct struct_t: named_tree_vector_t {
+            struct struct_t : named_tree_vector_t {
                 using base_t = named_tree_vector_t;
                 using base_t::base_t;
             };
@@ -204,28 +200,26 @@ namespace bt {
             using integral_literal_t = lexer::literal::numeric::integral_t;
             using floating_point_literal_t = lexer::literal::numeric::floating_point_t;
 
-            using node_base_t = std::variant<
-                std::monostate,
-                string_literal_t,
-                integral_literal_t,
-                floating_point_literal_t,
-                lexer::identifier_t,
-                lexer::token::true_t,
-                lexer::token::false_t,
-                unary_op_t,
-                bin_op_t,
-                invoc_t,
-                if_t,
-                assign_t,
-                fn_def_t,
-                var_def_t,
-                repeat_t,
-                struct_t,
-                def_type_t,
-                let_type_t,
-                template_t,
-                node_t
-            >;
+            using node_base_t = std::variant<std::monostate,
+                                             string_literal_t,
+                                             integral_literal_t,
+                                             floating_point_literal_t,
+                                             lexer::identifier_t,
+                                             lexer::token::true_t,
+                                             lexer::token::false_t,
+                                             unary_op_t,
+                                             bin_op_t,
+                                             invoc_t,
+                                             if_t,
+                                             assign_t,
+                                             fn_def_t,
+                                             var_def_t,
+                                             repeat_t,
+                                             struct_t,
+                                             def_type_t,
+                                             let_type_t,
+                                             template_t,
+                                             node_t>;
 
             struct tree_t : node_base_t {
                 using base_t = node_base_t;
@@ -236,6 +230,6 @@ namespace bt {
             auto operator<<(std::ostream& os, const tree_t& pt) -> std::ostream&;
             auto operator<<(std::ostream& os, const group_t& g) -> std::ostream&;
             auto operator<<(std::ostream& os, const if_t& if_) -> std::ostream&;
-        }  // namespace ast
+        }  // namespace syntax
     }      // namespace parser
 }  // namespace bt
