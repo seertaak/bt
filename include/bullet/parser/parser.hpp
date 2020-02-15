@@ -164,19 +164,16 @@ namespace bt {
 
                     const auto and_ = maybe<token::and_t>();
 
-                    if (!and_) return lhs;
-                    eat();
+                    if (const auto and_ = eat_if<token::and_t>())
+                        return bin_op_t{and_->token, lhs, and_test()};
 
-                    return bin_op_t{*and_, lhs, and_test()};
+                    return lhs;
                 }
 
                 auto not_test() -> tree_t {
-                    // cout << __PRETTY_FUNCTION__ << endl;
-                    const auto not_ = maybe<token::not_t>();
-                    if (!not_) return comparison();
-                    eat();
-
-                    return unary_op_t{*not_, not_test()};
+                    if (const auto not_ = eat_if<token::not_t>())
+                        return unary_op_t{not_->token, not_test()};
+                    return comparison();
                 }
 
                 auto comparison() -> tree_t {
