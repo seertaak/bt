@@ -53,7 +53,7 @@ def run():
             elif symbol in '?!':
                 categories = ['unary_postfix_op']
 
-            if symbol in '+,-,*,/,%,^,=,==,!=,<=,>=,<,>,and,not,or,xor,+=,-=,*=,/=,%=,^=,=>,->,`,|,|=,:'.split(','):
+            if symbol in '+,-,*,/,%,^,=,==,!=,<=,>=,<,>,and,not,or,xor,+=,-=,*=,/=,%=,^=,=>,->,`,|,|=,:,:*,:/,:%,>>,<<,**'.split(','):
                 categories.append('binary_op')
 
         class_defs.append(def_class.render(

@@ -224,6 +224,35 @@ namespace bt {
             struct tree_t : node_base_t {
                 using base_t = node_base_t;
                 using base_t::base_t;
+
+                template <typename T>
+                inline auto is() const -> bool {
+                    return std::holds_alternative<T>(*this);
+                }
+
+                inline operator bool() const {
+                    return !is<std::monostate>();
+                }
+
+                template <typename T>
+                inline auto get() const -> const T& {
+                    return std::get<T>(*this);
+                }
+
+                template <typename T>
+                inline auto get() -> T& {
+                    return std::get<T>(*this);
+                }
+
+                template <typename T>
+                inline auto get_if() const -> const T* {
+                    return std::get_if<T>(this);
+                }
+
+                template <typename T>
+                inline auto get_if() -> T* {
+                    return std::get_if<T>(this);
+                }
             };
 
             auto operator<<(std::ostream& os, const node_t& t) -> std::ostream&;

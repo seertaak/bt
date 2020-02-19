@@ -262,6 +262,24 @@ namespace bt {
                 static constexpr const uint32_t categories = punctuation;
                 static constexpr const bool is_reserved_word = false;
             };
+            struct colon_percentage_t : token_tag {
+                static constexpr const std::string_view name{"COLON_PERCENTAGE"};
+                static constexpr const std::string_view token{":%"};
+                static constexpr const uint32_t categories = binary_op;
+                static constexpr const bool is_reserved_word = false;
+            };
+            struct colon_slash_t : token_tag {
+                static constexpr const std::string_view name{"COLON_SLASH"};
+                static constexpr const std::string_view token{":/"};
+                static constexpr const uint32_t categories = binary_op;
+                static constexpr const bool is_reserved_word = false;
+            };
+            struct colon_star_t : token_tag {
+                static constexpr const std::string_view name{"COLON_STAR"};
+                static constexpr const std::string_view token{":*"};
+                static constexpr const uint32_t categories = binary_op;
+                static constexpr const bool is_reserved_word = false;
+            };
             struct equal_t : token_tag {
                 static constexpr const std::string_view name{"EQUAL"};
                 static constexpr const std::string_view token{"=="};
@@ -304,6 +322,12 @@ namespace bt {
                 static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
+            struct left_left_t : token_tag {
+                static constexpr const std::string_view name{"LEFT_LEFT"};
+                static constexpr const std::string_view token{"<<"};
+                static constexpr const uint32_t categories = binary_op;
+                static constexpr const bool is_reserved_word = false;
+            };
             struct leq_t : token_tag {
                 static constexpr const std::string_view name{"LEQ"};
                 static constexpr const std::string_view token{"<="};
@@ -340,6 +364,12 @@ namespace bt {
                 static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
+            struct right_right_t : token_tag {
+                static constexpr const std::string_view name{"RIGHT_RIGHT"};
+                static constexpr const std::string_view token{">>"};
+                static constexpr const uint32_t categories = binary_op;
+                static constexpr const bool is_reserved_word = false;
+            };
             struct slash_equal_t : token_tag {
                 static constexpr const std::string_view name{"SLASH_EQUAL"};
                 static constexpr const std::string_view token{"/="};
@@ -349,6 +379,12 @@ namespace bt {
             struct star_equal_t : token_tag {
                 static constexpr const std::string_view name{"STAR_EQUAL"};
                 static constexpr const std::string_view token{"*="};
+                static constexpr const uint32_t categories = binary_op;
+                static constexpr const bool is_reserved_word = false;
+            };
+            struct star_star_t : token_tag {
+                static constexpr const std::string_view name{"STAR_STAR"};
+                static constexpr const std::string_view token{"**"};
                 static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
             };
@@ -596,6 +632,9 @@ namespace bt {
                                                  var_t,
                                                  xor_t,
                                                  backslash_t,
+                                                 colon_percentage_t,
+                                                 colon_slash_t,
+                                                 colon_star_t,
                                                  equal_t,
                                                  fn_t,
                                                  geq_t,
@@ -603,14 +642,17 @@ namespace bt {
                                                  if_t,
                                                  in_t,
                                                  is_t,
+                                                 left_left_t,
                                                  leq_t,
                                                  minus_equal_t,
                                                  not_equal_t,
                                                  or_t,
                                                  percentage_equal_t,
                                                  plus_equal_t,
+                                                 right_right_t,
                                                  slash_equal_t,
                                                  star_equal_t,
+                                                 star_star_t,
                                                  thick_arrow_t,
                                                  thin_arrow_t,
                                                  ampersand_t,
@@ -681,6 +723,9 @@ namespace bt {
                                 token::var_t,
                                 token::xor_t,
                                 token::backslash_t,
+                                token::colon_percentage_t,
+                                token::colon_slash_t,
+                                token::colon_star_t,
                                 token::equal_t,
                                 token::fn_t,
                                 token::geq_t,
@@ -688,14 +733,17 @@ namespace bt {
                                 token::if_t,
                                 token::in_t,
                                 token::is_t,
+                                token::left_left_t,
                                 token::leq_t,
                                 token::minus_equal_t,
                                 token::not_equal_t,
                                 token::or_t,
                                 token::percentage_equal_t,
                                 token::plus_equal_t,
+                                token::right_right_t,
                                 token::slash_equal_t,
                                 token::star_equal_t,
+                                token::star_star_t,
                                 token::thick_arrow_t,
                                 token::thin_arrow_t,
                                 token::ampersand_t,
@@ -773,6 +821,9 @@ namespace bt {
         const token_t VAR{token::var_t{}};
         const token_t XOR{token::xor_t{}};
         const token_t BACKSLASH{token::backslash_t{}};
+        const token_t COLON_PERCENTAGE{token::colon_percentage_t{}};
+        const token_t COLON_SLASH{token::colon_slash_t{}};
+        const token_t COLON_STAR{token::colon_star_t{}};
         const token_t EQUAL{token::equal_t{}};
         const token_t FN{token::fn_t{}};
         const token_t GEQ{token::geq_t{}};
@@ -780,14 +831,17 @@ namespace bt {
         const token_t IF{token::if_t{}};
         const token_t IN{token::in_t{}};
         const token_t IS{token::is_t{}};
+        const token_t LEFT_LEFT{token::left_left_t{}};
         const token_t LEQ{token::leq_t{}};
         const token_t MINUS_EQUAL{token::minus_equal_t{}};
         const token_t NOT_EQUAL{token::not_equal_t{}};
         const token_t OR{token::or_t{}};
         const token_t PERCENTAGE_EQUAL{token::percentage_equal_t{}};
         const token_t PLUS_EQUAL{token::plus_equal_t{}};
+        const token_t RIGHT_RIGHT{token::right_right_t{}};
         const token_t SLASH_EQUAL{token::slash_equal_t{}};
         const token_t STAR_EQUAL{token::star_equal_t{}};
+        const token_t STAR_STAR{token::star_star_t{}};
         const token_t THICK_ARROW{token::thick_arrow_t{}};
         const token_t THIN_ARROW{token::thin_arrow_t{}};
         const token_t AMPERSAND{token::ampersand_t{}};

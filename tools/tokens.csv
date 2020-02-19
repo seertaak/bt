@@ -47,6 +47,8 @@ geq,>=
 equal,==
 not_equal,!=
 thick_arrow,=>
+left_left,<<
+right_right,>>
 thin_arrow,->
 question_mark,?
 bar,|
@@ -74,9 +76,13 @@ assign,=
 plus,+
 minus,-
 star,*
+star_star,**
 slash,/
 hat,^
 percentage,%
+colon_star,:*
+colon_slash,:/
+colon_percentage,:%
 true,true
 false,false
 null_lit,null

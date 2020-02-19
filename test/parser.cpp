@@ -92,3 +92,37 @@ TEST_CASE("Boolean comparisons", "[parser]") {
             tree_t(unary_op_t{
                 NOT, node_t(bin_op_t{IS, node_t(identifier_t("x")), node_t(identifier_t("y"))})}));
 }
+
+TEST_CASE("Arithmetic expressions", "[parser]") {
+    REQUIRE(ast("x | y") ==
+        tree_t(bin_op_t{
+            BAR, 
+            node_t(identifier_t("x")),
+            node_t(identifier_t("y"))
+        })
+    );
+
+    REQUIRE(ast("x | y | z") ==
+        tree_t(bin_op_t{
+            BAR, 
+            tree_t(bin_op_t{
+                BAR, 
+                node_t(identifier_t("x")),
+                node_t(identifier_t("y"))
+            }),
+            node_t(identifier_t("z"))
+        })
+    );
+
+    REQUIRE(ast("x = y + 2") ==
+        tree_t(bin_op_t{
+            BAR, 
+            tree_t(bin_op_t{
+                BAR, 
+                node_t(identifier_t("x")),
+                node_t(identifier_t("y"))
+            }),
+            node_t(identifier_t("z"))
+        })
+    );
+}
