@@ -1,8 +1,8 @@
 #include <bullet/parser/parser.hpp>
 
+#include <sstream>
 #include <string_view>
 #include <vector>
-#include <sstream>
 
 #include <boost/function_types/function_arity.hpp>
 #include <boost/function_types/function_type.hpp>
@@ -318,7 +318,7 @@ namespace bt {
                     return top_level();
                 }
             };
-        }  // namespace details
+        }  // namespace
 
         namespace details {
             auto parse(input_t&& input) -> tree_t {
@@ -326,5 +326,5 @@ namespace bt {
                 return p.parse();
             }
         }  // namespace details
-    }  // namespace parser
+    }      // namespace parser
 }  // namespace bt

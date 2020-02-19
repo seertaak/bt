@@ -98,34 +98,11 @@ TEST_CASE("Arithmetic expressions", "[parser]") {
     const auto y = node_t(identifier_t("y"));
     const auto z = node_t(identifier_t("z"));
 
-    REQUIRE(ast("x | y") ==
-        tree_t(bin_op_t{
-            BAR, 
-            x,
-            y
-        })
-    );
+    REQUIRE(ast("x | y") == tree_t(bin_op_t{BAR, x, y}));
 
-    REQUIRE(ast("x | y | z") ==
-        tree_t(bin_op_t{
-            BAR, 
-            tree_t(bin_op_t{
-                BAR, 
-                x,
-                y
-            }),
-            z
-        })
-    );
+    REQUIRE(ast("x | y | z") == tree_t(bin_op_t{BAR, tree_t(bin_op_t{BAR, x, y}), z}));
 
     REQUIRE(ast("x = y + 2") ==
-        tree_t(syntax::assign_t{
-            x,
-            node_t(bin_op_t{
-                PLUS, 
-                y,
-                node_t(integral_literal_t(2, 'i', 64))
-            })
-        })
-    );
+            tree_t(syntax::assign_t{
+                x, node_t(bin_op_t{PLUS, y, node_t(integral_literal_t(2, 'i', 64))})}));
 }
