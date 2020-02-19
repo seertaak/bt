@@ -94,11 +94,15 @@ TEST_CASE("Boolean comparisons", "[parser]") {
 }
 
 TEST_CASE("Arithmetic expressions", "[parser]") {
+    const auto x = node_t(identifier_t("x"));
+    const auto y = node_t(identifier_t("y"));
+    const auto z = node_t(identifier_t("z"));
+
     REQUIRE(ast("x | y") ==
         tree_t(bin_op_t{
             BAR, 
-            node_t(identifier_t("x")),
-            node_t(identifier_t("y"))
+            x,
+            y
         })
     );
 
@@ -107,22 +111,21 @@ TEST_CASE("Arithmetic expressions", "[parser]") {
             BAR, 
             tree_t(bin_op_t{
                 BAR, 
-                node_t(identifier_t("x")),
-                node_t(identifier_t("y"))
+                x,
+                y
             }),
-            node_t(identifier_t("z"))
+            z
         })
     );
 
     REQUIRE(ast("x = y + 2") ==
-        tree_t(bin_op_t{
-            BAR, 
-            tree_t(bin_op_t{
-                BAR, 
-                node_t(identifier_t("x")),
-                node_t(identifier_t("y"))
-            }),
-            node_t(identifier_t("z"))
+        tree_t(syntax::assign_t{
+            x,
+            node_t(bin_op_t{
+                PLUS, 
+                y,
+                node_t(integral_literal_t(2, 'i', 64))
+            })
         })
     );
 }
