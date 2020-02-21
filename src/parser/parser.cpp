@@ -76,7 +76,7 @@ namespace bt {
                     const auto t = peek();
                     if (!holds_alternative<T>(t.token)) {
                         auto msg = stringstream();
-                        msg << "Expected a " << token_symbol(T{}) << " but got a "
+                        msg << "Expected a \"" << token_symbol(T{}) << "\" but got a "
                             << token_symbol(t.token) << " at " << t.location;
                         throw std::runtime_error(msg.str());
                     }
@@ -148,10 +148,37 @@ namespace bt {
 
                 auto top_level() -> tree_t { return statement(); }
 
+                auto line_end_group() -> group_t {
+                    auto result = group_t();
+                    do {
+                        result.emplace_back(semicolon_group());
+                    } while (eat_if<token::line_end_t>());
+                    return result;
+                }
+
+                auto semicolon_group() -> group_t {
+                    auto result = group_t();
+                    do {
+                        result.emplace_back(comma_group());
+                    } while (eat_if<token::semicolon_t>());
+                    return result;
+                }
+
+                auto comma_group() -> group_t {
+                    auto result = group_t();
+                    do {
+                        result.emplace_back(top_level());
+                    } while (eat_if<token::comma_t>());
+                    return result;
+                }
+
                 auto statement() -> tree_t {
                     if (const auto result = eat_if([this](token::var_t) -> tree_t {
                             const auto lhs = expect<lexer::identifier_t>();
-                            expect<token::equal_t>();
+
+                            // TODO: implement the " : TYPE " part.
+
+                            expect<token::assign_t>();
                             const auto rhs = assignment_stmt();
                             return var_def_t{std::move(lhs), nullopt, std::move(rhs)};
                         }))
@@ -169,7 +196,6 @@ namespace bt {
                 }
 
                 auto or_test() -> tree_t {
-                    // cout << __PRETTY_FUNCTION__ << endl;
                     auto result = and_test();
 
                     while (const auto or_ = eat_if<token::or_t>())
@@ -280,7 +306,7 @@ namespace bt {
                 }
 
                 auto power() -> tree_t {
-                    const auto result = atom();
+                    const auto result = atom_expr();
 
                     if (const auto op = eat_if<token::star_star_t>())
                         return bin_op_t{op->token, result, factor()};
@@ -297,8 +323,20 @@ namespace bt {
                 },
                 */
 
+                auto atom_expr() -> tree_t {
+                    const auto a = atom();
+
+                    if (const auto result = eat_if([&](token::oparen_t) -> tree_t {
+                            const auto args = line_end_group();
+                            expect<token::cparen_t>();
+                            return invoc_t{a, args};
+                        }))
+                        return result;
+
+                    return a;
+                }
+
                 auto atom() -> tree_t {
-                    // cout << __PRETTY_FUNCTION__ << endl;
                     return eat_or_error(
                         [this](token::oparen_t) -> tree_t {
                             const auto e = top_level();

@@ -106,7 +106,7 @@ namespace bt {
             auto operator<<(std::ostream& os, const bin_op_t& binop) -> std::ostream&;
 
             struct invoc_t {
-                lexer::identifier_t target;
+                node_t target;
                 group_t arguments;
             };
 
@@ -210,6 +210,7 @@ namespace bt {
                                              unary_op_t,
                                              bin_op_t,
                                              invoc_t,
+                                             group_t,
                                              if_t,
                                              assign_t,
                                              fn_def_t,

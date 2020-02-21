@@ -101,8 +101,22 @@ TEST_CASE("Arithmetic expressions", "[parser]") {
     REQUIRE(ast("x | y") == tree_t(bin_op_t{BAR, x, y}));
 
     REQUIRE(ast("x | y | z") == tree_t(bin_op_t{BAR, tree_t(bin_op_t{BAR, x, y}), z}));
+}
 
-    REQUIRE(ast("x = y + 2") ==
-            tree_t(syntax::assign_t{
-                x, node_t(bin_op_t{PLUS, y, node_t(integral_literal_t(2, 'i', 64))})}));
+TEST_CASE("Statements", "[parser]") {
+    const auto x = node_t(identifier_t("x"));
+    const auto y = node_t(identifier_t("y"));
+    const auto z = node_t(identifier_t("z"));
+
+    const auto two = node_t(integral_literal_t(2, 'i', 64));
+    const auto three = node_t(integral_literal_t(3, 'i', 64));
+    const auto four = node_t(integral_literal_t(4, 'i', 64));
+
+    REQUIRE(ast("x = y + 2") == tree_t(syntax::assign_t{x, node_t(bin_op_t{PLUS, y, two})}));
+
+    REQUIRE(ast("var x = y + 2") ==
+            tree_t(syntax::var_def_t{identifier_t("x"), nullopt, node_t(bin_op_t{PLUS, y, two})}));
+
+    REQUIRE(ast("some_fn(2 , 3 , 4 )") ==
+            tree_t(syntax::var_def_t{identifier_t("x"), nullopt, node_t(bin_op_t{PLUS, y, two})}));
 }
