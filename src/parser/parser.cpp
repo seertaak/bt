@@ -188,10 +188,16 @@ namespace bt {
                         do {
                             arg_names.emplace_back(expect<identifier_t>());
                         } while (eat_if<token::comma_t>());
-                        expect<token::colon_t>();
-                        arg_types.emplace_back(expression());
-                        while (!arg_types.empty() && arg_types.size() < arg_names.size())
-                            arg_types.push_back(arg_types.back());
+
+                        if (eat_if<token::colon_t>()) {
+                            arg_types.emplace_back(expression());
+
+                            while (!arg_types.empty() && arg_types.size() < arg_names.size())
+                                arg_types.push_back(arg_types.back());
+                        } else {
+                            while (arg_types.size() < arg_names.size())
+                                arg_types.push_back(node_t());
+                        }
                     } while (eat_if<token::comma_t>());
                 }
 
@@ -230,12 +236,13 @@ namespace bt {
 
                             auto type = struct_t();
 
-                            expect<token::oparen_t>();
-                            if (!eat_if<token::cparen_t>()) {
-                                parse_fn_def_args_line_end(arg_names, arg_types);
-                                expect<token::cparen_t>();
-                                for (auto i = 0; i < arg_names.size(); i++)
-                                    type.emplace_back(arg_names[i], arg_types[i]);
+                            if (eat_if<token::oparen_t>()) {
+                                if (!eat_if<token::cparen_t>()) {
+                                    parse_fn_def_args_line_end(arg_names, arg_types);
+                                    expect<token::cparen_t>();
+                                    for (auto i = 0; i < arg_names.size(); i++)
+                                        type.emplace_back(arg_names[i], arg_types[i]);
+                                }
                             }
 
                             if (name) return def_type_t{*name, node_t(type)};
@@ -268,16 +275,17 @@ namespace bt {
                             auto arg_names = std::vector<lexer::identifier_t>();
                             auto arg_types = std::vector<node_t>();
 
-                            expect<token::oparen_t>();
-                            if (!eat_if<token::cparen_t>()) {
-                                parse_fn_def_args_line_end(arg_names, arg_types);
-                                expect<token::cparen_t>();
+                            if (eat_if<token::oparen_t>()) {
+                                if (!eat_if<token::cparen_t>()) {
+                                    parse_fn_def_args_line_end(arg_names, arg_types);
+                                    expect<token::cparen_t>();
+                                }
                             }
 
                             // x -> x + y / z.size() | y, var z
 
                             auto result_type = node_t(tree_t());
-                            if (eat_if<token::thin_arrow_t>())
+                            if (eat_if<token::colon_t>())
                                 result_type = node_t(expression());
 
                             expect<token::assign_t>();
@@ -449,13 +457,14 @@ namespace bt {
                         [this](token::fn_t) -> tree_t {
                             auto ast = fn_expr_t();
 
-                            expect<token::oparen_t>();
-                            if (!eat_if<token::cparen_t>()) {
-                                parse_fn_def_args_line_end(ast.arg_names, ast.arg_types);
-                                expect<token::cparen_t>();
+                            if (eat_if<token::oparen_t>()) { 
+                                if (!eat_if<token::cparen_t>()) {
+                                    parse_fn_def_args_line_end(ast.arg_names, ast.arg_types);
+                                    expect<token::cparen_t>();
+                                }
                             }
 
-                            if (eat_if<token::thin_arrow_t>())
+                            if (eat_if<token::colon_t>())
                                 ast.result_type = node_t(expression());
 
                             expect<token::assign_t>();
@@ -612,10 +621,16 @@ namespace bt {
                 }
 
                 auto data() -> data_t {
+                    const auto old_code = code;
+                    code = false;
+
                     auto result = data_t();
                     do {
                         result.emplace_back(invoc_args_semicolon());
                     } while (eat_if<token::line_end_t>());
+
+                    code = old_code;
+
                     if (result.size() == 1 && result.front().get().is<data_t>()) 
                         return result.front().get().get<data_t>();
                     return result;
@@ -631,9 +646,12 @@ namespace bt {
                 }
 
                 auto invoc_args_comma() -> tree_t {
+                    if (peek().token == OPAREN)
+                        return delimited_data();
+
                     auto result = data_t();
                     do {
-                        result.emplace_back(statement());
+                        result.emplace_back(expression());
                     } while (eat_if<token::comma_t>());
                     if (result.size() == 1) return result.front();
                     return result;
@@ -684,19 +702,10 @@ namespace bt {
                             return d;
                         },
                         [this](token::data_t) -> tree_t {
-                            const auto old_code = code;
-                            code = false;
-                            const auto result = atom_expr();
-                            code = old_code;
-
-                            return result;
+                            return delimited_data();
                         },
                         [this](token::do_t) -> tree_t {
-                            const auto old_code = code;
-                            code = true;
-                            const auto result = atom_expr();
-                            code = old_code;
-                            return result;
+                            return delimited_code();
                         },
                         [](identifier_t id) { return tree_t(id); },
                         [](string_literal_t s) { return tree_t(s); },

@@ -64,7 +64,10 @@ namespace bt {
                 for (auto i = 0; i < a.arg_names.size(); i++) {
                     if (first) first = false;
                     else os << ", ";
-                    os << a.arg_names[i] << ":" << a.arg_types[i];
+                    os << a.arg_names[i];
+                    const auto& t = a.arg_types[i];
+                    if (t.get())
+                        os << ":" << t;
                 }
                 os << ")";
                 if (a.result_type.get())
@@ -74,6 +77,7 @@ namespace bt {
 
                 if (!a.closure_params.empty()) {
                     first = true;
+                    os << " with ";
                     for (auto&& p: a.closure_params) {
                         if (first) first = false;
                         else os << ", ";
@@ -92,20 +96,16 @@ namespace bt {
                 for (auto i = 0; i < a.arg_names.size(); i++) {
                     if (first) first = false;
                     else os << ", ";
-                    os << a.arg_names[i] << ": " << a.arg_types[i];
+                    os << a.arg_names[i];
+                    const auto& t = a.arg_types[i];
+                    if (t.get())
+                        os << ":" << t;
                 }
                 os << "]";
                 if (a.result_type.get())
                     os << ", result_tye=" << a.result_type;
 
                 os << ", body=" << a.body << "]";
-
-                first = true;
-                for (auto i = 0; i < a.arg_names.size(); i++) {
-                    if (first) first = false;
-                    else os << ", ";
-                    os << a.arg_names[i] << ": " << a.arg_types[i];
-                }
 
                 return os;
             }

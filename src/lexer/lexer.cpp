@@ -522,6 +522,7 @@ namespace bt {
                             tokens.back() = source_token_t(CPAREN, line, column, column);
                         else
                             tokens.emplace_back(CPAREN, line, column, column);
+                        tokens.emplace_back(LINE_END, line, column, column);
                         tokens.emplace_back(OPAREN, line, column, column);
                         pos += 2;
                     } else if (s == "..") {

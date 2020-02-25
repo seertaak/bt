@@ -1,6 +1,9 @@
-map:
-    xs
-    fn(x:int) = x + z with:
-        var
-        z = 2, a = 4
+data:
+    :
+        "Martin"
+        "Alex"
+        --
+        find("Ben", 10)
+        "Blah" + 10
+
 
