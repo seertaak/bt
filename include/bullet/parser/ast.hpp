@@ -20,7 +20,7 @@ namespace bt {
                 ref(const T& t) : value{std::make_shared<T>(t)} {}
                 ref(T&& t) noexcept : value{std::make_shared<T>(std::move(t))} {}
 
-                ref() = default;
+                ref() : value{std::make_shared<T>()} {}
                 ref(const ref&) = default;
                 ref(ref&&) noexcept = default;
                 ref& operator=(const ref&) = default;
@@ -105,24 +105,49 @@ namespace bt {
             auto operator!=(const bin_op_t&, const bin_op_t&) -> bool;
             auto operator<<(std::ostream& os, const bin_op_t& binop) -> std::ostream&;
 
+            struct data_t : std::vector<node_t> {
+                using base_t = std::vector<node_t>;
+                using base_t::base_t;
+            };
+
+            auto operator==(const data_t&, const data_t&) -> bool;
+            auto operator!=(const data_t&, const data_t&) -> bool;
+            auto operator<<(std::ostream& os, const data_t& repeat) -> std::ostream&;
+
             struct invoc_t {
                 node_t target;
-                group_t arguments;
+                data_t arguments;
             };
 
             auto operator==(const invoc_t&, const invoc_t&) -> bool;
             auto operator!=(const invoc_t&, const invoc_t&) -> bool;
             auto operator<<(std::ostream& os, const invoc_t& invoc) -> std::ostream&;
-
+            
             struct if_t {
-                node_t test;
-                node_t then_branch;
-                std::optional<node_t> else_branch;
+                std::vector<node_t> elif_tests, elif_branches;
+                node_t else_branch;
             };
 
             auto operator==(const if_t&, const if_t&) -> bool;
             auto operator!=(const if_t&, const if_t&) -> bool;
             auto operator<<(std::ostream& os, const if_t& if_) -> std::ostream&;
+
+            struct elif_t {
+                node_t test;
+                node_t body;
+            };
+
+            auto operator==(const elif_t&, const elif_t&) -> bool;
+            auto operator!=(const elif_t&, const elif_t&) -> bool;
+            auto operator<<(std::ostream& os, const elif_t& elif_) -> std::ostream&;
+
+            struct else_t {
+                node_t body;
+            };
+
+            auto operator==(const else_t&, const else_t&) -> bool;
+            auto operator!=(const else_t&, const else_t&) -> bool;
+            auto operator<<(std::ostream& os, const else_t& else_) -> std::ostream&;
 
             struct assign_t {
                 node_t lhs, rhs;
@@ -134,7 +159,7 @@ namespace bt {
 
             struct var_def_t {
                 lexer::identifier_t name;
-                std::optional<node_t> type;
+                node_t type;
                 node_t rhs;
             };
 
@@ -142,23 +167,98 @@ namespace bt {
             auto operator!=(const var_def_t&, const var_def_t&) -> bool;
             auto operator<<(std::ostream& os, const var_def_t& a) -> std::ostream&;
 
+            struct fn_closure_param_t {
+                bool var;
+                std::optional<lexer::identifier_t> identifier;
+                node_t expression;
+            };
+
+            auto operator==(const fn_closure_param_t&, const fn_closure_param_t&) -> bool;
+            auto operator!=(const fn_closure_param_t&, const fn_closure_param_t&) -> bool;
+            auto operator<<(std::ostream& os, const fn_closure_param_t& a) -> std::ostream&;
+
+            struct fn_expr_t {
+                std::vector<lexer::identifier_t> arg_names;
+                std::vector<node_t> arg_types;
+                node_t result_type;
+                node_t body;
+                std::vector<fn_closure_param_t> closure_params;
+            };
+
+            auto operator==(const fn_expr_t&, const fn_expr_t&) -> bool;
+            auto operator!=(const fn_expr_t&, const fn_expr_t&) -> bool;
+            auto operator<<(std::ostream& os, const fn_expr_t& a) -> std::ostream&;
+
             struct fn_def_t {
                 lexer::identifier_t name;
-                named_group_t arguments;
+                std::vector<lexer::identifier_t> arg_names;
+                std::vector<node_t> arg_types;
                 node_t result_type;
+                node_t body;
             };
 
             auto operator==(const fn_def_t&, const fn_def_t&) -> bool;
             auto operator!=(const fn_def_t&, const fn_def_t&) -> bool;
             auto operator<<(std::ostream& os, const fn_def_t& a) -> std::ostream&;
 
-            struct repeat_t {
-                group_t body;
+            struct return_t { 
+                node_t value;
+            };
+            auto operator<<(std::ostream& os, const return_t&) -> std::ostream&;
+            auto operator==(const return_t&, const return_t&) -> bool;
+            auto operator!=(const return_t&, const return_t&) -> bool;
+
+            struct yield_t { 
+                node_t value;
+            };
+            auto operator<<(std::ostream& os, const yield_t&) -> std::ostream&;
+            auto operator==(const yield_t&, const yield_t&) -> bool;
+            auto operator!=(const yield_t&, const yield_t&) -> bool;
+
+            struct break_t {};
+            auto operator<<(std::ostream& os, const break_t&) -> std::ostream&;
+            auto operator==(const break_t&, const break_t&) -> bool;
+            auto operator!=(const break_t&, const break_t&) -> bool;
+
+            struct continue_t {};
+            auto operator<<(std::ostream& os, const continue_t&) -> std::ostream&;
+            auto operator==(const continue_t&, const continue_t&) -> bool;
+            auto operator!=(const continue_t&, const continue_t&) -> bool;
+
+            struct repeat_t : std::vector<node_t> {
+                using base_t = std::vector<node_t>;
+                using base_t::base_t;
             };
 
             auto operator==(const repeat_t&, const repeat_t&) -> bool;
             auto operator!=(const repeat_t&, const repeat_t&) -> bool;
             auto operator<<(std::ostream& os, const repeat_t& repeat) -> std::ostream&;
+
+            struct while_t {
+                node_t test, body;
+            };
+
+            auto operator==(const while_t&, const while_t&) -> bool;
+            auto operator!=(const while_t&, const while_t&) -> bool;
+            auto operator<<(std::ostream& os, const while_t& while_) -> std::ostream&;
+
+            struct for_t {
+                lexer::identifier_t var_lhs;
+                node_t var_rhs, body;
+            };
+
+            auto operator==(const for_t&, const for_t&) -> bool;
+            auto operator!=(const for_t&, const for_t&) -> bool;
+            auto operator<<(std::ostream& os, const for_t& for_) -> std::ostream&;
+
+            struct block_t : std::vector<node_t> {
+                using base_t = std::vector<node_t>;
+                using base_t::base_t;
+            };
+
+            auto operator==(const block_t&, const block_t&) -> bool;
+            auto operator!=(const block_t&, const block_t&) -> bool;
+            auto operator<<(std::ostream& os, const block_t& block) -> std::ostream&;
 
             struct struct_t : named_tree_vector_t {
                 using base_t = named_tree_vector_t;
@@ -167,7 +267,7 @@ namespace bt {
 
             auto operator==(const struct_t&, const struct_t&) -> bool;
             auto operator!=(const struct_t&, const struct_t&) -> bool;
-            auto operator<<(std::ostream& os, const named_tree_vector_t& t) -> std::ostream&;
+            auto operator<<(std::ostream& os, const struct_t& t) -> std::ostream&;
 
             struct def_type_t {
                 lexer::identifier_t name;
@@ -209,18 +309,30 @@ namespace bt {
                                              lexer::token::false_t,
                                              unary_op_t,
                                              bin_op_t,
+                                             block_t,
                                              invoc_t,
-                                             group_t,
+                                             data_t,
                                              if_t,
+                                             elif_t,
+                                             else_t,
                                              assign_t,
                                              fn_def_t,
+                                             fn_expr_t,
                                              var_def_t,
                                              repeat_t,
+                                             for_t,
+                                             while_t,
+                                             break_t,
+                                             continue_t,
+                                             return_t,
+                                             yield_t,
                                              struct_t,
                                              def_type_t,
                                              let_type_t,
                                              template_t,
                                              node_t>;
+
+
 
             struct tree_t : node_base_t {
                 using base_t = node_base_t;
@@ -242,6 +354,16 @@ namespace bt {
 
                 template <typename T>
                 inline auto get() -> T& {
+                    return std::get<T>(*this);
+                }
+
+                template <typename T>
+                inline auto as() const -> const T& {
+                    return std::get<T>(*this);
+                }
+
+                template <typename T>
+                inline auto as() -> T& {
                     return std::get<T>(*this);
                 }
 

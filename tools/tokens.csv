@@ -1,3 +1,4 @@
+do,do
 eol,
 eoi,
 indent,
@@ -22,6 +23,7 @@ var,var
 data,data
 object,object
 const,const
+alias,alias
 type,type
 fn,fn
 def,def
@@ -31,10 +33,16 @@ while,while
 repeat,repeat
 until,until
 break,break
+continue,continue
+return,return
+yield,yield
 goto,goto
 throw,throw
 catch,catch
 if,if
+then,then
+else,else
+elif,elif
 case,case
 plus_equal,+=
 minus_equal,-=
@@ -87,3 +95,5 @@ true,true
 false,false
 null_lit,null
 line_end,,
+where,where
+with,with

@@ -63,6 +63,12 @@ namespace bt {
                 return T::token;
             }
 
+            struct continue_t : token_tag {
+                static constexpr const std::string_view name{"CONTINUE"};
+                static constexpr const std::string_view token{"continue"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
             struct verbatim_t : token_tag {
                 static constexpr const std::string_view name{"VERBATIM"};
                 static constexpr const std::string_view token{"verbatim"};
@@ -96,6 +102,18 @@ namespace bt {
             struct repeat_t : token_tag {
                 static constexpr const std::string_view name{"REPEAT"};
                 static constexpr const std::string_view token{"repeat"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
+            struct return_t : token_tag {
+                static constexpr const std::string_view name{"RETURN"};
+                static constexpr const std::string_view token{"return"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
+            struct alias_t : token_tag {
+                static constexpr const std::string_view name{"ALIAS"};
+                static constexpr const std::string_view token{"alias"};
                 static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
@@ -141,9 +159,21 @@ namespace bt {
                 static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
+            struct where_t : token_tag {
+                static constexpr const std::string_view name{"WHERE"};
+                static constexpr const std::string_view token{"where"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
             struct while_t : token_tag {
                 static constexpr const std::string_view name{"WHILE"};
                 static constexpr const std::string_view token{"while"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
+            struct yield_t : token_tag {
+                static constexpr const std::string_view name{"YIELD"};
+                static constexpr const std::string_view token{"yield"};
                 static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
@@ -156,6 +186,18 @@ namespace bt {
             struct data_t : token_tag {
                 static constexpr const std::string_view name{"DATA"};
                 static constexpr const std::string_view token{"data"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
+            struct elif_t : token_tag {
+                static constexpr const std::string_view name{"ELIF"};
+                static constexpr const std::string_view token{"elif"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
+            struct else_t : token_tag {
+                static constexpr const std::string_view name{"ELSE"};
+                static constexpr const std::string_view token{"else"};
                 static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
@@ -195,6 +237,12 @@ namespace bt {
                 static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
+            struct then_t : token_tag {
+                static constexpr const std::string_view name{"THEN"};
+                static constexpr const std::string_view token{"then"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
             struct true_t : token_tag {
                 static constexpr const std::string_view name{"TRUE"};
                 static constexpr const std::string_view token{"true"};
@@ -204,6 +252,12 @@ namespace bt {
             struct type_t : token_tag {
                 static constexpr const std::string_view name{"TYPE"};
                 static constexpr const std::string_view token{"type"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
+            };
+            struct with_t : token_tag {
+                static constexpr const std::string_view name{"WITH"};
+                static constexpr const std::string_view token{"with"};
                 static constexpr const uint32_t categories = reserved_word;
                 static constexpr const bool is_reserved_word = true;
             };
@@ -279,6 +333,12 @@ namespace bt {
                 static constexpr const std::string_view token{":*"};
                 static constexpr const uint32_t categories = binary_op;
                 static constexpr const bool is_reserved_word = false;
+            };
+            struct do_t : token_tag {
+                static constexpr const std::string_view name{"DO"};
+                static constexpr const std::string_view token{"do"};
+                static constexpr const uint32_t categories = reserved_word;
+                static constexpr const bool is_reserved_word = true;
             };
             struct equal_t : token_tag {
                 static constexpr const std::string_view name{"EQUAL"};
@@ -599,12 +659,15 @@ namespace bt {
                 static constexpr const bool is_reserved_word = false;
             };
 
-            constexpr auto types = hana::tuple_t<verbatim_t,
+            constexpr auto types = hana::tuple_t<continue_t,
+                                                 verbatim_t,
                                                  private_t,
                                                  import_t,
                                                  object_t,
                                                  public_t,
                                                  repeat_t,
+                                                 return_t,
+                                                 alias_t,
                                                  break_t,
                                                  catch_t,
                                                  const_t,
@@ -612,17 +675,23 @@ namespace bt {
                                                  macro_t,
                                                  throw_t,
                                                  until_t,
+                                                 where_t,
                                                  while_t,
+                                                 yield_t,
                                                  case_t,
                                                  data_t,
+                                                 elif_t,
+                                                 else_t,
                                                  goto_t,
                                                  help_t,
                                                  meta_t,
                                                  note_t,
                                                  null_lit_t,
                                                  post_t,
+                                                 then_t,
                                                  true_t,
                                                  type_t,
+                                                 with_t,
                                                  and_t,
                                                  def_t,
                                                  doc_t,
@@ -635,6 +704,7 @@ namespace bt {
                                                  colon_percentage_t,
                                                  colon_slash_t,
                                                  colon_star_t,
+                                                 do_t,
                                                  equal_t,
                                                  fn_t,
                                                  geq_t,
@@ -690,12 +760,15 @@ namespace bt {
                                                  line_end_t>;
         }  // namespace token
 
-        using token_t = variant<token::verbatim_t,
+        using token_t = variant<token::continue_t,
+                                token::verbatim_t,
                                 token::private_t,
                                 token::import_t,
                                 token::object_t,
                                 token::public_t,
                                 token::repeat_t,
+                                token::return_t,
+                                token::alias_t,
                                 token::break_t,
                                 token::catch_t,
                                 token::const_t,
@@ -703,17 +776,23 @@ namespace bt {
                                 token::macro_t,
                                 token::throw_t,
                                 token::until_t,
+                                token::where_t,
                                 token::while_t,
+                                token::yield_t,
                                 token::case_t,
                                 token::data_t,
+                                token::elif_t,
+                                token::else_t,
                                 token::goto_t,
                                 token::help_t,
                                 token::meta_t,
                                 token::note_t,
                                 token::null_lit_t,
                                 token::post_t,
+                                token::then_t,
                                 token::true_t,
                                 token::type_t,
+                                token::with_t,
                                 token::and_t,
                                 token::def_t,
                                 token::doc_t,
@@ -726,6 +805,7 @@ namespace bt {
                                 token::colon_percentage_t,
                                 token::colon_slash_t,
                                 token::colon_star_t,
+                                token::do_t,
                                 token::equal_t,
                                 token::fn_t,
                                 token::geq_t,
@@ -788,12 +868,15 @@ namespace bt {
         auto token_name(const token_t& t) -> string_view;
         auto token_symbol(const token_t& t) -> string_view;
 
+        const token_t CONTINUE{token::continue_t{}};
         const token_t VERBATIM{token::verbatim_t{}};
         const token_t PRIVATE{token::private_t{}};
         const token_t IMPORT{token::import_t{}};
         const token_t OBJECT{token::object_t{}};
         const token_t PUBLIC{token::public_t{}};
         const token_t REPEAT{token::repeat_t{}};
+        const token_t RETURN{token::return_t{}};
+        const token_t ALIAS{token::alias_t{}};
         const token_t BREAK{token::break_t{}};
         const token_t CATCH{token::catch_t{}};
         const token_t CONST{token::const_t{}};
@@ -801,17 +884,23 @@ namespace bt {
         const token_t MACRO{token::macro_t{}};
         const token_t THROW{token::throw_t{}};
         const token_t UNTIL{token::until_t{}};
+        const token_t WHERE{token::where_t{}};
         const token_t WHILE{token::while_t{}};
+        const token_t YIELD{token::yield_t{}};
         const token_t CASE{token::case_t{}};
         const token_t DATA{token::data_t{}};
+        const token_t ELIF{token::elif_t{}};
+        const token_t ELSE{token::else_t{}};
         const token_t GOTO{token::goto_t{}};
         const token_t HELP{token::help_t{}};
         const token_t META{token::meta_t{}};
         const token_t NOTE{token::note_t{}};
         const token_t NULL_LIT{token::null_lit_t{}};
         const token_t POST{token::post_t{}};
+        const token_t THEN{token::then_t{}};
         const token_t TRUE{token::true_t{}};
         const token_t TYPE{token::type_t{}};
+        const token_t WITH{token::with_t{}};
         const token_t AND{token::and_t{}};
         const token_t DEF{token::def_t{}};
         const token_t DOC{token::doc_t{}};
@@ -824,6 +913,7 @@ namespace bt {
         const token_t COLON_PERCENTAGE{token::colon_percentage_t{}};
         const token_t COLON_SLASH{token::colon_slash_t{}};
         const token_t COLON_STAR{token::colon_star_t{}};
+        const token_t DO{token::do_t{}};
         const token_t EQUAL{token::equal_t{}};
         const token_t FN{token::fn_t{}};
         const token_t GEQ{token::geq_t{}};

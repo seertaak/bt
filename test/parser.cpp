@@ -115,8 +115,8 @@ TEST_CASE("Statements", "[parser]") {
     REQUIRE(ast("x = y + 2") == tree_t(syntax::assign_t{x, node_t(bin_op_t{PLUS, y, two})}));
 
     REQUIRE(ast("var x = y + 2") ==
-            tree_t(syntax::var_def_t{identifier_t("x"), nullopt, node_t(bin_op_t{PLUS, y, two})}));
+            tree_t(syntax::var_def_t{identifier_t("x"), node_t(), node_t(bin_op_t{PLUS, y, two})}));
 
-    REQUIRE(ast("some_fn(2 , 3 , 4 )") ==
-            tree_t(syntax::var_def_t{identifier_t("x"), nullopt, node_t(bin_op_t{PLUS, y, two})}));
+    REQUIRE(ast(R"(some_fn("foo"))") ==
+            tree_t(syntax::var_def_t{identifier_t("x"), node_t(), node_t(bin_op_t{PLUS, y, two})}));
 }

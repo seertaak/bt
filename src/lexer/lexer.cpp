@@ -41,6 +41,7 @@ namespace bt {
                         if (eat_empty_line(pos)) continue;
 
                         eat_margin(pos);
+                        eat_multiline_sep(pos);
 
                         for (;;) {
                             eat_spaces(pos);
@@ -126,8 +127,9 @@ namespace bt {
                 auto eat_digits(uint32_t& pos, Integral& result) -> bool {
                     result = 0;
                     int n = 0;
-                    for (; pos < input_length; n++) {
-                        const auto c = input[pos++];
+                    for (; pos < input_length; n++, pos++) {
+                        const auto c = input[pos];
+                        //cout << "EAT_DIGITS CONSIDERING : \"" << c << "\"" << endl;
 
                         int v = -1;
 
@@ -152,10 +154,10 @@ namespace bt {
 
                         if (v >= 0) {
                             result = result * base + v;
-                        } else if (n > 0 && c == '_')
-                            continue;
-                        else {
-                            pos--;
+                        } else if (n > 0 && c == '_') {
+                            continue; 
+                        } else {
+                            //cout << "BREAKING FROM EAT_DIGITS ON : \"" << c << "\"" << endl;
                             break;
                         }
                     }
@@ -170,6 +172,8 @@ namespace bt {
                     uint32_t p = pos;
 
                     auto s = remaining_input(p);
+
+                    //cout << "EAT NUMERIC TOKEN " << s << endl;
 
                     unsigned long long intval;
 
@@ -186,14 +190,24 @@ namespace bt {
                         base = 2;
                     } else if (s.size() > 1 && s.front() == '0') {
                         p += 1;
-                        match = eat_digits<8, unsigned long long>(p, intval);
                         base = 8;
+                        match = eat_digits<8, unsigned long long>(p, intval);
+                        if (!match) {
+                            match = true;
+                            intval = 0;
+                            base = 10;
+                        }
                     } else {
                         match = eat_digits<10, unsigned long long>(p, intval);
                         base = 10;
                     }
 
-                    if (!match) return false;
+                    if (!match) {
+                        //cout << "RET FROM EAT_NUMERIC_LIT because no match for \"" << s << "\"" << endl;
+                        return false;
+                    } else {
+                        //cout << "MATCH IN EAT_NUMERIC_LIT for \"" << remaining_input(p) << "\", value: " << intval << endl;
+                    }
 
                     char c;
 
@@ -279,7 +293,17 @@ namespace bt {
                     } else {
                         // integral
 
-                        if (p >= input_length) goto emit_integral_token;
+                        if (p >= input_length || c == ' ' || c == ')' || c == ',' || c == ';' ||
+                            c == ' ' || c == '\n' || c == '\r' || c == ':')
+                        {
+                            //if (p < input_length)
+                                //cout << "SEPARATOR FOUND: \"" << c << "\"" << endl;
+                            goto emit_integral_token;
+                        } else {
+                            //if (p < input_length)
+                                //cout << "SEPARATOR NOT FOUND: \"" << c << "\"" << endl;
+                        }
+
 
                         if (c == 'u') {
                             signedness = 'u';
@@ -287,8 +311,10 @@ namespace bt {
                         } else if (c == 'i') {
                             signedness = 'i';
                             ++p;
-                        } else if (p < input_length && c != ' ' && c != '\n' && c != '\r') {
-                            throw std::runtime_error("Bad integral literal.");
+                        } else if (p < input_length) {
+                            auto s = stringstream();
+                            s << "Bad integral literal: \"" << c << "\"" << endl;
+                            throw std::runtime_error(s.str());
                         }
 
                         if (!signedness) {
@@ -485,6 +511,26 @@ namespace bt {
 
                 inline auto eoi(uint32_t p) -> bool { return p >= input_length; }
 
+                auto eat_multiline_sep(uint32_t& pos) -> void {
+                    const auto s = remaining_input(pos).substr(0, 2);
+
+                    const auto line = start_of_line.size();
+                    const auto column = start_of_line.back() - 1;
+
+                    if (s == "--") {
+                        if (tokens.back() == LINE_END)
+                            tokens.back() = source_token_t(CPAREN, line, column, column);
+                        else
+                            tokens.emplace_back(CPAREN, line, column, column);
+                        tokens.emplace_back(OPAREN, line, column, column);
+                        pos += 2;
+                    } else if (s == "..") {
+                        if (!tokens.empty() && (tokens.back() == LINE_END || tokens.back() == SEMICOLON || tokens.back() == COMMA))
+                            tokens.pop_back();
+                        pos += 2;
+                    }
+                }
+
                 auto eat_margin(uint32_t& pos) -> void {
                     const auto s = remaining_input(pos);
 
@@ -495,25 +541,33 @@ namespace bt {
                     const auto column = start_of_line.back() - 1;
 
                     const auto colon_indent = !tokens.empty() && tokens.back() == COLON;
+                    const auto assign_indent = !tokens.empty() && tokens.back() == ASSIGN;
 
                     if (n_spaces == margin) {
                         if (colon_indent) throw runtime_error("Indent expected");
-                        if (!tokens.empty()) tokens.emplace_back(LINE_END, line, column, column);
+                        if (!tokens.empty() && tokens.back().token != OPAREN) 
+                            tokens.emplace_back(LINE_END, line, column, column);
                     } else if (n_spaces > margin) {
                         if (colon_indent)
                             tokens.back() = source_token_t(OPAREN, line, column, column);
-                        margins.emplace_back(n_spaces, colon_indent);
+                        else if (assign_indent)
+                            tokens.emplace_back(OPAREN, line, column, column);
+                        margins.emplace_back(n_spaces, colon_indent || assign_indent);
                     } else {
                         if (colon_indent) throw runtime_error("Indent expected");
 
+                        auto all_ws = true;
                         while (!empty(margins) && n_spaces < get<int16_t>(margins.back())) {
-                            if (get<bool>(margins.back()))
+                            if (get<bool>(margins.back())) 
                                 tokens.emplace_back(CPAREN, line, column, column);
-
-                            tokens.emplace_back(LINE_END, line, column, column);
+                            else
+                                all_ws = false;
 
                             margins.pop_back();
                         }
+
+                        if (all_ws)
+                            tokens.emplace_back(LINE_END, line, column, column);
                     }
                     pos += n_spaces;
                 }

@@ -1,4 +1,34 @@
 
+meta def vector(t: type) -> type:
+j
+    
+
+def foo(e...) ===> e... : tuple(e.type...)
+def foo(x: double...): array(double, #...)
+
+def foo(x: (double...)...):
+
+def foo:
+    x: (double...)...
+    --
+
+def create_files(fn: file.t...):
+    
+
+point(x:3.0, y:1.0)
+
+statement: var x = 10
+assignment_stmt: x = 10
+
+if x ~= 10.0:
+if: 
+    var e = found_element
+    ..printf:
+        I found element: e
+
+
+:
+    var x = 10
 
 type dog:
     def bark(): "Woofwoof"
