@@ -8,6 +8,7 @@ namespace bt {
         using input_t = lexer::output_t;
 
         namespace details {
+            auto parse(const input_t& input) -> syntax::tree_t;
             auto parse(input_t&& input) -> syntax::tree_t;
         }  // namespace details
 

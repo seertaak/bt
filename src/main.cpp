@@ -14,12 +14,14 @@
 #include <bullet/lexer/token.hpp>
 #include <bullet/parser/ast.hpp>
 #include <bullet/parser/parser.hpp>
+//#include <bullet/analysis/annotated_ast.hpp>
 
 using namespace std;
 using namespace bt;
 using namespace lexer;
 using namespace lexer::token;
 using namespace parser;
+//using namespace analysis;
 using namespace syntax;
 using namespace rang;
 
@@ -45,8 +47,43 @@ int main(int argc, const char* argv[]) {
         return buffer.str();
     }();
 
-    cout << (source | tokenize).tokens << endl;
-    cout << (source | tokenize | parse) << endl;
+    const lexer::output_t lex_output = source | tokenize;
+    const syntax::tree_t ast = parser::details::parse(lex_output);
+
+    cout << lex_output.tokens << endl;
+    cout << endl << endl;
+
+    auto s = std::stringstream();
+    parser::pretty_print(ast, s, 0);
+    cout << s.str() << endl;
+
+    /*
+
+    namespace hana = boost::hana;
+
+    using vt = std::variant<int, float>;
+    constexpr auto ttt = bt::analysis::annotated::variant_types_tuple_c<vt>;
+    constexpr auto uuu = bt::analysis::annotated::tree_type_c(ttt, boost::hana::type_c<int>);
+
+    static_assert(hana::equal(uuu, 
+        hana::tuple_t<std::tuple<syntax::ref<int>, int>, 
+        std::tuple<syntax::ref<float>, int>>));
+    static_assert(hana::equal(
+        bt::analysis::annotated::ref_type_c<parser::syntax::ref<int>>,
+        hana::type_c<int>
+    ));
+
+    static_assert(annotated::is_ref(hana::type_c<parser::syntax::ref<int>>));
+    static_assert(!annotated::is_ref(hana::type_c<int>));
+
+    static_assert(!annotated::is_recursive(uuu));
+    static_assert(annotated::is_recursive(
+        annotated::variant_tags(hana::type_c<parser::syntax::node_base_t>)
+    ));
+    static_assert(annotated::is_recursive(
+        annotated::variant_tags(hana::type_c<parser::syntax::tree_t>)
+    ));
+    */
 
     return 0;
 }

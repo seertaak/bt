@@ -4,6 +4,9 @@
 #include <memory>
 #include <optional>
 #include <variant>
+#include <sstream>
+
+#include <boost/hana/all.hpp>
 
 #include <bullet/lexer/token.hpp>
 
@@ -383,5 +386,309 @@ namespace bt {
             auto operator<<(std::ostream& os, const group_t& g) -> std::ostream&;
             auto operator<<(std::ostream& os, const if_t& if_) -> std::ostream&;
         }  // namespace syntax
+
+        inline void pretty_print(const syntax::tree_t& tree, std::stringstream& out, int indent_level) {
+            const auto margin = [&] {
+                auto out = std::stringstream(); 
+                for (auto i = 0; i < indent_level; i++)
+                    out << ' ';
+                return out.str();
+            };
+
+            const auto indent = [&] { indent_level += 4; return ""; };
+            const auto dedent = [&] { indent_level -= 4; return ""; };
+
+            using namespace syntax;
+            using namespace std;
+
+            std::visit(
+                boost::hana::overload(
+                    [&] (const string_literal_t& s) { 
+                        out << margin() << s << endl; 
+                    },
+                    [&] (const integral_literal_t& s) { 
+                        out << margin() << s << endl; 
+                    },
+                    [&] (const floating_point_literal_t& f) { 
+                        out << margin() << f << endl; 
+                    },
+                    [&] (const lexer::identifier_t& i) { 
+                        out << margin() << i << endl; 
+                    },
+                    [&] (const lexer::token::true_t& i) { 
+                        out << margin() << i << endl; 
+                    },
+                    [&] (const lexer::token::false_t& i) { 
+                        out << margin() << i << endl; 
+                    },
+                    [&] (const block_t& block) { 
+                        out << margin() << "block:" << endl;
+                        indent();
+                        for (const auto& n: block)
+                            pretty_print(n.get(), out, indent_level);
+                        dedent();
+                    },
+                    [&] (const data_t& data) { 
+                        out << margin() << "data:" << endl;
+                        indent();
+                        for (const auto& n: data)
+                            pretty_print(n.get(), out, indent_level);
+                        dedent();
+                    },
+                    [&] (const unary_op_t& op) {
+                        out << margin() << "unary_op:" << endl;
+                        indent();
+                        out << margin() << op << endl;
+                        pretty_print(op.operand.get(), out, indent_level);
+                        dedent();
+                    },
+                    [&] (const bin_op_t& op) {
+                        out << margin() << "binary_op:" << endl;
+                        indent();
+                        out << margin() << op << endl;
+                        pretty_print(op.lhs.get(), out, indent_level);
+                        pretty_print(op.rhs.get(), out, indent_level);
+                        dedent();
+                    },
+                    [&] (const invoc_t& i) {
+                        out << margin() << "invoke:" << endl;
+                        indent();
+                        out << margin() << "target:" << endl;
+                        indent();
+                        pretty_print(i.target.get(), out, indent_level);
+                        dedent();
+                        out << margin() << "arguments:" << endl;
+                        indent();
+                        for (const auto& n: i.arguments)
+                            pretty_print(n.get(), out, indent_level);
+                        dedent();
+                        dedent();
+                    },
+                    [&] (const if_t& i) {
+                        out << margin() << "if:" << endl;
+                        indent();
+
+                        for (int j = 0; j < i.elif_tests.size(); j++) {
+                            out << margin() << "cond:" << endl;
+                            indent();
+                            pretty_print(i.elif_tests[j].get(), out, indent_level);
+                            dedent();
+                            out << margin() << "then:" << endl;
+                            indent();
+                            pretty_print(i.elif_branches[j].get(), out, indent_level);
+                            dedent();
+                        }
+                        out << margin() << "else:" << endl;
+                        indent();
+                        pretty_print(i.else_branch.get(), out, indent_level);
+                        dedent();
+
+                        dedent();
+                    },
+                    [&] (const elif_t& i) {
+                        out << margin() << "elif:" << endl;
+                        indent();
+
+                        out << margin() << "test:" << endl;
+                        indent();
+                        pretty_print(i.test.get(), out, indent_level);
+                        dedent();
+                        out << margin() << "then:" << endl;
+                        indent();
+                        pretty_print(i.body.get(), out, indent_level);
+                        dedent();
+
+                        dedent();
+                    },
+                    [&] (const else_t& i) {
+                        out << margin() << "else:" << endl;
+                        indent();
+                        pretty_print(i.body, out, indent_level);
+                        dedent();
+                    },
+                    [&] (const assign_t& i) {
+                        out << margin() << "assign:" << endl;
+
+                        indent();
+                        out << margin() << "lhs:" << endl;
+                        indent();
+                        pretty_print(i.lhs.get(), out, indent_level);
+                        dedent();
+                        dedent();
+
+                        indent();
+                        out << margin() << " rhs:" << endl;
+                        indent();
+                        pretty_print(i.rhs.get(), out, indent_level);
+                        dedent();
+                        dedent();
+                    },
+                    [&] (const fn_def_t& f) {
+                        out << margin() << "fn_def:" << endl;
+
+                        indent();
+                        out << margin() << "name:" << f.name.name << endl;
+                        out << margin() << "arguments:" << endl;
+                        indent();
+                        for (auto i = 0; i < f.arg_names.size(); i++) {
+                            out << margin() << "name:" << f.arg_names[i].name << endl;
+                            out << margin() << "type:" << endl;
+                            indent();
+                            pretty_print(f.arg_types[i].get(), out, indent_level);
+                            dedent();
+                        }
+                        dedent();
+
+                        out << margin() << "result_type:" << endl;
+                        indent();
+                        pretty_print(f.result_type.get(), out, indent_level);
+                        dedent();
+
+                        out << margin() << "body:" << endl;
+                        indent();
+                        pretty_print(f.body.get(), out, indent_level);
+                        dedent();
+
+                        dedent();
+                    },
+                    [&] (const fn_expr_t& f) {
+                        out << margin() << "fn_expr:" << endl;
+
+                        indent();
+                        out << margin() << "arguments:" << endl;
+                        indent();
+                        for (auto i = 0; i < f.arg_names.size(); i++) {
+                            out << margin() << "name:" << f.arg_names[i].name << endl;
+                            out << margin() << "type:" << endl;
+                            indent();
+                            pretty_print(f.arg_types[i].get(), out, indent_level);
+                            dedent();
+                        }
+                        dedent();
+
+                        out << margin() << "result_type:" << endl;
+                        indent();
+                        pretty_print(f.result_type.get(), out, indent_level);
+                        dedent();
+
+                        out << margin() << "body:" << endl;
+                        indent();
+                        pretty_print(f.body.get(), out, indent_level);
+                        dedent();
+
+                        dedent();
+                    },
+                    [&] (const var_def_t& f) {
+                        out << margin() << "var_def:" << endl;
+
+                        indent();
+                        out << margin() << "name:" << f.name.name << endl;
+                        out << margin() << "type:" << endl;
+                        indent();
+                        pretty_print(f.type.get(), out, indent_level);
+                        dedent();
+                        out << margin() << "rhs:" << endl;
+                        indent();
+                        pretty_print(f.rhs.get(), out, indent_level);
+                        dedent();
+                        dedent();
+                    },
+                    [&] (const repeat_t& v) {
+                        out << margin() << "repeat:" << endl;
+
+                        indent();
+                        for (const auto& n: v)
+                            pretty_print(n.get(), out, indent_level);
+                        dedent();
+                    },
+                    [&] (const for_t& v) {
+                        out << margin() << "for:" << endl;
+
+                        indent();
+                        out << margin() << "var:" << v.var_lhs << endl;
+                        out << margin() << "sequence:" << endl;
+                        indent();
+                        pretty_print(v.var_rhs.get(), out, indent_level);
+                        dedent();
+                        out << margin() << "body:" << endl;
+                        indent();
+                        pretty_print(v.body.get(), out, indent_level);
+                        dedent();
+                        dedent();
+                    },
+                    [&] (const while_t& v) {
+                        out << margin() << "while:" << endl;
+
+                        indent();
+                        out << margin() << "cond:" << endl;
+                        indent();
+                        pretty_print(v.test.get(), out, indent_level);
+                        dedent();
+                        out << margin() << "body:" << endl;
+                        indent();
+                        pretty_print(v.body.get(), out, indent_level);
+                        dedent();
+                        dedent();
+                    },
+                    [&] (const break_t& v) { 
+                        out << margin() << "break" << endl; 
+                    },
+                    [&] (const continue_t& v) { 
+                        out << margin() << "continue" << endl; 
+                    },
+                    [&] (const return_t& v) { 
+                        out << margin() << "return:" << endl; 
+                        indent();
+                        pretty_print(v.value.get(), out, indent_level);
+                        dedent();
+                    },
+                    [&] (const yield_t& v) { 
+                        out << margin() << "return:" << endl; 
+                        indent();
+                        pretty_print(v.value.get(), out, indent_level);
+                        dedent();
+                    },
+                    [&] (const struct_t& v) {
+                        out << margin() << "struct:" << endl; 
+                        indent();
+                        for (const auto& e: v) {
+                            out << margin() << e.first.name << ":" << endl;
+                            indent();
+                            pretty_print(e.second.get(), out, indent_level);
+                            dedent();
+                        }
+                        dedent();
+                    },
+                    [&] (const def_type_t& f) {
+                        out << margin() << "def_type:" << endl;
+
+                        indent();
+                        out << margin() << "name:" << f.name.name << endl;
+                        out << margin() << "defn:" << endl;
+                        indent();
+                        pretty_print(f.type.get(), out, indent_level);
+                        dedent();
+                        dedent();
+                    },
+                    [&] (const let_type_t& f) {
+                        out << margin() << "let_type:" << endl;
+
+                        indent();
+                        out << margin() << "name:" << f.name.name << endl;
+                        out << margin() << "defn:" << endl;
+                        indent();
+                        pretty_print(f.type.get(), out, indent_level);
+                        dedent();
+                        dedent();
+                    },
+                    [&] (const template_t& v) {
+                        out << margin() << "template" << endl;
+                    },
+                    [&] (const node_t&) {},
+                    [&] (const std::monostate&) {},
+                    [] (auto) {}
+                ), tree
+            );
+        }
     }      // namespace parser
 }  // namespace bt

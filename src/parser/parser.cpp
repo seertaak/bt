@@ -720,6 +720,10 @@ namespace bt {
         }  // namespace
 
         namespace details {
+            auto parse(const input_t& input) -> tree_t {
+                auto p = parser(input);
+                return p.parse();
+            }
             auto parse(input_t&& input) -> tree_t {
                 auto p = parser(forward<input_t>(input));
                 return p.parse();

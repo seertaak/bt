@@ -1,9 +1,6 @@
-data:
-    :
-        "Martin"
-        "Alex"
-        --
-        find("Ben", 10)
-        "Blah" + 10
-
-
+def foo(x: int, y: f64): int =
+    for (x: xs):
+        print:
+            "Hello"
+            " world!"
+    return x + 5
