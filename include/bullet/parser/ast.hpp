@@ -91,8 +91,10 @@ namespace bt {
             auto operator<<(std::ostream& os, const named_group_t& g) -> std::ostream&;
 
             struct unary_op_t {
-                lexer::token_t op;
-                node_t operand;
+                BOOST_HANA_DEFINE_STRUCT(unary_op_t,
+                    (lexer::token_t, op),
+                    (node_t, operand)
+                );
             };
 
             auto operator==(const unary_op_t&, const unary_op_t&) -> bool;
@@ -100,8 +102,11 @@ namespace bt {
             auto operator<<(std::ostream& os, const unary_op_t& uop) -> std::ostream&;
 
             struct bin_op_t {
-                lexer::token_t op;
-                node_t lhs, rhs;
+                BOOST_HANA_DEFINE_STRUCT(bin_op_t,
+                    (lexer::token_t, op),
+                    (node_t, lhs), 
+                    (node_t, rhs)
+                );
             };
 
             auto operator==(const bin_op_t&, const bin_op_t&) -> bool;
@@ -118,8 +123,10 @@ namespace bt {
             auto operator<<(std::ostream& os, const data_t& repeat) -> std::ostream&;
 
             struct invoc_t {
-                node_t target;
-                data_t arguments;
+                BOOST_HANA_DEFINE_STRUCT(invoc_t,
+                    (node_t, target),
+                    (data_t, arguments)
+                );
             };
 
             auto operator==(const invoc_t&, const invoc_t&) -> bool;
@@ -127,8 +134,11 @@ namespace bt {
             auto operator<<(std::ostream& os, const invoc_t& invoc) -> std::ostream&;
             
             struct if_t {
-                std::vector<node_t> elif_tests, elif_branches;
-                node_t else_branch;
+                BOOST_HANA_DEFINE_STRUCT(if_t,
+                    (std::vector<node_t>, elif_tests),
+                    (std::vector<node_t>, elif_branches),
+                    (node_t, else_branch)
+                );
             };
 
             auto operator==(const if_t&, const if_t&) -> bool;
@@ -136,8 +146,10 @@ namespace bt {
             auto operator<<(std::ostream& os, const if_t& if_) -> std::ostream&;
 
             struct elif_t {
-                node_t test;
-                node_t body;
+                BOOST_HANA_DEFINE_STRUCT(elif_t,
+                    (node_t, test),
+                    (node_t, body)
+                );
             };
 
             auto operator==(const elif_t&, const elif_t&) -> bool;
@@ -145,7 +157,9 @@ namespace bt {
             auto operator<<(std::ostream& os, const elif_t& elif_) -> std::ostream&;
 
             struct else_t {
-                node_t body;
+                BOOST_HANA_DEFINE_STRUCT(else_t,
+                    (node_t, body)
+                );
             };
 
             auto operator==(const else_t&, const else_t&) -> bool;
@@ -153,7 +167,10 @@ namespace bt {
             auto operator<<(std::ostream& os, const else_t& else_) -> std::ostream&;
 
             struct assign_t {
-                node_t lhs, rhs;
+                BOOST_HANA_DEFINE_STRUCT(assign_t,
+                    (node_t, lhs),
+                    (node_t, rhs)
+                );
             };
 
             auto operator==(const assign_t&, const assign_t&) -> bool;
@@ -161,9 +178,11 @@ namespace bt {
             auto operator<<(std::ostream& os, const assign_t& a) -> std::ostream&;
 
             struct var_def_t {
-                lexer::identifier_t name;
-                node_t type;
-                node_t rhs;
+                BOOST_HANA_DEFINE_STRUCT(var_def_t,
+                    (lexer::identifier_t, name),
+                    (node_t, type),
+                    (node_t, rhs)
+                );
             };
 
             auto operator==(const var_def_t&, const var_def_t&) -> bool;
@@ -171,9 +190,11 @@ namespace bt {
             auto operator<<(std::ostream& os, const var_def_t& a) -> std::ostream&;
 
             struct fn_closure_param_t {
-                bool var;
-                std::optional<lexer::identifier_t> identifier;
-                node_t expression;
+                BOOST_HANA_DEFINE_STRUCT(fn_closure_param_t,
+                    (bool, var),
+                    (std::optional<lexer::identifier_t>, identifier),
+                    (node_t, expression)
+                );
             };
 
             auto operator==(const fn_closure_param_t&, const fn_closure_param_t&) -> bool;
@@ -181,11 +202,13 @@ namespace bt {
             auto operator<<(std::ostream& os, const fn_closure_param_t& a) -> std::ostream&;
 
             struct fn_expr_t {
-                std::vector<lexer::identifier_t> arg_names;
-                std::vector<node_t> arg_types;
-                node_t result_type;
-                node_t body;
-                std::vector<fn_closure_param_t> closure_params;
+                BOOST_HANA_DEFINE_STRUCT(fn_expr_t,
+                    (std::vector<lexer::identifier_t>, arg_names),
+                    (std::vector<node_t>, arg_types),
+                    (node_t, result_type),
+                    (node_t, body),
+                    (std::vector<fn_closure_param_t>, closure_params)
+                );
             };
 
             auto operator==(const fn_expr_t&, const fn_expr_t&) -> bool;
@@ -193,11 +216,13 @@ namespace bt {
             auto operator<<(std::ostream& os, const fn_expr_t& a) -> std::ostream&;
 
             struct fn_def_t {
-                lexer::identifier_t name;
-                std::vector<lexer::identifier_t> arg_names;
-                std::vector<node_t> arg_types;
-                node_t result_type;
-                node_t body;
+                BOOST_HANA_DEFINE_STRUCT(fn_def_t,
+                    (lexer::identifier_t, name),
+                    (std::vector<lexer::identifier_t>, arg_names),
+                    (std::vector<node_t>, arg_types),
+                    (node_t, result_type),
+                    (node_t, body)
+                );
             };
 
             auto operator==(const fn_def_t&, const fn_def_t&) -> bool;
@@ -205,25 +230,33 @@ namespace bt {
             auto operator<<(std::ostream& os, const fn_def_t& a) -> std::ostream&;
 
             struct return_t { 
-                node_t value;
+                BOOST_HANA_DEFINE_STRUCT(return_t,
+                    (node_t, value)
+                );
             };
             auto operator<<(std::ostream& os, const return_t&) -> std::ostream&;
             auto operator==(const return_t&, const return_t&) -> bool;
             auto operator!=(const return_t&, const return_t&) -> bool;
 
             struct yield_t { 
-                node_t value;
+                BOOST_HANA_DEFINE_STRUCT(yield_t,
+                    (node_t, value)
+                );
             };
             auto operator<<(std::ostream& os, const yield_t&) -> std::ostream&;
             auto operator==(const yield_t&, const yield_t&) -> bool;
             auto operator!=(const yield_t&, const yield_t&) -> bool;
 
-            struct break_t {};
+            struct break_t {
+                BOOST_HANA_DEFINE_STRUCT(break_t);
+            };
             auto operator<<(std::ostream& os, const break_t&) -> std::ostream&;
             auto operator==(const break_t&, const break_t&) -> bool;
             auto operator!=(const break_t&, const break_t&) -> bool;
 
-            struct continue_t {};
+            struct continue_t {
+                BOOST_HANA_DEFINE_STRUCT(continue_t);
+            };
             auto operator<<(std::ostream& os, const continue_t&) -> std::ostream&;
             auto operator==(const continue_t&, const continue_t&) -> bool;
             auto operator!=(const continue_t&, const continue_t&) -> bool;
@@ -238,7 +271,10 @@ namespace bt {
             auto operator<<(std::ostream& os, const repeat_t& repeat) -> std::ostream&;
 
             struct while_t {
-                node_t test, body;
+                BOOST_HANA_DEFINE_STRUCT(while_t,
+                    (node_t, test), 
+                    (node_t, body)
+                );
             };
 
             auto operator==(const while_t&, const while_t&) -> bool;
@@ -246,8 +282,11 @@ namespace bt {
             auto operator<<(std::ostream& os, const while_t& while_) -> std::ostream&;
 
             struct for_t {
-                lexer::identifier_t var_lhs;
-                node_t var_rhs, body;
+                BOOST_HANA_DEFINE_STRUCT(for_t,
+                    (lexer::identifier_t, var_lhs),
+                    (node_t, var_rhs),
+                    (node_t, body)
+                );
             };
 
             auto operator==(const for_t&, const for_t&) -> bool;
@@ -273,8 +312,10 @@ namespace bt {
             auto operator<<(std::ostream& os, const struct_t& t) -> std::ostream&;
 
             struct def_type_t {
-                lexer::identifier_t name;
-                node_t type;
+                BOOST_HANA_DEFINE_STRUCT(def_type_t,
+                    (lexer::identifier_t, name),
+                    (node_t, type)
+                );
             };
 
             auto operator==(const def_type_t&, const def_type_t&) -> bool;
@@ -282,8 +323,10 @@ namespace bt {
             auto operator<<(std::ostream& os, const def_type_t& d) -> std::ostream&;
 
             struct let_type_t {
-                lexer::identifier_t name;
-                node_t type;
+                BOOST_HANA_DEFINE_STRUCT(let_type_t,
+                    (lexer::identifier_t, name),
+                    (node_t, type)
+                );
             };
 
             auto operator==(const let_type_t&, const let_type_t&) -> bool;
@@ -291,8 +334,10 @@ namespace bt {
             auto operator<<(std::ostream& os, const let_type_t& d) -> std::ostream&;
 
             struct template_t {
-                named_group_t arguments;
-                node_t body;
+                BOOST_HANA_DEFINE_STRUCT(template_t,
+                    (named_group_t, arguments),
+                    (node_t, body)
+                );
             };
 
             auto operator==(const template_t&, const template_t&) -> bool;
@@ -334,7 +379,6 @@ namespace bt {
                                              let_type_t,
                                              template_t,
                                              node_t>;
-
 
 
             struct tree_t : node_base_t {
@@ -690,5 +734,6 @@ namespace bt {
                 ), tree
             );
         }
+
     }      // namespace parser
 }  // namespace bt

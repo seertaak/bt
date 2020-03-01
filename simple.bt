@@ -1,6 +1,5 @@
-def foo(x: int, y: f64): int =
-    for (x: xs):
-        print:
-            "Hello"
-            " world!"
-    return x + 5
+var x = 5
+var z = 10
+do:
+    var a = x + 5
+    print(a)

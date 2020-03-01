@@ -102,6 +102,78 @@ namespace bt { namespace analysis {
             using base_t::base_t;
         };
     }
+
+    namespace second_try {
+        namespace hana = boost::hana;
+        // let Ts be a list of types.
+        constexpr auto to_variant_type = [](auto type_tags) {
+            return hana::unpack(
+                type_tags,
+                hana::template_<std::variant>
+            );
+        };
+
+        template <typename...Type>
+        class tree_t;
+
+        template <typename...Type>
+        using node_t = parser::syntax::ref<tree_t<Type...>>;
+
+        template <typename...Type>
+        using tree_base_t = std::variant<Type..., node_t<Type...>>;
+
+        template <typename...Type>
+        class tree_t : public tree_base_t<Type...> {
+        public:
+            using base_t = tree_base_t<Type...>;
+            using base_t::base_t;
+        };
+
+        constexpr auto to_recursive_variant_type = [](auto variant_type_tags) {
+            return hana::unpack(
+                variant_type_tags,
+                hana::template_<tree_t>
+            );
+        };
+
+        constexpr auto annotator = [](auto annotations) {
+            return [=] (auto type) {
+                return hana::unpack(
+                    hana::prepend(annotations, type),
+                    hana::template_<std::tuple>
+                );
+            };
+        };
+
+        constexpr auto annotated_types = [](auto types, auto annotations) {
+            return hana::transform(
+                types,
+                annotator(annotations)
+            );
+        };
+
+        /*
+        const auto f = [] (const block_t& b) -> unordered_set<identifier_t> {
+            ....
+        };
+
+            
+        template <typename Annotation, typename...Type, typename...Fn>
+        auto transformed_tree(const tree_t<Type...>& input, Fn&&...fn)
+            -> typename decltype(
+                    annotated_types(
+                        hana::tuple_t<Type...>, 
+                        hana::tuple_t<Annotation>
+                    )
+               )::type
+        {
+            return std::visit(
+                [] (const Type
+                input
+            );
+        }
+        */
+    }
 } }
 
         

@@ -14,14 +14,14 @@
 #include <bullet/lexer/token.hpp>
 #include <bullet/parser/ast.hpp>
 #include <bullet/parser/parser.hpp>
-//#include <bullet/analysis/annotated_ast.hpp>
+#include <bullet/analysis/annotated_ast.hpp>
 
 using namespace std;
 using namespace bt;
 using namespace lexer;
 using namespace lexer::token;
 using namespace parser;
-//using namespace analysis;
+using namespace analysis;
 using namespace syntax;
 using namespace rang;
 
@@ -57,13 +57,11 @@ int main(int argc, const char* argv[]) {
     parser::pretty_print(ast, s, 0);
     cout << s.str() << endl;
 
+    namespace hana = boost::hana;
     /*
 
-    namespace hana = boost::hana;
-
     using vt = std::variant<int, float>;
-    constexpr auto ttt = bt::analysis::annotated::variant_types_tuple_c<vt>;
-    constexpr auto uuu = bt::analysis::annotated::tree_type_c(ttt, boost::hana::type_c<int>);
+    constexpr auto uuu = annotated::variant_tags(hana::type_c<vt>);
 
     static_assert(hana::equal(uuu, 
         hana::tuple_t<std::tuple<syntax::ref<int>, int>, 
@@ -84,6 +82,48 @@ int main(int argc, const char* argv[]) {
         annotated::variant_tags(hana::type_c<parser::syntax::tree_t>)
     ));
     */
+    namespace st = second_try;
+    using namespace second_try;
+
+    static_assert(
+        hana::equal(
+            hana::type_c<std::variant<int, float>>,
+            to_variant_type(hana::tuple_t<int, float>)
+        )
+    );
+
+    static_assert(
+        hana::equal(
+            hana::type_c<st::tree_t<int, float>>,
+            to_recursive_variant_type(hana::tuple_t<int, float>)
+        )
+    );
+
+    using namespace std;
+
+    static_assert(
+        hana::equal(
+            hana::tuple_t<tuple<int, bool>, tuple<float, bool>>,
+            annotated_types(
+                hana::tuple_t<int, float>,
+                hana::tuple_t<bool>
+            )
+        )
+    );
+
+    static_assert(
+        hana::equal(
+            hana::type_c<st::tree_t<tuple<int, bool>, tuple<float, bool>>>,
+            to_recursive_variant_type(
+                annotated_types(
+                    hana::tuple_t<int, float>,
+                    hana::tuple_t<bool>
+                )
+            )
+        )
+    );
+
+    using namespace std;
 
     return 0;
 }
