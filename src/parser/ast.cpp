@@ -12,26 +12,6 @@ namespace bt {
             using namespace std;
             using namespace lexer;
 
-            auto operator<<(ostream& os, const named_group_t& g) -> ostream& {
-                auto first = true;
-                os << "named_group[";
-                for (const auto& [ident, subtree] : g) {
-                    if (first)
-                        first = false;
-                    else
-                        os << ", ";
-                    os << ident << ": " << subtree.get();
-                }
-                os << "]";
-                return os;
-            }
-
-            auto operator<<(ostream& os, const unary_op_t& uop) -> ostream& {
-                auto first = false;
-                os << "unary_op[" << uop.op << ", " << uop.operand << "]";
-                return os;
-            }
-
             auto operator<<(ostream& os, const bin_op_t& binop) -> ostream& {
                 auto first = true;
                 os << "binary_op[" << binop.op << ", " << binop.lhs << ", " << binop.rhs << "]";
@@ -328,22 +308,6 @@ namespace bt {
                 return l.test == r.test && l.body == r.body;
             }
             auto operator!=(const while_t& l, const while_t& r) -> bool { return !(l == r); }
-
-            auto operator==(const named_group_t& l, const named_group_t& r) -> bool {
-                if (l.size() != r.size()) return false;
-                for (auto i = 0; i < l.size(); i++)
-                    if (l[i] != r[i]) return false;
-                return true;
-            }
-            auto operator!=(const named_group_t& l, const named_group_t& r) -> bool {
-                return !(l == r);
-            }
-
-            auto operator==(const unary_op_t& l, const unary_op_t& r) -> bool {
-                return l.op == r.op && l.operand == r.operand;
-            }
-
-            auto operator!=(const unary_op_t& l, const unary_op_t& r) -> bool { return !(l == r); }
 
             auto operator==(const bin_op_t& l, const bin_op_t& r) -> bool {
                 return l.op == r.op && l.lhs == r.lhs && l.rhs == r.rhs;

@@ -46,4 +46,60 @@ namespace bt {
         auto get() const -> file::path { return file_; }
         operator file::path() const { return file_; }
     };
+
+    template <typename T>
+    using ptr = std::shared_ptr<T>;
+
+    template <typename T>
+    struct ref {
+        ptr<T> value;
+
+        ref(const T& t) : value{std::make_shared<T>(t)} {}
+        ref(T&& t) noexcept : value{std::make_shared<T>(std::move(t))} {}
+
+        ref() : value{std::make_shared<T>()} {}
+        ref(const ref&) = default;
+        ref(ref&&) noexcept = default;
+        ref& operator=(const ref&) = default;
+        ref& operator=(ref&&) noexcept = default;
+        ref& operator=(const T& t) { *value = t; }
+        ref& operator=(T&& t) noexcept { value.emplace(std::forward(t)); }
+
+        T& get() { return *value; }
+        const T& get() const { return *value; }
+
+        operator T&() { return *value; }
+        operator const T&() const { return *value; }
+    };
+
+    template <typename T>
+    auto operator==(const ref<T>& l, const ref<T>& r) -> bool {
+        return l.get() == r.get();
+    }
+
+    template <typename T>
+    auto operator==(const ref<T>& l, const T& r) -> bool {
+        return l.get() == r;
+    }
+
+    template <typename T>
+    auto operator==(const T& l, const ref<T>& r) -> bool {
+        return l == r.get();
+    }
+
+    template <typename T>
+    auto operator!=(const ref<T>& l, const ref<T>& r) -> bool {
+        return !(l == r);
+    }
+
+    template <typename T>
+    auto operator!=(const ref<T>& l, const T& r) -> bool {
+        return !(l == r);
+    }
+
+    template <typename T>
+    auto operator!=(const T& l, const ref<T>& r) -> bool {
+        return !(l == r);
+    }
+
 }  // namespace bt

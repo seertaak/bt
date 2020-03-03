@@ -81,7 +81,6 @@ int main(int argc, const char* argv[]) {
     static_assert(annotated::is_recursive(
         annotated::variant_tags(hana::type_c<parser::syntax::tree_t>)
     ));
-    */
     namespace st = second_try;
     using namespace second_try;
 
@@ -124,6 +123,11 @@ int main(int argc, const char* argv[]) {
     );
 
     using namespace std;
+    */
+
+    namespace st = second_try;
+    auto t = st::attr_tree_t<std::string, st::foo, st::bar>();
+    auto u = st::attr_tree_t<float, st::foo, st::bar>();
 
     return 0;
 }

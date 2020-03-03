@@ -113,46 +113,49 @@ namespace bt { namespace analysis {
             );
         };
 
-        template <typename...Type>
-        class tree_t;
+        template <typename A, template <typename> typename...Type>
+        class attr_tree_t;
 
-        template <typename...Type>
-        using node_t = parser::syntax::ref<tree_t<Type...>>;
+        template <typename A, template <typename> typename...Type>
+        using attr_node_t = parser::syntax::ref<attr_tree_t<A, Type...>>;
 
-        template <typename...Type>
-        using tree_base_t = std::variant<Type..., node_t<Type...>>;
+        template <typename A, template <typename> typename...Type>
+        using attr_tree_base_t = std::variant<std::monostate, Type<A>..., attr_node_t<A, Type...>>;
 
-        template <typename...Type>
-        class tree_t : public tree_base_t<Type...> {
+        template <typename A, template <typename> typename...Type>
+        class attr_tree_t : public attr_tree_base_t<A, Type...> {
         public:
-            using base_t = tree_base_t<Type...>;
+            using base_t = attr_tree_base_t<A, Type...>;
             using base_t::base_t;
         };
 
-        constexpr auto to_recursive_variant_type = [](auto variant_type_tags) {
-            return hana::unpack(
-                variant_type_tags,
-                hana::template_<tree_t>
-            );
+        template <typename A> struct foo;
+        template <typename A> struct bar;
+
+        template <typename A>
+        using foobar_tree_node_t = attr_node_t<A, foo, bar>;
+
+        template <typename A> 
+        struct annotated_t {
+            A annotation;
         };
 
-        constexpr auto annotator = [](auto annotations) {
-            return [=] (auto type) {
-                return hana::unpack(
-                    hana::prepend(annotations, type),
-                    hana::template_<std::tuple>
-                );
-            };
+        template <typename A>
+        struct foo : annotated_t<A> {
+            float foo;
+            foobar_tree_node_t<A> sub_node;
         };
 
-        constexpr auto annotated_types = [](auto types, auto annotations) {
-            return hana::transform(
-                types,
-                annotator(annotations)
-            );
+        template <typename A>
+        struct bar : annotated_t<A> {
+            int bar;
         };
+
+        using test_foobar_tree_t = attr_tree_t<int, foo, bar>;
+
 
         /*
+
         const auto f = [] (const block_t& b) -> unordered_set<identifier_t> {
             ....
         };

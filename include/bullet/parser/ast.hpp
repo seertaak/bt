@@ -9,87 +9,11 @@
 #include <boost/hana/all.hpp>
 
 #include <bullet/lexer/token.hpp>
+#include <bullet/util.hpp>
 
 namespace bt {
     namespace parser {
         namespace syntax {
-            template <typename T>
-            using ptr = std::shared_ptr<T>;
-
-            template <typename T>
-            struct ref {
-                ptr<T> value;
-
-                ref(const T& t) : value{std::make_shared<T>(t)} {}
-                ref(T&& t) noexcept : value{std::make_shared<T>(std::move(t))} {}
-
-                ref() : value{std::make_shared<T>()} {}
-                ref(const ref&) = default;
-                ref(ref&&) noexcept = default;
-                ref& operator=(const ref&) = default;
-                ref& operator=(ref&&) noexcept = default;
-                ref& operator=(const T& t) { *value = t; }
-                ref& operator=(T&& t) noexcept { value.emplace(std::forward(t)); }
-
-                T& get() { return *value; }
-                const T& get() const { return *value; }
-
-                operator T&() { return *value; }
-                operator const T&() const { return *value; }
-            };
-
-            template <typename T>
-            auto operator==(const ref<T>& l, const ref<T>& r) -> bool {
-                return l.get() == r.get();
-            }
-
-            template <typename T>
-            auto operator==(const ref<T>& l, const T& r) -> bool {
-                return l.get() == r;
-            }
-
-            template <typename T>
-            auto operator==(const T& l, const ref<T>& r) -> bool {
-                return l == r.get();
-            }
-
-            template <typename T>
-            auto operator!=(const ref<T>& l, const ref<T>& r) -> bool {
-                return !(l == r);
-            }
-
-            template <typename T>
-            auto operator!=(const ref<T>& l, const T& r) -> bool {
-                return !(l == r);
-            }
-
-            template <typename T>
-            auto operator!=(const T& l, const ref<T>& r) -> bool {
-                return !(l == r);
-            }
-
-            struct tree_t;
-            using node_t = ref<tree_t>;
-
-            struct group_t : std::vector<node_t> {
-                using base_t = std::vector<node_t>;
-                using base_t::base_t;
-            };
-            auto operator<<(std::ostream& os, const group_t& g) -> std::ostream&;
-            auto operator==(const group_t&, const group_t&) -> bool;
-            auto operator!=(const group_t&, const group_t&) -> bool;
-
-            using named_node_t = std::pair<lexer::identifier_t, node_t>;
-            using named_tree_vector_t = std::vector<named_node_t>;
-
-            struct named_group_t : named_tree_vector_t {
-                using base_t = named_tree_vector_t;
-                using base_t::base_t;
-            };
-            auto operator==(const named_group_t&, const named_group_t&) -> bool;
-            auto operator!=(const named_group_t&, const named_group_t&) -> bool;
-            auto operator<<(std::ostream& os, const named_group_t& g) -> std::ostream&;
-
             struct unary_op_t {
                 BOOST_HANA_DEFINE_STRUCT(unary_op_t,
                     (lexer::token_t, op),
@@ -427,7 +351,6 @@ namespace bt {
 
             auto operator<<(std::ostream& os, const node_t& t) -> std::ostream&;
             auto operator<<(std::ostream& os, const tree_t& pt) -> std::ostream&;
-            auto operator<<(std::ostream& os, const group_t& g) -> std::ostream&;
             auto operator<<(std::ostream& os, const if_t& if_) -> std::ostream&;
         }  // namespace syntax
 
