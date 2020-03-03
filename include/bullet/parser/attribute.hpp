@@ -1,5 +1,7 @@
 #pragma once
 
+#include <iostream>
+
 namespace bt {
     namespace parser {
         struct empty_attribute_t {};
@@ -13,7 +15,7 @@ namespace bt {
         };
 
         template <typename Attr>
-        auto operator<<(ostream& os, const attribute_t<Attr>& a) -> ostream& {
+        auto operator<<(std::ostream& os, const attribute_t<Attr>& a) -> std::ostream& {
             os << "attr[" << a.attribute << "]";
             return os;
         }

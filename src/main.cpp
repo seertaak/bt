@@ -14,14 +14,12 @@
 #include <bullet/lexer/token.hpp>
 #include <bullet/parser/ast.hpp>
 #include <bullet/parser/parser.hpp>
-#include <bullet/analysis/annotated_ast.hpp>
 
 using namespace std;
 using namespace bt;
 using namespace lexer;
 using namespace lexer::token;
 using namespace parser;
-using namespace analysis;
 using namespace syntax;
 using namespace rang;
 
@@ -53,11 +51,11 @@ int main(int argc, const char* argv[]) {
     cout << lex_output.tokens << endl;
     cout << endl << endl;
 
-    auto s = std::stringstream();
-    parser::pretty_print(ast, s, 0);
-    cout << s.str() << endl;
+    //auto s = std::stringstream();
+    //parser::pretty_print(ast, s, 0);
+    //cout << s.str() << endl;
 
-    namespace hana = boost::hana;
+    //namespace hana = boost::hana;
     /*
 
     using vt = std::variant<int, float>;
@@ -123,11 +121,11 @@ int main(int argc, const char* argv[]) {
     );
 
     using namespace std;
-    */
 
     namespace st = second_try;
     auto t = st::attr_tree_t<std::string, st::foo, st::bar>();
     auto u = st::attr_tree_t<float, st::foo, st::bar>();
+    */
 
     return 0;
 }

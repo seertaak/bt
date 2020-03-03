@@ -24,15 +24,15 @@ namespace bt {
             };
 
             template <typename Attr>
-            auto operator<<(ostream& os, const unary_op_t& uop) -> ostream& {
+            auto operator<<(std::ostream& os, const unary_op_t<Attr>& uop) -> std::ostream& {
                 auto first = false;
                 os << "unary_op[" << uop.op << ", " << uop.operand 
-                   << ", attribute=[" << uop.attribute << uop.location "]]";
+                   << ", " << uop.attribute << ", " << uop.location << "]]";
                 return os;
             }
 
             template <typename Attr>
-            auto operator==(const unary_op_t& l, const unary_op_t& r) -> bool {
+            auto operator==(const unary_op_t<Attr>& l, const unary_op_t<Attr>& r) -> bool {
                 if (static_cast<const location_t&>(l) != static_cast<const location_t&>(r))
                     return false;
                 return l.op == r.op && l.operand == r.operand && l.attribute == r.attribute;
@@ -40,12 +40,6 @@ namespace bt {
             }
 
             template <typename Attr>
-            auto operator!=(const unary_op_t& l, const unary_op_t& r) -> bool { return !(l == r); }
-
-
-            auto operator==(const unary_op_t&, const unary_op_t&) -> bool;
-            auto operator!=(const unary_op_t&, const unary_op_t&) -> bool;
-            auto operator<<(std::ostream& os, const unary_op_t& uop) -> std::ostream&;
-
+            auto operator!=(const unary_op_t<Attr>& l, const unary_op_t<Attr>& r) -> bool { return !(l == r); }
 } } }
 

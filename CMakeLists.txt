@@ -19,6 +19,7 @@ set(sources
     src/lexer/identifier.cpp
     src/parser/ast.cpp
     src/parser/parser.cpp
+    src/parser/location.cpp
 )
 
 ###################################################################

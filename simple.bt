@@ -2,4 +2,4 @@ var x = 5
 var z = 10
 do:
     var a = x + 5
-    print(a)
+    a.print

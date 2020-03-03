@@ -12,12 +12,7 @@ namespace bt {
             using namespace std;
             using namespace lexer;
 
-            auto operator<<(ostream& os, const bin_op_t& binop) -> ostream& {
-                auto first = true;
-                os << "binary_op[" << binop.op << ", " << binop.lhs << ", " << binop.rhs << "]";
-                return os;
-            }
-
+            /*
             auto operator<<(ostream& os, const invoc_t& invoc) -> ostream& {
                 auto first = true;
                 os << invoc.target << "(";
@@ -106,12 +101,6 @@ namespace bt {
                     else
                         os << ", ";
                     os << ident << ": " << subtree;
-
-                    /*
-                    match(subtree, [&] (auto x) {
-                        os << x;
-                    });
-                    */
                 }
                 os << "]";
                 return os;
@@ -309,12 +298,6 @@ namespace bt {
             }
             auto operator!=(const while_t& l, const while_t& r) -> bool { return !(l == r); }
 
-            auto operator==(const bin_op_t& l, const bin_op_t& r) -> bool {
-                return l.op == r.op && l.lhs == r.lhs && l.rhs == r.rhs;
-            }
-
-            auto operator!=(const bin_op_t& l, const bin_op_t& r) -> bool { return !(l == r); }
-
             auto operator==(const invoc_t& l, const invoc_t& r) -> bool {
                 return l.target == r.target && l.arguments == r.arguments;
             }
@@ -445,6 +428,7 @@ namespace bt {
                     os << "=" << p.expression;
                 return os;
             }
+            */
 
         }  // namespace syntax
     }      // namespace parser

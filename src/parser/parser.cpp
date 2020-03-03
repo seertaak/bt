@@ -147,8 +147,10 @@ namespace bt {
                 parser(const input_t& in) : input(in) { it = begin(input.tokens); }
                 parser(input_t&& in) noexcept : input(std::move(in)) { it = begin(input.tokens); }
 
-                auto top_level() -> tree_t { return block(); }
+                //auto top_level() -> tree_t { return block(); }
+                auto top_level() -> tree_t { return atom(); }
 
+                /*
                 auto block() -> tree_t {
                     auto result = block_t();
                     do {
@@ -687,9 +689,11 @@ namespace bt {
                     }
                     return result;
                 }
+                */
 
                 auto atom() -> tree_t {
                     return eat_or_error(
+                        /*
                         [this](token::oparen_t) -> tree_t {
                             if (code) {
                                 const auto e = block();
@@ -707,6 +711,7 @@ namespace bt {
                         [this](token::do_t) -> tree_t {
                             return delimited_code();
                         },
+                        */
                         [](identifier_t id) { return tree_t(id); },
                         [](string_literal_t s) { return tree_t(s); },
                         [](integral_literal_t i) { return tree_t(i); },

@@ -8,35 +8,17 @@
 
 #include <boost/hana/all.hpp>
 
+#include <bullet/parser/ast_fwd.hpp>
 #include <bullet/lexer/token.hpp>
 #include <bullet/util.hpp>
+#include <bullet/parser/ast/unary_op.hpp>
+#include <bullet/parser/ast/bin_op.hpp>
+#include <bullet/parser/attribute.hpp>
 
 namespace bt {
     namespace parser {
         namespace syntax {
-            struct unary_op_t {
-                BOOST_HANA_DEFINE_STRUCT(unary_op_t,
-                    (lexer::token_t, op),
-                    (node_t, operand)
-                );
-            };
-
-            auto operator==(const unary_op_t&, const unary_op_t&) -> bool;
-            auto operator!=(const unary_op_t&, const unary_op_t&) -> bool;
-            auto operator<<(std::ostream& os, const unary_op_t& uop) -> std::ostream&;
-
-            struct bin_op_t {
-                BOOST_HANA_DEFINE_STRUCT(bin_op_t,
-                    (lexer::token_t, op),
-                    (node_t, lhs), 
-                    (node_t, rhs)
-                );
-            };
-
-            auto operator==(const bin_op_t&, const bin_op_t&) -> bool;
-            auto operator!=(const bin_op_t&, const bin_op_t&) -> bool;
-            auto operator<<(std::ostream& os, const bin_op_t& binop) -> std::ostream&;
-
+            /*
             struct data_t : std::vector<node_t> {
                 using base_t = std::vector<node_t>;
                 using base_t::base_t;
@@ -267,11 +249,13 @@ namespace bt {
             auto operator==(const template_t&, const template_t&) -> bool;
             auto operator!=(const template_t&, const template_t&) -> bool;
             auto operator<<(std::ostream& os, const template_t& t) -> std::ostream&;
+            */
 
             using string_literal_t = lexer::string_token_t;
             using integral_literal_t = lexer::literal::numeric::integral_t;
             using floating_point_literal_t = lexer::literal::numeric::floating_point_t;
 
+            template <typename Attr>
             using node_base_t = std::variant<std::monostate,
                                              string_literal_t,
                                              integral_literal_t,
@@ -279,10 +263,11 @@ namespace bt {
                                              lexer::identifier_t,
                                              lexer::token::true_t,
                                              lexer::token::false_t,
+                                             unary_op_t<Attr>,
+                                             bin_op_t<Attr>,
+                                             /*
                                              block_t,
                                              data_t,
-                                             unary_op_t,
-                                             bin_op_t,
                                              invoc_t,
                                              if_t,
                                              elif_t,
@@ -302,11 +287,13 @@ namespace bt {
                                              def_type_t,
                                              let_type_t,
                                              template_t,
-                                             node_t>;
+                                             */
+                                             attr_node_t<Attr>>;
 
 
-            struct tree_t : node_base_t {
-                using base_t = node_base_t;
+            template <typename Attr>
+            struct attr_tree_t : node_base_t<Attr> {
+                using base_t = node_base_t<Attr>;
                 using base_t::base_t;
 
                 template <typename T>
@@ -349,11 +336,14 @@ namespace bt {
                 }
             };
 
-            auto operator<<(std::ostream& os, const node_t& t) -> std::ostream&;
-            auto operator<<(std::ostream& os, const tree_t& pt) -> std::ostream&;
-            auto operator<<(std::ostream& os, const if_t& if_) -> std::ostream&;
+            using tree_t = attr_tree_t<empty_attribute_t>;
+
+            //auto operator<<(std::ostream& os, const node_t& t) -> std::ostream&;
+            //auto operator<<(std::ostream& os, const tree_t& pt) -> std::ostream&;
+            //auto operator<<(std::ostream& os, const if_t& if_) -> std::ostream&;
         }  // namespace syntax
 
+        /*
         inline void pretty_print(const syntax::tree_t& tree, std::stringstream& out, int indent_level) {
             const auto margin = [&] {
                 auto out = std::stringstream(); 
@@ -657,6 +647,7 @@ namespace bt {
                 ), tree
             );
         }
+        */
 
     }      // namespace parser
 }  // namespace bt
