@@ -2,10 +2,10 @@
 
 #include <cassert>
 #include <cctype>
+#include <cmath>
 #include <exception>
 #include <sstream>
 #include <string>
-#include <cmath>
 
 #include <boost/hana.hpp>
 
@@ -131,7 +131,7 @@ namespace bt {
                     int n = 0;
                     for (; pos < input_length; n++, pos++) {
                         const auto c = input[pos];
-                        //cout << "EAT_DIGITS CONSIDERING : \"" << c << "\"" << endl;
+                        // cout << "EAT_DIGITS CONSIDERING : \"" << c << "\"" << endl;
 
                         int v = -1;
 
@@ -157,9 +157,9 @@ namespace bt {
                         if (v >= 0) {
                             result = result * base + v;
                         } else if (n > 0 && c == '_') {
-                            continue; 
+                            continue;
                         } else {
-                            //cout << "BREAKING FROM EAT_DIGITS ON : \"" << c << "\"" << endl;
+                            // cout << "BREAKING FROM EAT_DIGITS ON : \"" << c << "\"" << endl;
                             break;
                         }
                     }
@@ -175,7 +175,7 @@ namespace bt {
 
                     auto s = remaining_input(p);
 
-                    //cout << "EAT NUMERIC TOKEN " << s << endl;
+                    // cout << "EAT NUMERIC TOKEN " << s << endl;
 
                     unsigned long long intval;
 
@@ -205,10 +205,12 @@ namespace bt {
                     }
 
                     if (!match) {
-                        //cout << "RET FROM EAT_NUMERIC_LIT because no match for \"" << s << "\"" << endl;
+                        // cout << "RET FROM EAT_NUMERIC_LIT because no match for \"" << s << "\""
+                        // << endl;
                         return false;
                     } else {
-                        //cout << "MATCH IN EAT_NUMERIC_LIT for \"" << remaining_input(p) << "\", value: " << intval << endl;
+                        // cout << "MATCH IN EAT_NUMERIC_LIT for \"" << remaining_input(p) << "\",
+                        // value: " << intval << endl;
                     }
 
                     char c;
@@ -296,16 +298,14 @@ namespace bt {
                         // integral
 
                         if (p >= input_length || c == ' ' || c == ')' || c == ',' || c == ';' ||
-                            c == ' ' || c == '\n' || c == '\r' || c == ':')
-                        {
-                            //if (p < input_length)
-                                //cout << "SEPARATOR FOUND: \"" << c << "\"" << endl;
+                            c == ' ' || c == '\n' || c == '\r' || c == ':') {
+                            // if (p < input_length)
+                            // cout << "SEPARATOR FOUND: \"" << c << "\"" << endl;
                             goto emit_integral_token;
                         } else {
-                            //if (p < input_length)
-                                //cout << "SEPARATOR NOT FOUND: \"" << c << "\"" << endl;
+                            // if (p < input_length)
+                            // cout << "SEPARATOR NOT FOUND: \"" << c << "\"" << endl;
                         }
-
 
                         if (c == 'u') {
                             signedness = 'u';
@@ -528,7 +528,9 @@ namespace bt {
                         tokens.emplace_back(OPAREN, line, column, column);
                         pos += 2;
                     } else if (s == "..") {
-                        if (!tokens.empty() && (tokens.back() == LINE_END || tokens.back() == SEMICOLON || tokens.back() == COMMA))
+                        if (!tokens.empty() &&
+                            (tokens.back() == LINE_END || tokens.back() == SEMICOLON ||
+                             tokens.back() == COMMA))
                             tokens.pop_back();
                         pos += 2;
                     }
@@ -548,7 +550,7 @@ namespace bt {
 
                     if (n_spaces == margin) {
                         if (colon_indent) throw runtime_error("Indent expected");
-                        if (!tokens.empty() && tokens.back().token != OPAREN) 
+                        if (!tokens.empty() && tokens.back().token != OPAREN)
                             tokens.emplace_back(LINE_END, line, column, column);
                     } else if (n_spaces > margin) {
                         if (colon_indent)
@@ -561,7 +563,7 @@ namespace bt {
 
                         auto all_ws = true;
                         while (!empty(margins) && n_spaces < get<int16_t>(margins.back())) {
-                            if (get<bool>(margins.back())) 
+                            if (get<bool>(margins.back()))
                                 tokens.emplace_back(CPAREN, line, column, column);
                             else
                                 all_ws = false;
@@ -569,8 +571,7 @@ namespace bt {
                             margins.pop_back();
                         }
 
-                        if (all_ws)
-                            tokens.emplace_back(LINE_END, line, column, column);
+                        if (all_ws) tokens.emplace_back(LINE_END, line, column, column);
                     }
                     pos += n_spaces;
                 }

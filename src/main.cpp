@@ -51,18 +51,18 @@ int main(int argc, const char* argv[]) {
     cout << lex_output.tokens << endl;
     cout << endl << endl;
 
-    //auto s = std::stringstream();
-    //parser::pretty_print(ast, s, 0);
-    //cout << s.str() << endl;
+    auto s = std::stringstream();
+    parser::pretty_print<empty_attribute_t>(ast, s, 0);
+    cout << s.str() << endl;
 
-    //namespace hana = boost::hana;
+    // namespace hana = boost::hana;
     /*
 
     using vt = std::variant<int, float>;
     constexpr auto uuu = annotated::variant_tags(hana::type_c<vt>);
 
-    static_assert(hana::equal(uuu, 
-        hana::tuple_t<std::tuple<syntax::ref<int>, int>, 
+    static_assert(hana::equal(uuu,
+        hana::tuple_t<std::tuple<syntax::ref<int>, int>,
         std::tuple<syntax::ref<float>, int>>));
     static_assert(hana::equal(
         bt::analysis::annotated::ref_type_c<parser::syntax::ref<int>>,

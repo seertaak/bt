@@ -125,4 +125,3 @@ TEST_CASE("Statements", "[parser]") {
             tree_t(syntax::var_def_t{identifier_t("x"), node_t(), node_t(bin_op_t{PLUS, y, two})}));
 }
 */
-

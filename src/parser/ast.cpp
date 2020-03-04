@@ -42,39 +42,10 @@ namespace bt {
                 return os;
             }
 
-            auto operator<<(ostream& os, const struct_t& t) -> ostream& {
-                auto first = true;
-                os << "struct[";
-                for (const auto& [ident, subtree] : t) {
-                    if (first)
-                        first = false;
-                    else
-                        os << ", ";
-                    os << ident << ": " << subtree;
-                }
-                os << "]";
-                return os;
-            }
-
             // def type foo = int   -- foo is a new type.
             // let type foo = int       -- foo is an alias for int, but not a new type.
             // type foo (...)
             // union type foo:
-
-            auto operator<<(ostream& os, const def_type_t& d) -> ostream& {
-                os << "def_type[" << d.name << "=" << d.type << "]";
-                return os;
-            }
-
-            auto operator<<(ostream& os, const let_type_t& d) -> ostream& {
-                os << "let_type[" << d.name << "=" << d.type << "]";
-                return os;
-            }
-
-            auto operator<<(ostream& os, const template_t& t) -> ostream& {
-                os << "template[args=" << t.arguments << ", body=" << t << "]";
-                return os;
-            }
 
             auto operator<<(ostream& os, const tree_t& n) -> ostream& {
                 visit([&](const auto& e) { os << e; }, n);
@@ -111,45 +82,6 @@ namespace bt {
                 return os;
             }
 
-            auto operator<<(ostream& os, const repeat_t& g) -> ostream& {
-                auto first = true;
-                os << "repeat[";
-                for (const auto& pt : g) {
-                    if (first)
-                        first = false;
-                    else
-                        os << ", ";
-                    os << pt;
-                }
-                os << "]";
-                return os;
-            }
-
-            auto operator<<(ostream& os, const for_t& f) -> ostream& {
-                os << "for[var_lhs=" << f.var_lhs << ", var_rhs=" << f.var_rhs
-                    << ", body=" << f.body << "]";
-                return os;
-            }
-
-            auto operator<<(ostream& os, const while_t& f) -> ostream& {
-                os << "while[test=" << f.test << ", body=" << f.body << "]";
-                return os;
-            }
-
-            auto operator<<(ostream& os, const block_t& g) -> ostream& {
-                auto first = true;
-                os << "block[";
-                for (const auto& pt : g) {
-                    if (first)
-                        first = false;
-                    else
-                        os << ", ";
-                    os << pt;
-                }
-                os << "]";
-                return os;
-            }
-
             auto operator<<(ostream& os, const else_t& e) -> ostream& {
                 os << "else[" << e.body << "]";
                 return os;
@@ -180,32 +112,6 @@ namespace bt {
                 return !(l == r);
             }
 
-            auto operator==(const block_t& l, const block_t& r) -> bool {
-                if (l.size() != r.size()) return false;
-                for (auto i = 0; i < l.size(); i++)
-                    if (l[i] != r[i]) return false;
-                return true;
-            }
-            auto operator!=(const block_t& l, const block_t& r) -> bool { return !(l == r); }
-
-            auto operator==(const repeat_t& l, const repeat_t& r) -> bool {
-                if (l.size() != r.size()) return false;
-                for (auto i = 0; i < l.size(); i++)
-                    if (l[i] != r[i]) return false;
-                return true;
-            }
-            auto operator!=(const repeat_t& l, const repeat_t& r) -> bool { return !(l == r); }
-
-            auto operator==(const for_t& l, const for_t& r) -> bool {
-                return l.var_lhs == r.var_lhs && l.var_rhs == r.var_rhs && l.body == r.body;
-            }
-            auto operator!=(const for_t& l, const for_t& r) -> bool { return !(l == r); }
-
-            auto operator==(const while_t& l, const while_t& r) -> bool {
-                return l.test == r.test && l.body == r.body;
-            }
-            auto operator!=(const while_t& l, const while_t& r) -> bool { return !(l == r); }
-
             auto operator==(const fn_def_t& l, const fn_def_t& r) -> bool {
                 if (l.name != r.name)
                     return false;
@@ -232,27 +138,7 @@ namespace bt {
             }
             auto operator!=(const fn_def_t& l, const fn_def_t& r) -> bool { return !(l == r); }
 
-            auto operator==(const struct_t& l, const struct_t& r) -> bool {
-                if (l.size() != r.size()) return false;
-                for (auto i = 0; i < l.size(); i++)
-                    if (l[i] != r[i]) return false;
-                return true;
-            }
-            auto operator!=(const struct_t& l, const struct_t& r) -> bool { return !(l == r); }
 
-            auto operator==(const def_type_t& l, const def_type_t& r) -> bool {
-                return l.name == r.name && l.type == r.type;
-            }
-            auto operator!=(const def_type_t& l, const def_type_t& r) -> bool { return !(l == r); }
-            auto operator==(const let_type_t& l, const let_type_t& r) -> bool {
-                return l.name == r.name && l.type == r.type;
-            }
-            auto operator!=(const let_type_t& l, const let_type_t& r) -> bool { return !(l == r); }
-            auto operator==(const template_t& l, const template_t& r) -> bool {
-                return l.arguments == r.arguments && l.body == r.body;
-            }
-
-            auto operator!=(const template_t& l, const template_t& r) -> bool { return !(l == r); }
 
 
             */

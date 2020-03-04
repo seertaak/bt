@@ -1,5 +1,2 @@
-var x = 5
-var z = 10
-do:
-    var a = x + 5
-    a.print
+def foo(x: int) -> int =
+    print(x + 1)

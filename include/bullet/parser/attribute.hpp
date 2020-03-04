@@ -6,6 +6,11 @@ namespace bt {
     namespace parser {
         struct empty_attribute_t {};
 
+        inline auto operator<<(std::ostream& os, const empty_attribute_t& a) -> std::ostream& {
+            os << "empty[]";
+            return os;
+        }
+
         template <typename Attr>
         struct attr_tree_t;
 

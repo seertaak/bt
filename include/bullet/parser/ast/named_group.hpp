@@ -17,13 +17,15 @@ namespace bt {
             using named_tree_vector_t = std::vector<named_node_t<Attr>>;
 
             template <typename Attr>
-            struct named_group_t : named_tree_vector_t {
-                using base_t = named_tree_vector_t;
+            struct named_group_t : named_tree_vector_t<Attr> {
+                using base_t = named_tree_vector_t<Attr>;
                 using base_t::base_t;
+                Attr attribute;
+                auto operator<=>(const named_group_t&) const = default;
             };
              
             template <typename Attr>
-            auto operator<<(ostream& os, const named_group_t<Attr>& g) -> ostream& {
+            auto operator<<(std::ostream& os, const named_group_t<Attr>& g) -> std::ostream& {
                 auto first = true;
                 os << "named_group[";
                 for (const auto& [ident, subtree] : g) {
@@ -32,21 +34,9 @@ namespace bt {
                     else
                         os << ", ";
                     os << ident << ": " << subtree.get();
-                    os << ", " << subtree.get().attribute;
                 }
-                os << "]";
+                os << ", attr=" << g.attribute << "]";
                 return os;
-            }
-            template <typename Attr>
-            auto operator==(const named_group_t<Attr>& l, const named_group_t<Attr>& r) -> bool {
-                if (l.size() != r.size()) return false;
-                for (auto i = 0; i < l.size(); i++)
-                    if (l[i] != r[i]) return false;
-                return true;
-            }
-            template <typename Attr>
-            auto operator!=(const named_group_t& l, const named_group_t& r) -> bool {
-                return !(l == r);
             }
      }
   }

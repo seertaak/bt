@@ -14,7 +14,7 @@ namespace bt {
             template <typename Attr>
             struct return_t {
                 BOOST_HANA_DEFINE_STRUCT(return_t,
-                    (attr_attr_node_t<Attr><Attr>, body),
+                    (attr_node_t<Attr>, value),
                     (Attr, attribute)
                 );
                  auto operator<=>(const return_t&) const = default;
@@ -22,8 +22,8 @@ namespace bt {
 
             template <typename Attr>
             auto operator<<(std::ostream& os, const return_t<Attr>& e) -> std::ostream& {
-                if (t.value.get())
-                    os << "return[" << t.value.get() << "]";
+                if (e.value.get())
+                    os << "return[" << e.value.get() << "]";
                 else
                     os << "return[]";
                 return os;

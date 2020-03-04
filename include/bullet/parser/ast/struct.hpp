@@ -3,30 +3,31 @@
 #include <iostream>
 
 #include <bullet/parser/ast_fwd.hpp>
+#include <bullet/parser/ast/named_group.hpp>
 
 namespace bt {
     namespace parser {
         namespace syntax {
             template <typename Attr>
-            struct block_t : std::vector<attr_node_t<Attr>> {
-                using base_t = std::vector<attr_node_t<Attr>>;
+            struct struct_t : named_tree_vector_t<Attr> {
+                using base_t = named_tree_vector_t<Attr>;
                 using base_t::base_t;
                 Attr attribute;
-                auto operator<=>(const block_t&) const = default;
+                auto operator<=>(const struct_t&) const = default;
             };
 
             template <typename Attr>
-            auto operator<<(std::ostream& os, const block_t<Attr>& data) -> std::ostream& {
+            auto operator<<(std::ostream& os, const struct_t<Attr>& t) -> std::ostream& {
                 auto first = true;
-                os << "block[[";
-                for (const auto& pt : data) {
+                os << "struct[";
+                for (const auto& [ident, subtree] : t) {
                     if (first)
                         first = false;
                     else
                         os << ", ";
-                    os << pt;
+                    os << ident << ": " << subtree;
                 }
-                os << "], " << data.attribute << "]";
+                os << "]";
                 return os;
             }
         }}} 
