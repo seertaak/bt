@@ -13,128 +13,20 @@
 #include <bullet/util.hpp>
 #include <bullet/parser/ast/unary_op.hpp>
 #include <bullet/parser/ast/bin_op.hpp>
+#include <bullet/parser/ast/data.hpp>
+#include <bullet/parser/ast/invoc.hpp>
+#include <bullet/parser/ast/if.hpp>
+#include <bullet/parser/ast/elif.hpp>
+#include <bullet/parser/ast/else.hpp>
+#include <bullet/parser/ast/assign.hpp>
+#include <bullet/parser/ast/var_def.hpp>
+#include <bullet/parser/ast/fn_expr.hpp>
 #include <bullet/parser/attribute.hpp>
 
 namespace bt {
     namespace parser {
         namespace syntax {
             /*
-            struct data_t : std::vector<node_t> {
-                using base_t = std::vector<node_t>;
-                using base_t::base_t;
-            };
-
-            auto operator==(const data_t&, const data_t&) -> bool;
-            auto operator!=(const data_t&, const data_t&) -> bool;
-            auto operator<<(std::ostream& os, const data_t& repeat) -> std::ostream&;
-
-            struct invoc_t {
-                BOOST_HANA_DEFINE_STRUCT(invoc_t,
-                    (node_t, target),
-                    (data_t, arguments)
-                );
-            };
-
-            auto operator==(const invoc_t&, const invoc_t&) -> bool;
-            auto operator!=(const invoc_t&, const invoc_t&) -> bool;
-            auto operator<<(std::ostream& os, const invoc_t& invoc) -> std::ostream&;
-            
-            struct if_t {
-                BOOST_HANA_DEFINE_STRUCT(if_t,
-                    (std::vector<node_t>, elif_tests),
-                    (std::vector<node_t>, elif_branches),
-                    (node_t, else_branch)
-                );
-            };
-
-            auto operator==(const if_t&, const if_t&) -> bool;
-            auto operator!=(const if_t&, const if_t&) -> bool;
-            auto operator<<(std::ostream& os, const if_t& if_) -> std::ostream&;
-
-            struct elif_t {
-                BOOST_HANA_DEFINE_STRUCT(elif_t,
-                    (node_t, test),
-                    (node_t, body)
-                );
-            };
-
-            auto operator==(const elif_t&, const elif_t&) -> bool;
-            auto operator!=(const elif_t&, const elif_t&) -> bool;
-            auto operator<<(std::ostream& os, const elif_t& elif_) -> std::ostream&;
-
-            struct else_t {
-                BOOST_HANA_DEFINE_STRUCT(else_t,
-                    (node_t, body)
-                );
-            };
-
-            auto operator==(const else_t&, const else_t&) -> bool;
-            auto operator!=(const else_t&, const else_t&) -> bool;
-            auto operator<<(std::ostream& os, const else_t& else_) -> std::ostream&;
-
-            struct assign_t {
-                BOOST_HANA_DEFINE_STRUCT(assign_t,
-                    (node_t, lhs),
-                    (node_t, rhs)
-                );
-            };
-
-            auto operator==(const assign_t&, const assign_t&) -> bool;
-            auto operator!=(const assign_t&, const assign_t&) -> bool;
-            auto operator<<(std::ostream& os, const assign_t& a) -> std::ostream&;
-
-            struct var_def_t {
-                BOOST_HANA_DEFINE_STRUCT(var_def_t,
-                    (lexer::identifier_t, name),
-                    (node_t, type),
-                    (node_t, rhs)
-                );
-            };
-
-            auto operator==(const var_def_t&, const var_def_t&) -> bool;
-            auto operator!=(const var_def_t&, const var_def_t&) -> bool;
-            auto operator<<(std::ostream& os, const var_def_t& a) -> std::ostream&;
-
-            struct fn_closure_param_t {
-                BOOST_HANA_DEFINE_STRUCT(fn_closure_param_t,
-                    (bool, var),
-                    (std::optional<lexer::identifier_t>, identifier),
-                    (node_t, expression)
-                );
-            };
-
-            auto operator==(const fn_closure_param_t&, const fn_closure_param_t&) -> bool;
-            auto operator!=(const fn_closure_param_t&, const fn_closure_param_t&) -> bool;
-            auto operator<<(std::ostream& os, const fn_closure_param_t& a) -> std::ostream&;
-
-            struct fn_expr_t {
-                BOOST_HANA_DEFINE_STRUCT(fn_expr_t,
-                    (std::vector<lexer::identifier_t>, arg_names),
-                    (std::vector<node_t>, arg_types),
-                    (node_t, result_type),
-                    (node_t, body),
-                    (std::vector<fn_closure_param_t>, closure_params)
-                );
-            };
-
-            auto operator==(const fn_expr_t&, const fn_expr_t&) -> bool;
-            auto operator!=(const fn_expr_t&, const fn_expr_t&) -> bool;
-            auto operator<<(std::ostream& os, const fn_expr_t& a) -> std::ostream&;
-
-            struct fn_def_t {
-                BOOST_HANA_DEFINE_STRUCT(fn_def_t,
-                    (lexer::identifier_t, name),
-                    (std::vector<lexer::identifier_t>, arg_names),
-                    (std::vector<node_t>, arg_types),
-                    (node_t, result_type),
-                    (node_t, body)
-                );
-            };
-
-            auto operator==(const fn_def_t&, const fn_def_t&) -> bool;
-            auto operator!=(const fn_def_t&, const fn_def_t&) -> bool;
-            auto operator<<(std::ostream& os, const fn_def_t& a) -> std::ostream&;
-
             struct return_t { 
                 BOOST_HANA_DEFINE_STRUCT(return_t,
                     (node_t, value)
@@ -265,17 +157,16 @@ namespace bt {
                                              lexer::token::false_t,
                                              unary_op_t<Attr>,
                                              bin_op_t<Attr>,
+                                             data_t<Attr>,
+                                             invoc_t<Attr>,
+                                             if_t<Attr>,
+                                             elif_t<Attr>,
+                                             else_t<Attr>,
+                                             var_def_t<Attr>,
+                                             fn_expr_t<Attr>,
                                              /*
                                              block_t,
-                                             data_t,
-                                             invoc_t,
-                                             if_t,
-                                             elif_t,
-                                             else_t,
                                              assign_t,
-                                             fn_def_t,
-                                             fn_expr_t,
-                                             var_def_t,
                                              repeat_t,
                                              for_t,
                                              while_t,

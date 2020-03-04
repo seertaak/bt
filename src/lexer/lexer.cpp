@@ -1,5 +1,6 @@
 #include <bullet/lexer/lexer.hpp>
 
+#include <cassert>
 #include <cctype>
 #include <exception>
 #include <sstream>

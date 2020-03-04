@@ -13,55 +13,12 @@ namespace bt {
             using namespace lexer;
 
             /*
-            auto operator<<(ostream& os, const invoc_t& invoc) -> ostream& {
-                auto first = true;
-                os << invoc.target << "(";
-
-                for (auto&& arg : invoc.arguments) {
-                    if (first)
-                        first = false;
-                    else
-                        os << ", ";
-                    os << arg;
-                }
-                os << ")";
-                return os;
-            }
 
             auto operator<<(ostream& os, const assign_t& a) -> ostream& {
                 os << "assign[" << a.lhs << ", " << a.rhs << "]";
                 return os;
             }
 
-            auto operator<<(ostream& os, const fn_expr_t& a) -> ostream& {
-                os << "fn(";
-                auto first = true;
-                for (auto i = 0; i < a.arg_names.size(); i++) {
-                    if (first) first = false;
-                    else os << ", ";
-                    os << a.arg_names[i];
-                    const auto& t = a.arg_types[i];
-                    if (t.get())
-                        os << ":" << t;
-                }
-                os << ")";
-                if (a.result_type.get())
-                    os << " -> " << a.result_type;
-
-                os << " = " << a.body;
-
-                if (!a.closure_params.empty()) {
-                    first = true;
-                    os << " with ";
-                    for (auto&& p: a.closure_params) {
-                        if (first) first = false;
-                        else os << ", ";
-                        os << p;
-                    }
-                }
-
-                return os;
-            }
 
             auto operator<<(ostream& os, const fn_def_t& a) -> ostream& {
                 os << "def_fn[";
@@ -82,13 +39,6 @@ namespace bt {
 
                 os << ", body=" << a.body << "]";
 
-                return os;
-            }
-
-            auto operator<<(ostream& os, const var_def_t& v) -> ostream& {
-                os << "var[" << v.name;
-                if (v.type.get()) os << ": " << v.type;
-                os << " = " << v.rhs << "]";
                 return os;
             }
 
@@ -186,20 +136,6 @@ namespace bt {
                 return os;
             }
 
-            auto operator<<(ostream& os, const data_t& g) -> ostream& {
-                auto first = true;
-                os << "data[";
-                for (const auto& pt : g) {
-                    if (first)
-                        first = false;
-                    else
-                        os << ", ";
-                    os << pt;
-                }
-                os << "]";
-                return os;
-            }
-
             auto operator<<(ostream& os, const block_t& g) -> ostream& {
                 auto first = true;
                 os << "block[";
@@ -211,24 +147,6 @@ namespace bt {
                     os << pt;
                 }
                 os << "]";
-                return os;
-            }
-
-            auto operator<<(ostream& os, const if_t& if_) -> ostream& {
-                os << "if[";
-                auto first = true;
-                for (auto i = 0; i < if_.elif_tests.size(); i++) {
-                    if (first) first = false;
-                    else os << ", ";
-                    os << if_.elif_tests[i] << " => " << if_.elif_branches[i];
-                }
-                if (if_.else_branch.get()) os << ", else=" << if_.else_branch;
-                os << "]";
-                return os;
-            }
-
-            auto operator<<(ostream& os, const elif_t& e) -> ostream& {
-                os << "elif[test=" << e.test << ", body=" << e.body << "]";
                 return os;
             }
 
@@ -262,16 +180,6 @@ namespace bt {
                 return !(l == r);
             }
 
-            auto operator==(const data_t& l, const data_t& r) -> bool {
-                if (l.size() != r.size()) return false;
-                for (auto i = 0; i < l.size(); i++)
-                    if (l[i] != r[i]) return false;
-                return true;
-            }
-            auto operator!=(const data_t& l, const data_t& r) -> bool {
-                return !(l == r);
-            }
-
             auto operator==(const block_t& l, const block_t& r) -> bool {
                 if (l.size() != r.size()) return false;
                 for (auto i = 0; i < l.size(); i++)
@@ -297,67 +205,6 @@ namespace bt {
                 return l.test == r.test && l.body == r.body;
             }
             auto operator!=(const while_t& l, const while_t& r) -> bool { return !(l == r); }
-
-            auto operator==(const invoc_t& l, const invoc_t& r) -> bool {
-                return l.target == r.target && l.arguments == r.arguments;
-            }
-            auto operator!=(const invoc_t& l, const invoc_t& r) -> bool { return !(l == r); }
-
-            auto operator==(const if_t& l, const if_t& r) -> bool {
-                if (l.elif_tests.size() != r.elif_tests.size()) return false;
-                for (auto i = 0; i < l.elif_tests.size(); i++) {
-                    if (l.elif_tests[i] != r.elif_tests[i]) 
-                        return false;
-                    if (l.elif_branches[i] != r.elif_branches[i]) 
-                        return false;
-                }
-                return l.else_branch == r.else_branch;
-            }
-            auto operator!=(const if_t& l, const if_t& r) -> bool { return !(l == r); }
-
-            auto operator==(const elif_t& l, const elif_t& r) -> bool {
-                return l.test == r.test && l.body == r.body;
-            }
-            auto operator!=(const elif_t& l, const elif_t& r) -> bool { return !(l == r); }
-
-            auto operator==(const else_t& l, const else_t& r) -> bool {
-                return l.body == r.body;
-            }
-            auto operator!=(const else_t& l, const else_t& r) -> bool { return !(l == r); }
-
-            auto operator==(const assign_t& l, const assign_t& r) -> bool {
-                return l.lhs == r.lhs && l.rhs == r.rhs;
-            }
-            auto operator!=(const assign_t& l, const assign_t& r) -> bool { return !(l == r); }
-
-            auto operator==(const fn_expr_t& l, const fn_expr_t& r) -> bool {
-                if (l.arg_names.size() != r.arg_names.size())
-                    return false;
-                for (int i = 0; i < l.arg_names.size(); i++)
-                    if (l.arg_names[i] != r.arg_names[i])
-                        return false;
-
-                if (l.arg_types.size() != r.arg_types.size())
-                    return false;
-                for (int i = 0; i < l.arg_types.size(); i++)
-                    if (l.arg_types[i] != r.arg_types[i])
-                        return false;
-
-                if (l.result_type != r.result_type)
-                    return false;
-
-                if (l.body != r.body)
-                    return false;
-
-                if (l.closure_params.size() != r.closure_params.size())
-                    return false;
-                for (int i = 0; i < l.closure_params.size(); i++)
-                    if (l.closure_params[i] != r.closure_params[i])
-                        return false;
-
-                return true;
-            }
-            auto operator!=(const fn_expr_t& l, const fn_expr_t& r) -> bool { return !(l == r); }
 
             auto operator==(const fn_def_t& l, const fn_def_t& r) -> bool {
                 if (l.name != r.name)
@@ -385,11 +232,6 @@ namespace bt {
             }
             auto operator!=(const fn_def_t& l, const fn_def_t& r) -> bool { return !(l == r); }
 
-            auto operator==(const var_def_t& l, const var_def_t& r) -> bool {
-                return l.name == r.name && l.type == r.type && l.rhs == r.rhs;
-            }
-            auto operator!=(const var_def_t& l, const var_def_t& r) -> bool { return !(l == r); }
-
             auto operator==(const struct_t& l, const struct_t& r) -> bool {
                 if (l.size() != r.size()) return false;
                 for (auto i = 0; i < l.size(); i++)
@@ -412,22 +254,7 @@ namespace bt {
 
             auto operator!=(const template_t& l, const template_t& r) -> bool { return !(l == r); }
 
-            auto operator==(const fn_closure_param_t& l, const fn_closure_param_t& r) -> bool {
-                return l.var == r.var && l.identifier == r.identifier && l.expression == r.expression;
-            }
-            auto operator!=(const fn_closure_param_t& l, const fn_closure_param_t& r) -> bool {
-                return !(l == r);
-            }
 
-            auto operator<<(std::ostream& os, const fn_closure_param_t& p) -> std::ostream& {
-                if (auto v = p.var)
-                    os << "var ";
-                if (auto i = p.identifier)
-                    os << i->name;
-                if (p.expression.get())
-                    os << "=" << p.expression;
-                return os;
-            }
             */
 
         }  // namespace syntax

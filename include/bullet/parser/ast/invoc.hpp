@@ -5,6 +5,7 @@
 #include <boost/hana/all.hpp>
 
 #include <bullet/parser/ast_fwd.hpp>
+#include <bullet/parser/ast/data.hpp>
 
 namespace bt {
     namespace parser {
@@ -13,15 +14,15 @@ namespace bt {
             template <typename Attr>
             struct invoc_t {
                 BOOST_HANA_DEFINE_STRUCT(invoc_t,
-                    (node_t, target),
-                    (data_t, arguments),
+                    (attr_node_t<Attr>, target),
+                    (data_t<Attr>, arguments),
                     (Attr, attribute)
                 );
-                 auto operator<=>(const Point&) const = default;
+                 auto operator<=>(const invoc_t&) const = default;
             };
 
             template <typename Attr>
-            auto operator<<(ostream& os, const invoc_t& invoc) -> ostream& {
+            auto operator<<(std::ostream& os, const invoc_t<Attr>& invoc) -> std::ostream& {
                 auto first = true;
                 os << "invoke[" << invoc.target << "(";
 
