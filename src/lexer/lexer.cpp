@@ -5,6 +5,7 @@
 #include <exception>
 #include <sstream>
 #include <string>
+#include <cmath>
 
 #include <boost/hana.hpp>
 
