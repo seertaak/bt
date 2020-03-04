@@ -40,4 +40,6 @@ namespace bt {
                 os << "], " << data.attribute << "]";
                 return os;
             }
-        }}} 
+        }  // namespace syntax
+    }      // namespace parser
+}  // namespace bt

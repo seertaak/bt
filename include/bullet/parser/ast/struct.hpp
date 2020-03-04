@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include <bullet/parser/ast_fwd.hpp>
 #include <bullet/parser/ast/named_group.hpp>
+#include <bullet/parser/ast_fwd.hpp>
 
 namespace bt {
     namespace parser {
@@ -30,4 +30,6 @@ namespace bt {
                 os << "]";
                 return os;
             }
-        }}} 
+        }  // namespace syntax
+    }      // namespace parser
+}  // namespace bt

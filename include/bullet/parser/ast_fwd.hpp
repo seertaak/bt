@@ -10,8 +10,6 @@ namespace bt {
 
             template <typename Attr>
             using attr_node_t = ref<attr_tree_t<Attr>>;
-        }
-    }
-}
-
-
+        }  // namespace syntax
+    }      // namespace parser
+}  // namespace bt

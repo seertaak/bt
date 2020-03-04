@@ -4,8 +4,8 @@
 
 #include <boost/hana/all.hpp>
 
-#include <bullet/parser/ast_fwd.hpp>
 #include <bullet/parser/ast/data.hpp>
+#include <bullet/parser/ast_fwd.hpp>
 
 namespace bt {
     namespace parser {
@@ -13,11 +13,8 @@ namespace bt {
 
             template <typename Attr>
             struct else_t {
-                BOOST_HANA_DEFINE_STRUCT(else_t,
-                    (attr_node_t<Attr>, body),
-                    (Attr, attribute)
-                );
-                 auto operator<=>(const else_t&) const = default;
+                BOOST_HANA_DEFINE_STRUCT(else_t, (attr_node_t<Attr>, body), (Attr, attribute));
+                auto operator<=>(const else_t&) const = default;
             };
 
             template <typename Attr>
@@ -26,4 +23,6 @@ namespace bt {
                 return os;
             }
 
-        }}}
+        }  // namespace syntax
+    }      // namespace parser
+}  // namespace bt

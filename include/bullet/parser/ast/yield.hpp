@@ -12,11 +12,8 @@ namespace bt {
 
             template <typename Attr>
             struct yield_t {
-                BOOST_HANA_DEFINE_STRUCT(yield_t,
-                    (attr_node_t<Attr>, value),
-                    (Attr, attribute)
-                );
-                 auto operator<=>(const yield_t&) const = default;
+                BOOST_HANA_DEFINE_STRUCT(yield_t, (attr_node_t<Attr>, value), (Attr, attribute));
+                auto operator<=>(const yield_t&) const = default;
             };
 
             template <typename Attr>
@@ -25,4 +22,6 @@ namespace bt {
                 return os;
             }
 
-        }}}
+        }  // namespace syntax
+    }      // namespace parser
+}  // namespace bt

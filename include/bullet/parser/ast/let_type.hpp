@@ -13,11 +13,10 @@ namespace bt {
             template <typename Attr>
             struct let_type_t {
                 BOOST_HANA_DEFINE_STRUCT(let_type_t,
-                    (lexer::identifier_t, name),
-                    (attr_node_t<Attr>, type),
-                    (Attr, attribute)
-                );
-                 auto operator<=>(const let_type_t&) const = default;
+                                         (lexer::identifier_t, name),
+                                         (attr_node_t<Attr>, type),
+                                         (Attr, attribute));
+                auto operator<=>(const let_type_t&) const = default;
             };
 
             template <typename Attr>
@@ -26,4 +25,6 @@ namespace bt {
                 return os;
             }
 
-        }}}
+        }  // namespace syntax
+    }      // namespace parser
+}  // namespace bt

@@ -13,11 +13,10 @@ namespace bt {
             template <typename Attr>
             struct while_t {
                 BOOST_HANA_DEFINE_STRUCT(while_t,
-                    (attr_node_t<Attr>, test), 
-                    (attr_node_t<Attr>, body),
-                    (Attr, attribute)
-                );
-                 auto operator<=>(const while_t&) const = default;
+                                         (attr_node_t<Attr>, test),
+                                         (attr_node_t<Attr>, body),
+                                         (Attr, attribute));
+                auto operator<=>(const while_t&) const = default;
             };
 
             template <typename Attr>
@@ -26,4 +25,6 @@ namespace bt {
                 return os;
             }
 
-        }}}
+        }  // namespace syntax
+    }      // namespace parser
+}  // namespace bt

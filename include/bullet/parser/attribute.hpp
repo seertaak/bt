@@ -34,4 +34,5 @@ namespace bt {
         auto operator!=(const attribute_t<Attr>& l, const attribute_t<Attr>& r) -> bool {
             return l.attribute != r.attribute;
         }
-} }
+    }  // namespace parser
+}  // namespace bt

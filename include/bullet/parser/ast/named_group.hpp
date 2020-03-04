@@ -1,8 +1,8 @@
 #pragma once
 
 #include <iostream>
-#include <vector>
 #include <tuple>
+#include <vector>
 
 #include <bullet/parser/ast_fwd.hpp>
 #include <bullet/util.hpp>
@@ -23,7 +23,7 @@ namespace bt {
                 Attr attribute;
                 auto operator<=>(const named_group_t&) const = default;
             };
-             
+
             template <typename Attr>
             auto operator<<(std::ostream& os, const named_group_t<Attr>& g) -> std::ostream& {
                 auto first = true;
@@ -38,8 +38,6 @@ namespace bt {
                 os << ", attr=" << g.attribute << "]";
                 return os;
             }
-     }
-  }
-}
-
-
+        }  // namespace syntax
+    }      // namespace parser
+}  // namespace bt

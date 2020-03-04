@@ -4,8 +4,8 @@
 
 #include <boost/hana/all.hpp>
 
-#include <bullet/parser/ast_fwd.hpp>
 #include <bullet/parser/ast/data.hpp>
+#include <bullet/parser/ast_fwd.hpp>
 
 namespace bt {
     namespace parser {
@@ -14,11 +14,10 @@ namespace bt {
             template <typename Attr>
             struct invoc_t {
                 BOOST_HANA_DEFINE_STRUCT(invoc_t,
-                    (attr_node_t<Attr>, target),
-                    (data_t<Attr>, arguments),
-                    (Attr, attribute)
-                );
-                 auto operator<=>(const invoc_t&) const = default;
+                                         (attr_node_t<Attr>, target),
+                                         (data_t<Attr>, arguments),
+                                         (Attr, attribute));
+                auto operator<=>(const invoc_t&) const = default;
             };
 
             template <typename Attr>
@@ -36,4 +35,6 @@ namespace bt {
                 os << "), " << invoc.attribute << "]";
                 return os;
             }
-        } }} 
+        }  // namespace syntax
+    }      // namespace parser
+}  // namespace bt
