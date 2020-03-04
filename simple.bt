@@ -1,2 +1,2 @@
-def foo(x: int) -> int =
+def foo(x: int): int =
     print(x + 1)

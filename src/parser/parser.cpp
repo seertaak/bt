@@ -263,7 +263,6 @@ namespace bt {
                                 return let_type_t<empty_attribute_t>{name, p_node_t(atom_expr())};
                             },
                             [this](token::var_t) -> tree_t {
-                                cout << "VAR " << endl;
                                 const auto lhs = expect<lexer::identifier_t>();
 
                                 auto result_type = p_node_t(tree_t());
