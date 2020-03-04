@@ -471,8 +471,8 @@ namespace bt {
                                 */
                                 auto column = pos - start_of_line.back();
 
-                                tokens.emplace_back(token_v, line, column,
-                                                    column + token_v.token.size());
+                                tokens.emplace_back(token_v, line, column + 1,
+                                                    column + token_v.token.size() + 1);
 
                                 pos = end_pos;
 
