@@ -18,10 +18,10 @@ using namespace lexer;
 using namespace lexer::token;
 
 namespace {
-    auto tok_list(string_view input) -> source_token_list_t {
-        auto output = input | tokenize;
-        return output.tokens;
-    }
+auto tok_list(string_view input) -> source_token_list_t {
+    auto output = input | tokenize;
+    return output.tokens;
+}
 }  // namespace
 
 TEST_CASE("Basic token functionality", "[token]") {

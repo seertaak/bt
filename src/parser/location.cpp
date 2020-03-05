@@ -1,16 +1,12 @@
 #include <bullet/parser/location.hpp>
 
-namespace bt {
-    namespace parser {
-        namespace syntax {
-            using namespace std;
+namespace bt { namespace parser { namespace syntax {
+    using namespace std;
 
-            auto operator<<(ostream& os, const location_t& l) -> ostream& {
-                os << '(' << l.first_line << ":" << l.first_col << "-" << l.last_line << ":"
-                   << l.last_col << ')';
-                return os;
-            }
+    auto operator<<(ostream& os, const location_t& l) -> ostream& {
+        os << '(' << l.first_line << ":" << l.first_col << "-" << l.last_line << ":" << l.last_col
+           << ')';
+        return os;
+    }
 
-        }  // namespace syntax
-    }      // namespace parser
-}  // namespace bt
+}}}  // namespace bt::parser::syntax

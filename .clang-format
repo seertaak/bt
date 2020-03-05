@@ -38,7 +38,8 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 MacroBlockBegin: '^IPC_END_MESSAGE_MAP$'
 MacroBlockEnd:   ''
 MaxEmptyLinesToKeep: 1
-NamespaceIndentation: All
+NamespaceIndentation: Inner
+CompactNamespaces: true
 ObjCBlockIndentWidth: 2
 ObjCSpaceAfterProperty: false
 ObjCSpaceBeforeProtocolList: false
