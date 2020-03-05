@@ -182,14 +182,14 @@ namespace bt { namespace parser {
                 [&](const unary_op_t<Attr>& op) {
                     out << margin() << "unary_op:" << endl;
                     indent();
-                    out << margin() << op << endl;
+                    out << margin() << op.op << endl;
                     pretty_print<Attr>(op.operand.get(), out, indent_level);
                     dedent();
                 },
                 [&](const bin_op_t<Attr>& op) {
                     out << margin() << "binary_op:" << endl;
                     indent();
-                    out << margin() << op << endl;
+                    out << margin() << op.op << endl;
                     pretty_print<Attr>(op.lhs.get(), out, indent_level);
                     pretty_print<Attr>(op.rhs.get(), out, indent_level);
                     dedent();
