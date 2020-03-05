@@ -44,6 +44,10 @@ namespace bt {
                     return *it;
                 }
 
+                auto loc_first() { return peek().location; }
+
+                auto loc_last() { return (it - 1)->location; }
+
                 auto eat() -> source_token_t {
                     if (it == end(input.tokens)) throw std::runtime_error("End of input.");
                     return *it++;
@@ -154,11 +158,16 @@ namespace bt {
                 auto top_level() -> tree_t { return block(); }
 
                 auto block() -> tree_t {
+                    const auto l = loc_first();
                     auto result = p_block_t();
                     do {
                         parse_block_line(result);
                     } while (eat_if<token::line_end_t>());
-                    return result.size() == 1 ? result.front().get() : result;
+
+                    const auto L = loc_last();
+                    auto rv = result.size() == 1 ? result.front().get() : result;
+                    rv.location = location_t(l, L);
+                    return rv;
                 }
 
                 void parse_block_line(p_block_t& block) {
@@ -209,27 +218,36 @@ namespace bt {
                 }
 
                 auto delimited_code() -> tree_t {
+                    const auto l = loc_first();
                     const auto old_code = code;
                     code = false;
                     expect<token::oparen_t>();
-                    const auto result = block();
+                    auto result = block();
                     expect<token::cparen_t>();
                     code = old_code;
+                    const auto L = loc_last();
+                    result.location = location_t(l, L);
                     return result;
                 }
 
                 auto delimited_data() -> tree_t {
+                    const auto l = loc_first();
+
                     const auto old_code = code;
                     code = false;
                     expect<token::oparen_t>();
-                    const auto result = data();
+                    tree_t result = data();
                     expect<token::cparen_t>();
                     code = old_code;
+
+                    const auto L = loc_last();
+                    result.location = location_t(l, L);
                     return result;
                 }
 
                 auto statement() -> tree_t {
-                    if (const auto result = eat_if(
+                    const auto l = loc_first();
+                    if (auto result = eat_if(
                             [this](token::type_t) -> tree_t {
                                 auto name = optional<identifier_t>();
                                 if (const auto ident = eat_if<identifier_t>()) {
@@ -302,9 +320,8 @@ namespace bt {
                                 return var_def_t<empty_attribute_t>{
                                     fn_name,
                                     p_node_t(),  // TODO!
-                                    p_node_t(fn_expr_t<empty_attribute_t>{
-                                        arg_names, arg_types, result_type, body, {}, {}}),
-                                    {}};
+                                    p_node_t(fn_expr_t<empty_attribute_t>{arg_names, arg_types,
+                                                                          result_type, body})};
                             },
                             [this](token::if_t) -> tree_t {
                                 auto ast = if_t<empty_attribute_t>{};
@@ -374,17 +391,23 @@ namespace bt {
                                 code = old_code;
 
                                 return ast;
-                            }))
+                            })) {
+                        result.location = location_t(l, loc_last());
                         return result;
+                    }
 
                     return assignment_stmt();
                 }
 
                 auto assignment_stmt() -> tree_t {
+                    const auto l = loc_first();
                     const auto lhs = expression();
 
-                    if (eat_if<token::assign_t>())
-                        return assign_t<empty_attribute_t>{lhs, assignment_stmt()};
+                    if (eat_if<token::assign_t>()) {
+                        auto rhs = assignment_stmt();
+                        rhs.location = location_t(l, loc_last());
+                        return assign_t<empty_attribute_t>{lhs, rhs};
+                    }
 
                     return lhs;
                 }
@@ -427,7 +450,8 @@ namespace bt {
                 }
 
                 auto expression() -> tree_t {
-                    if (const auto result = eat_if(
+                    const auto l = loc_first();
+                    if (auto result = eat_if(
                             [this](token::if_t) -> tree_t {
                                 auto ast = if_t<empty_attribute_t>{};
 
@@ -469,12 +493,8 @@ namespace bt {
 
                                 return ast;
                             },
-                            [this](token::break_t) -> tree_t {
-                                return syntax::break_t<empty_attribute_t>{};
-                            },
-                            [this](token::continue_t) -> tree_t {
-                                return syntax::continue_t<empty_attribute_t>{};
-                            },
+                            [this](token::break_t) -> tree_t { return syntax::break_t{}; },
+                            [this](token::continue_t) -> tree_t { return syntax::continue_t{}; },
                             [this](token::return_t) -> tree_t {
                                 auto t = peek().token;
                                 if (t == LINE_END || t == SEMICOLON || t == COMMA || t == CPAREN)
@@ -486,35 +506,53 @@ namespace bt {
                                 if (t == LINE_END || t == SEMICOLON || t == COMMA || t == CPAREN)
                                     return syntax::yield_t<empty_attribute_t>{};
                                 return syntax::yield_t<empty_attribute_t>{p_node_t(expression())};
-                            }))
+                            })) {
+                        result.location = location_t(l, loc_last());
                         return result;
+                    }
                     return or_test();
                 }
 
+                auto location(const lexer::location_t& l) -> location_t {
+                    return location_t(l, loc_last());
+                }
+
                 auto or_test() -> tree_t {
+                    const auto l = loc_first();
+
                     auto result = and_test();
 
                     while (const auto or_ = eat_if<token::or_t>())
                         result = bin_op_t<empty_attribute_t>{or_->token, result, and_test()};
 
+                    result.location = location(l);
+
                     return result;
                 }
 
                 auto and_test() -> tree_t {
+                    const auto l = loc_first();
                     auto result = not_test();
                     while (const auto and_ = eat_if<token::and_t>())
                         result = bin_op_t<empty_attribute_t>{and_->token, result, not_test()};
+                    result.location = location(l);
                     return result;
                 }
 
                 auto not_test() -> tree_t {
-                    if (const auto not_ = eat_if<token::not_t>())
-                        return unary_op_t<empty_attribute_t>{not_->token, not_test()};
+                    const auto l = loc_first();
+                    if (const auto not_ = eat_if<token::not_t>()) {
+                        auto result =
+                            tree_t(unary_op_t<empty_attribute_t>{not_->token, not_test()});
+                        result.location = location(l);
+                        return result;
+                    }
                     return comparison();
                 }
 
                 auto comparison() -> tree_t {
-                    const auto result = bit_or_expr();
+                    const auto l = loc_first();
+                    tree_t result = bit_or_expr();
 
                     using namespace token;
 
@@ -522,49 +560,60 @@ namespace bt {
                         eat_if<leq_t, geq_t, lt_t, gt_t, equal_t, not_equal_t, in_t, is_t, not_t>();
                     if (!cmp) return result;
 
-                    if (cmp->token == NOT)
-                        return unary_op_t<empty_attribute_t>{
+                    if (cmp->token == NOT) {
+                        tree_t result = unary_op_t<empty_attribute_t>{
                             cmp->token, p_node_t(bin_op_t<empty_attribute_t>{expect<in_t>(), result,
                                                                              atom_expr()})};
-                    else if (cmp->token == IS) {
+                        result.location = location(l);
+                    } else if (cmp->token == IS) {
                         if (auto not_ = eat_if<not_t>()) {
-                            return unary_op_t<empty_attribute_t>{
+                            tree_t result = unary_op_t<empty_attribute_t>{
                                 not_->token, p_node_t(bin_op_t<empty_attribute_t>{
                                                  cmp->token, result, atom_expr()})};
+                            result.location = location(l);
                         }
                     }
 
-                    return bin_op_t<empty_attribute_t>{cmp->token, result, atom_expr()};
+                    result = bin_op_t<empty_attribute_t>{cmp->token, result, atom_expr()};
+                    result.location = location(l);
+                    return result;
                 }
 
                 auto bit_or_expr() -> tree_t {
-                    auto result = bit_xor_expr();
+                    const auto l = loc_first();
+                    tree_t result = bit_xor_expr();
 
                     while (const auto op = eat_if<token::bar_t>())
                         result = bin_op_t<empty_attribute_t>{op->token, result, bit_xor_expr()};
+
+                    result.location = location(l);
 
                     return result;
                 }
 
                 auto bit_xor_expr() -> tree_t {
+                    const auto l = loc_first();
                     auto result = bit_and_expr();
 
                     while (const auto op = eat_if<token::hat_t>())
                         result = bin_op_t<empty_attribute_t>{op->token, result, bit_and_expr()};
 
+                    result.location = location(l);
                     return result;
                 }
 
                 auto bit_and_expr() -> tree_t {
+                    const auto l = loc_first();
                     auto result = bit_shift_expr();
 
                     while (const auto op = eat_if<token::ampersand_t>())
                         result = bin_op_t<empty_attribute_t>{op->token, result, bit_shift_expr()};
-
+                    result.location = location(l);
                     return result;
                 }
 
                 auto bit_shift_expr() -> tree_t {
+                    const auto l = loc_first();
                     auto result = arithmetic_expr();
 
                     using namespace token;
@@ -572,19 +621,23 @@ namespace bt {
                     while (const auto op = eat_if<left_left_t, right_right_t>())
                         result = bin_op_t<empty_attribute_t>{op->token, result, arithmetic_expr()};
 
+                    result.location = location(l);
                     return result;
                 }
 
                 auto arithmetic_expr() -> tree_t {
+                    const auto l = loc_first();
                     auto result = term();
 
                     while (const auto op = eat_if<token::plus_t, token::minus_t>())
                         result = bin_op_t<empty_attribute_t>{op->token, result, term()};
 
+                    result.location = location(l);
                     return result;
                 }
 
                 auto term() -> tree_t {
+                    const auto l = loc_first();
                     auto result = factor();
 
                     using namespace token;
@@ -593,26 +646,35 @@ namespace bt {
                                                   colon_slash_t, colon_percentage_t>())
                         result = bin_op_t<empty_attribute_t>{op->token, result, factor()};
 
+                    result.location = location(l);
                     return result;
                 }
 
                 auto factor() -> tree_t {
                     using namespace token;
-                    if (const auto op = eat_if<plus_t, minus_t, tilde_t>())
-                        return unary_op_t<empty_attribute_t>{op->token, factor()};
+                    const auto l = loc_first();
+                    if (const auto op = eat_if<plus_t, minus_t, tilde_t>()) {
+                        tree_t result = unary_op_t<empty_attribute_t>{op->token, factor()};
+                        result.location = location(l);
+                    }
                     return power();
                 }
 
                 auto power() -> tree_t {
-                    const auto result = atom_expr();
+                    const auto l = loc_first();
+                    tree_t result = atom_expr();
 
                     if (const auto op = eat_if<token::star_star_t>())
-                        return bin_op_t<empty_attribute_t>{op->token, result, factor()};
+                        result = bin_op_t<empty_attribute_t>{op->token, result, factor()};
+
+                    result.location = location(l);
 
                     return result;
                 }
 
                 auto data() -> p_data_t {
+                    const auto l = loc_first();
+
                     const auto old_code = code;
                     code = false;
 
@@ -624,7 +686,8 @@ namespace bt {
                     code = old_code;
 
                     if (result.size() == 1 && result.front().get().is<p_data_t>())
-                        return result.front().get().get<p_data_t>();
+                        result = result.front().get().get<p_data_t>();
+
                     return result;
                 }
 
@@ -662,6 +725,7 @@ namespace bt {
                 }
 
                 auto atom_expr() -> tree_t {
+                    const auto l = loc_first();
                     p_node_t result = simple_atom_expr();
                     while (eat_if<token::dot_t>()) {
                         p_node_t rhs = simple_atom_expr();
@@ -676,11 +740,14 @@ namespace bt {
                             });
                         }
                     }
-                    return result;
+                    tree_t rv = result;
+                    rv.location = location(l);
+                    return rv;
                 }
 
                 auto atom() -> tree_t {
-                    return eat_or_error(
+                    const auto l = loc_first();
+                    tree_t result = eat_or_error(
                         [this](token::oparen_t) -> tree_t {
                             if (code) {
                                 const auto e = block();
@@ -700,6 +767,9 @@ namespace bt {
                         [](floating_point_literal_t x) { return tree_t(x); },
                         [](token::true_t b) { return tree_t(b); },
                         [](token::false_t b) { return tree_t(b); });
+
+                    result.location = location(l);
+                    return result;
                 }
 
                 auto parse() -> tree_t { return top_level(); }

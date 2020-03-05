@@ -12,7 +12,7 @@ namespace bt {
 
             template <typename Attr>
             struct yield_t {
-                BOOST_HANA_DEFINE_STRUCT(yield_t, (attr_node_t<Attr>, value), (Attr, attribute));
+                BOOST_HANA_DEFINE_STRUCT(yield_t, (attr_node_t<Attr>, value));
                 auto operator<=>(const yield_t&) const = default;
             };
 

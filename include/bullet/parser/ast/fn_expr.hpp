@@ -35,8 +35,7 @@ namespace bt {
                                          (std::vector<attr_node_t<Attr>>, arg_types),
                                          (attr_node_t<Attr>, result_type),
                                          (attr_node_t<Attr>, body),
-                                         (std::vector<fn_closure_param_t<Attr>>, closure_params),
-                                         (Attr, attribute));
+                                         (std::vector<fn_closure_param_t<Attr>>, closure_params));
                 auto operator<=>(const fn_expr_t&) const = default;
             };
 

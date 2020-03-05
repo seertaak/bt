@@ -11,7 +11,6 @@ namespace bt {
             struct data_t : std::vector<attr_node_t<Attr>> {
                 using base_t = std::vector<attr_node_t<Attr>>;
                 using base_t::base_t;
-                Attr attribute;
             };
 
             template <typename Attr>
@@ -29,7 +28,7 @@ namespace bt {
             template <typename Attr>
             auto operator<<(std::ostream& os, const data_t<Attr>& data) -> std::ostream& {
                 auto first = true;
-                os << "data[[";
+                os << "data[";
                 for (const auto& pt : data) {
                     if (first)
                         first = false;
@@ -37,7 +36,7 @@ namespace bt {
                         os << ", ";
                     os << pt;
                 }
-                os << "], " << data.attribute << "]";
+                os << "]";
                 return os;
             }
         }  // namespace syntax

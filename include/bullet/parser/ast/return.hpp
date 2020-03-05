@@ -13,7 +13,7 @@ namespace bt {
 
             template <typename Attr>
             struct return_t {
-                BOOST_HANA_DEFINE_STRUCT(return_t, (attr_node_t<Attr>, value), (Attr, attribute));
+                BOOST_HANA_DEFINE_STRUCT(return_t, (attr_node_t<Attr>, value));
                 auto operator<=>(const return_t&) const = default;
             };
 

@@ -20,15 +20,13 @@ namespace bt {
             struct unary_op_t {
                 lexer::token_t op;
                 attr_node_t<Attr> operand;
-                Attr attribute;
                 auto operator<=>(const unary_op_t&) const = default;
             };
 
             template <typename Attr>
             auto operator<<(std::ostream& os, const unary_op_t<Attr>& uop) -> std::ostream& {
                 auto first = false;
-                os << "unary_op[" << uop.op << ", " << uop.operand << ", " << uop.attribute << ", "
-                   << "]]";
+                os << "unary_op[" << uop.op << ", " << uop.operand << "]";
                 return os;
             }
         }  // namespace syntax

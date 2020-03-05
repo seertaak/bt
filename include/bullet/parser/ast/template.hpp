@@ -14,8 +14,7 @@ namespace bt {
             struct template_t {
                 BOOST_HANA_DEFINE_STRUCT(template_t,
                                          (named_group_t<Attr>, arguments),
-                                         (attr_node_t<Attr>, body),
-                                         (Attr, attribute));
+                                         (attr_node_t<Attr>, body));
                 auto operator<=>(const template_t&) const = default;
             };
 

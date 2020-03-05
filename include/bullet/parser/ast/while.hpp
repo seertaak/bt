@@ -14,8 +14,7 @@ namespace bt {
             struct while_t {
                 BOOST_HANA_DEFINE_STRUCT(while_t,
                                          (attr_node_t<Attr>, test),
-                                         (attr_node_t<Attr>, body),
-                                         (Attr, attribute));
+                                         (attr_node_t<Attr>, body));
                 auto operator<=>(const while_t&) const = default;
             };
 

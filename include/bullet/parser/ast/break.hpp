@@ -1,5 +1,6 @@
 #pragma once
 
+#include <compare>
 #include <iostream>
 
 #include <boost/hana/all.hpp>
@@ -11,14 +12,12 @@ namespace bt {
     namespace parser {
         namespace syntax {
 
-            template <typename Attr>
             struct break_t {
-                BOOST_HANA_DEFINE_STRUCT(break_t, (Attr, attribute));
+                BOOST_HANA_DEFINE_STRUCT(break_t);
                 auto operator<=>(const break_t&) const = default;
             };
 
-            template <typename Attr>
-            auto operator<<(std::ostream& os, const break_t<Attr>& e) -> std::ostream& {
+            inline auto operator<<(std::ostream& os, const break_t& e) -> std::ostream& {
                 os << "break";
                 return os;
             }

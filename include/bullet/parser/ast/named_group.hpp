@@ -20,7 +20,6 @@ namespace bt {
             struct named_group_t : named_tree_vector_t<Attr> {
                 using base_t = named_tree_vector_t<Attr>;
                 using base_t::base_t;
-                Attr attribute;
                 auto operator<=>(const named_group_t&) const = default;
             };
 
@@ -35,7 +34,7 @@ namespace bt {
                         os << ", ";
                     os << ident << ": " << subtree.get();
                 }
-                os << ", attr=" << g.attribute << "]";
+                os << "]";
                 return os;
             }
         }  // namespace syntax

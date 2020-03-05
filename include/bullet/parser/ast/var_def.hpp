@@ -16,8 +16,7 @@ namespace bt {
                 BOOST_HANA_DEFINE_STRUCT(var_def_t,
                                          (lexer::identifier_t, name),
                                          (attr_node_t<Attr>, type),
-                                         (attr_node_t<Attr>, rhs),
-                                         (Attr, attribute));
+                                         (attr_node_t<Attr>, rhs));
                 auto operator<=>(const var_def_t&) const = default;
             };
 

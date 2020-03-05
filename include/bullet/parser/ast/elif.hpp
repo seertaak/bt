@@ -15,8 +15,7 @@ namespace bt {
             struct elif_t {
                 BOOST_HANA_DEFINE_STRUCT(elif_t,
                                          (attr_node_t<Attr>, test),
-                                         (attr_node_t<Attr>, body),
-                                         (Attr, attribute));
+                                         (attr_node_t<Attr>, body));
                 auto operator<=>(const elif_t&) const = default;
             };
 

@@ -16,8 +16,7 @@ namespace bt {
                 BOOST_HANA_DEFINE_STRUCT(if_t,
                                          (std::vector<attr_node_t<Attr>>, elif_tests),
                                          (std::vector<attr_node_t<Attr>>, elif_branches),
-                                         (attr_node_t<Attr>, else_branch),
-                                         (Attr, attribute));
+                                         (attr_node_t<Attr>, else_branch));
                 auto operator<=>(const if_t&) const = default;
             };
 

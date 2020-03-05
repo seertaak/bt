@@ -49,6 +49,8 @@ namespace bt {
                                              lexer::identifier_t,
                                              lexer::token::true_t,
                                              lexer::token::false_t,
+                                             break_t,
+                                             continue_t,
                                              unary_op_t<Attr>,
                                              bin_op_t<Attr>,
                                              data_t<Attr>,
@@ -62,8 +64,6 @@ namespace bt {
                                              assign_t<Attr>,
                                              for_t<Attr>,
                                              while_t<Attr>,
-                                             break_t<Attr>,
-                                             continue_t<Attr>,
                                              return_t<Attr>,
                                              yield_t<Attr>,
                                              struct_t<Attr>,
@@ -76,6 +76,9 @@ namespace bt {
             struct attr_tree_t : node_base_t<Attr> {
                 using base_t = node_base_t<Attr>;
                 using base_t::base_t;
+
+                location_t location;
+                Attr attribute;
 
                 template <typename T>
                 inline auto is() const -> bool {
@@ -156,6 +159,7 @@ namespace bt {
             using namespace syntax;
             using namespace std;
 
+            out << margin() << tree.location << endl;
             std::visit(
                 boost::hana::overload(
                     [&](const string_literal_t& s) { out << margin() << s << endl; },
@@ -335,8 +339,8 @@ namespace bt {
                         dedent();
                         dedent();
                     },
-                    [&](const break_t<Attr>& v) { out << margin() << "break" << endl; },
-                    [&](const continue_t<Attr>& v) { out << margin() << "continue" << endl; },
+                    [&](const break_t& v) { out << margin() << "break" << endl; },
+                    [&](const continue_t& v) { out << margin() << "continue" << endl; },
                     [&](const return_t<Attr>& v) {
                         out << margin() << "return:" << endl;
                         indent();

@@ -13,7 +13,7 @@ namespace bt {
 
             template <typename Attr>
             struct else_t {
-                BOOST_HANA_DEFINE_STRUCT(else_t, (attr_node_t<Attr>, body), (Attr, attribute));
+                BOOST_HANA_DEFINE_STRUCT(else_t, (attr_node_t<Attr>, body));
                 auto operator<=>(const else_t&) const = default;
             };
 

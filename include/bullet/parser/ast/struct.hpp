@@ -12,7 +12,6 @@ namespace bt {
             struct struct_t : named_tree_vector_t<Attr> {
                 using base_t = named_tree_vector_t<Attr>;
                 using base_t::base_t;
-                Attr attribute;
                 auto operator<=>(const struct_t&) const = default;
             };
 

@@ -15,8 +15,7 @@ namespace bt {
             struct invoc_t {
                 BOOST_HANA_DEFINE_STRUCT(invoc_t,
                                          (attr_node_t<Attr>, target),
-                                         (data_t<Attr>, arguments),
-                                         (Attr, attribute));
+                                         (data_t<Attr>, arguments));
                 auto operator<=>(const invoc_t&) const = default;
             };
 
@@ -32,7 +31,7 @@ namespace bt {
                         os << ", ";
                     os << arg;
                 }
-                os << "), " << invoc.attribute << "]";
+                os << ")]";
                 return os;
             }
         }  // namespace syntax
