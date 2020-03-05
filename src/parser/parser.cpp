@@ -11,6 +11,7 @@
 #include <boost/hof.hpp>
 #include <boost/type_index.hpp>
 
+#include <bullet/parser/error.hpp>
 #include <bullet/util.hpp>
 
 namespace bt { namespace parser {
@@ -42,12 +43,16 @@ namespace bt { namespace parser {
                 return *it;
             }
 
+            void throw_error(const std::string& s) { throw ::bt::parser::error(s, peek()); }
+
+            void throw_error(std::stringstream& s) { throw ::bt::parser::error(s, peek()); }
+
             auto loc_first() { return peek().location; }
 
             auto loc_last() { return (it - 1)->location; }
 
             auto eat() -> source_token_t {
-                if (it == end(input.tokens)) throw std::runtime_error("End of input.");
+                if (it == end(input.tokens)) throw_error("End of input.");
                 return *it++;
             }
 
@@ -84,8 +89,8 @@ namespace bt { namespace parser {
                 if (!holds_alternative<T>(t.token)) {
                     auto msg = stringstream();
                     msg << "Expected a \"" << token_symbol(T{}) << "\" but got a "
-                        << token_symbol(t.token) << " at " << t.location;
-                    throw std::runtime_error(msg.str());
+                        << token_symbol(t.token);
+                    throw_error(msg);
                 }
                 ++it;
                 return t.get_with_loc<T>();
@@ -93,7 +98,11 @@ namespace bt { namespace parser {
 
             auto eat(token_t&& token) -> source_token_t {
                 const auto t = peek();
-                if (t != token) throw runtime_error("FUCK RUASDFASDF");
+                if (t != token) {
+                    auto msg = stringstream();
+                    msg << "Expected a \"" << token << "\",  but got a \"" << t << "\"";
+                    throw_error(msg);
+                }
                 ++it;
                 return t;
             }
@@ -140,9 +149,10 @@ namespace bt { namespace parser {
                         msg << token_symbol(t);
                     });
 
-                    msg << ">, at " << loc_tok.location;
+                    msg << ">";
+                    throw_error(msg);
 
-                    throw runtime_error(msg.str());
+                    return tree_t();
                 };
                 return std::visit(boost::hana::overload(fns..., on_error),
                                   std::forward<token_t>(loc_tok.token));
@@ -172,11 +182,15 @@ namespace bt { namespace parser {
                     const auto s = statement();
                     if (s.is<else_t<empty_attribute_t>>()) {
                         if (block.empty() || !block.back().get().is<if_t<empty_attribute_t>>())
-                            throw std::runtime_error("Bad else block");
+                            throw_error(
+                                "Dangling \"else\" block (prior statement is not \"if\" or "
+                                "\"elif\"");
                         block.back().get().as<if_t<empty_attribute_t>>().else_branch = p_node_t(s);
                     } else if (s.is<elif_t<empty_attribute_t>>()) {
                         if (block.empty() || !block.back().get().is<if_t<empty_attribute_t>>())
-                            throw std::runtime_error("Bad else block");
+                            throw_error(
+                                "Dangling \"elif\" block (prior statement is not \"if\" or "
+                                "\"elif\"");
                         auto& if_ = block.back().get().as<if_t<empty_attribute_t>>();
                         const auto& elif = s.as<elif_t<empty_attribute_t>>();
                         if_.elif_tests.push_back(elif.test);
@@ -412,7 +426,7 @@ namespace bt { namespace parser {
                 p_node_t expr;
                 if (eat_if<token::assign_t>()) expr = p_node_t(expression());
 
-                if (!var && !id && !expr.get()) throw std::runtime_error("Bad capture expression.");
+                if (!var && !id && !expr.get()) throw_error("Bad capture expression.");
 
                 optional<with_loc<lexer::identifier_t>> ident;
                 if (id) ident.emplace(id->get_with_loc<lexer::identifier_t>());

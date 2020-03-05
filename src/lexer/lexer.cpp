@@ -9,6 +9,8 @@
 
 #include <boost/hana.hpp>
 
+#include <bullet/lexer/error.hpp>
+
 namespace bt { namespace lexer {
     using namespace std;
 
@@ -29,6 +31,14 @@ namespace bt { namespace lexer {
 
         public:
             tokenizer_t(string_view input) : input(input), input_length(size(input)) {}
+
+            auto throw_error(std::stringstream& msg, uint32_t pos) {
+                throw error(msg, start_of_line.size() + 1, pos - start_of_line.back() + 1);
+            }
+
+            auto throw_error(const std::string& msg, uint32_t pos) {
+                throw error(msg, start_of_line.size() + 1, pos - start_of_line.back() + 1);
+            }
 
             auto process() -> output_t {
                 using namespace token;
@@ -76,7 +86,7 @@ namespace bt { namespace lexer {
                             msg << "]";
                         }
 
-                        throw std::runtime_error(msg.str());
+                        throw_error(msg, pos);
                     }
                 }
 
@@ -109,7 +119,7 @@ namespace bt { namespace lexer {
                                 break;
                             }
                         } else if (c == '\t') {
-                            throw std::runtime_error("Tabs are not fucking allowed.");
+                            throw_error("Tabs are not fucking allowed.", pos);
                         } else if (c != ' ') {
                             break;
                         }
@@ -242,7 +252,7 @@ namespace bt { namespace lexer {
                     if (eat_digits<10, int>(p, exponent)) {
                         fpval *= pow(static_cast<long double>(10), exp_sign * exponent);
                     } else {
-                        throw std::runtime_error("Invalid floating point.");
+                        throw_error("Invalid floating point literal", pos);
                     }
 
                     if (p < input_length && input[p] == 'f') goto parse_fp_width;
@@ -276,7 +286,7 @@ namespace bt { namespace lexer {
                     if (c == 'f') {
                     parse_fp_width:
                         s = remaining_input(++p);
-                        if (s.size() < 2) throw std::runtime_error("Fucking bad floating");
+                        if (s.size() < 2) throw_error("Invalid floating point literal", pos);
                         s = s.substr(0, 2);
                         if (s == "32"sv) {
                             width = 32;
@@ -284,7 +294,7 @@ namespace bt { namespace lexer {
                         } else if (s == "64"sv) {
                             p += 2;
                         } else {
-                            throw std::runtime_error("Invalid integral width speecifier.");
+                            throw_error("Invalid integral width speecifier", pos);
                         }
                     }
 
@@ -314,14 +324,14 @@ namespace bt { namespace lexer {
                     } else if (p < input_length) {
                         auto s = stringstream();
                         s << "Bad integral literal: \"" << c << "\"" << endl;
-                        throw std::runtime_error(s.str());
+                        throw_error(s.str(), pos);
                     }
 
                     if (!signedness) {
                         signedness = 'i';
                         width = 64;
                     } else {
-                        if (p >= input_length) throw std::runtime_error("Fuckinng bad int.");
+                        if (p >= input_length) throw_error("Bad integral literal", pos);
 
                         s = remaining_input(p);
                         if (s.size() >= 1 && s[0] == '8') {
@@ -337,7 +347,7 @@ namespace bt { namespace lexer {
                             width = 64;
                             p += 2;
                         } else {
-                            throw std::runtime_error("Invalid integral width speecifier.");
+                            throw_error("Invalid integral width speecifier", pos);
                         }
                     }
 
