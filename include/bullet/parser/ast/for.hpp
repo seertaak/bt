@@ -4,6 +4,7 @@
 
 #include <boost/hana/all.hpp>
 
+#include <bullet/lexer/location.hpp>
 #include <bullet/parser/ast_fwd.hpp>
 
 namespace bt {
@@ -13,7 +14,7 @@ namespace bt {
             template <typename Attr>
             struct for_t {
                 BOOST_HANA_DEFINE_STRUCT(for_t,
-                                         (lexer::identifier_t, var_lhs),
+                                         (lexer::with_loc<lexer::identifier_t>, var_lhs),
                                          (attr_node_t<Attr>, var_rhs),
                                          (attr_node_t<Attr>, body));
                 auto operator<=>(const for_t&) const = default;

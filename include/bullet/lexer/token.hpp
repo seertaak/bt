@@ -8,6 +8,7 @@
 #include <boost/hana.hpp>
 
 #include <bullet/lexer/identifier.hpp>
+#include <bullet/lexer/location.hpp>
 #include <bullet/lexer/numeric_token.hpp>
 #include <bullet/lexer/string_token.hpp>
 
@@ -968,16 +969,6 @@ namespace bt {
         const token_t INDENT{token::indent_t{}};
         const token_t LINE_END{token::line_end_t{}};
 
-        struct location_t {
-            uint32_t line;
-            uint16_t first_col;
-            uint16_t last_col;
-        };
-
-        auto operator==(const location_t& lhs, const location_t& rhs) -> bool;
-        auto operator!=(const location_t& lhs, const location_t& rhs) -> bool;
-        auto operator<<(ostream& os, const location_t& l) -> ostream&;
-
         struct source_token_t {
             token_t token;
             location_t location;
@@ -989,6 +980,11 @@ namespace bt {
             source_token_t() = default;
             source_token_t(const source_token_t&) = default;
             source_token_t& operator=(const source_token_t&) = default;
+
+            template <typename T>
+            inline auto get_with_loc() const -> with_loc<T> {
+                return with_loc<T>(std::get<T>(token), location);
+            }
         };
 
         auto operator<<(ostream& os, const source_token_t& t) -> ostream&;

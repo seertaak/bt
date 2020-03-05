@@ -8,6 +8,7 @@
 
 #include <boost/hana/all.hpp>
 
+#include <bullet/lexer/location.hpp>
 #include <bullet/lexer/token.hpp>
 #include <bullet/parser/ast/assign.hpp>
 #include <bullet/parser/ast/bin_op.hpp>
@@ -73,12 +74,11 @@ namespace bt {
                                              attr_node_t<Attr>>;
 
             template <typename Attr>
-            struct attr_tree_t : node_base_t<Attr> {
+            struct attr_tree_t : node_base_t<Attr>, with_attr<Attr> {
                 using base_t = node_base_t<Attr>;
                 using base_t::base_t;
 
                 location_t location;
-                Attr attribute;
 
                 template <typename T>
                 inline auto is() const -> bool {
@@ -275,7 +275,7 @@ namespace bt {
                         out << margin() << "arguments:" << endl;
                         indent();
                         for (auto i = 0; i < f.arg_names.size(); i++) {
-                            out << margin() << "name:" << f.arg_names[i].name << endl;
+                            out << margin() << "name:" << f.arg_names[i] << endl;
                             out << margin() << "type:" << endl;
                             indent();
                             pretty_print<Attr>(f.arg_types[i].get(), out, indent_level);
@@ -299,7 +299,7 @@ namespace bt {
                         out << margin() << "var_def:" << endl;
 
                         indent();
-                        out << margin() << "name:" << f.name.name << endl;
+                        out << margin() << "name:" << f.name << endl;
                         out << margin() << "type:" << endl;
                         indent();
                         pretty_print<Attr>(f.type.get(), out, indent_level);
@@ -357,7 +357,7 @@ namespace bt {
                         out << margin() << "struct:" << endl;
                         indent();
                         for (const auto& e : v) {
-                            out << margin() << e.first.name << ":" << endl;
+                            out << margin() << e.first << ":" << endl;
                             indent();
                             pretty_print<Attr>(e.second.get(), out, indent_level);
                             dedent();
@@ -368,7 +368,7 @@ namespace bt {
                         out << margin() << "def_type:" << endl;
 
                         indent();
-                        out << margin() << "name:" << f.name.name << endl;
+                        out << margin() << "name:" << f.name << endl;
                         out << margin() << "defn:" << endl;
                         indent();
                         pretty_print<Attr>(f.type.get(), out, indent_level);
@@ -379,7 +379,7 @@ namespace bt {
                         out << margin() << "let_type:" << endl;
 
                         indent();
-                        out << margin() << "name:" << f.name.name << endl;
+                        out << margin() << "name:" << f.name << endl;
                         out << margin() << "defn:" << endl;
                         indent();
                         pretty_print<Attr>(f.type.get(), out, indent_level);

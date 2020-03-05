@@ -1,5 +1,6 @@
 #pragma once
 
+#include <bullet/parser/location.hpp>
 #include <bullet/util.hpp>
 
 namespace bt {
@@ -10,6 +11,12 @@ namespace bt {
 
             template <typename Attr>
             using attr_node_t = ref<attr_tree_t<Attr>>;
+
+            template <typename Attr>
+            struct with_attr {
+                Attr attribute;
+            };
+
         }  // namespace syntax
     }      // namespace parser
 }  // namespace bt

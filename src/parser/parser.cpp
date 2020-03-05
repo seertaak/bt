@@ -81,7 +81,7 @@ namespace bt {
                 }
 
                 template <typename T>
-                auto expect() -> T {
+                auto expect() -> with_loc<T> {
                     const auto t = peek();
                     if (!holds_alternative<T>(t.token)) {
                         auto msg = stringstream();
@@ -90,7 +90,7 @@ namespace bt {
                         throw std::runtime_error(msg.str());
                     }
                     ++it;
-                    return get<T>(t.token);
+                    return t.get_with_loc<T>();
                 }
 
                 auto eat(token_t&& token) -> source_token_t {
@@ -191,14 +191,14 @@ namespace bt {
                     } while (eat_if<token::semicolon_t>());
                 }
 
-                void parse_fn_def_args_line_end(vector<identifier_t>& arg_names,
+                void parse_fn_def_args_line_end(vector<with_loc<identifier_t>>& arg_names,
                                                 vector<p_node_t>& arg_types) {
                     do {
                         parse_fn_def_args_comma(arg_names, arg_types);
                     } while (eat_if<token::line_end_t>());
                 }
 
-                void parse_fn_def_args_comma(vector<identifier_t>& arg_names,
+                void parse_fn_def_args_comma(vector<with_loc<identifier_t>>& arg_names,
                                              vector<p_node_t>& arg_types) {
                     do {
                         do {
@@ -249,15 +249,15 @@ namespace bt {
                     const auto l = loc_first();
                     if (auto result = eat_if(
                             [this](token::type_t) -> tree_t {
-                                auto name = optional<identifier_t>();
+                                auto name = optional<with_loc<identifier_t>>();
                                 if (const auto ident = eat_if<identifier_t>()) {
-                                    name = get<identifier_t>(ident->token);
+                                    name = ident->get_with_loc<identifier_t>();
                                     if (eat_if<token::assign_t>())
                                         return def_type_t<empty_attribute_t>{*name,
                                                                              p_node_t(atom_expr())};
                                 }
 
-                                auto arg_names = std::vector<lexer::identifier_t>();
+                                auto arg_names = std::vector<with_loc<lexer::identifier_t>>();
                                 auto arg_types = std::vector<p_node_t>();
 
                                 auto type = struct_t<empty_attribute_t>();
@@ -298,7 +298,7 @@ namespace bt {
                             [this](token::def_t) -> tree_t {
                                 const auto fn_name = expect<lexer::identifier_t>();
 
-                                auto arg_names = std::vector<lexer::identifier_t>();
+                                auto arg_names = std::vector<with_loc<lexer::identifier_t>>();
                                 auto arg_types = std::vector<p_node_t>();
 
                                 if (eat_if<token::oparen_t>()) {
@@ -421,8 +421,8 @@ namespace bt {
                     if (!var && !id && !expr.get())
                         throw std::runtime_error("Bad capture expression.");
 
-                    optional<lexer::identifier_t> ident;
-                    if (id) ident.emplace(get<lexer::identifier_t>(id->token));
+                    optional<with_loc<lexer::identifier_t>> ident;
+                    if (id) ident.emplace(id->get_with_loc<lexer::identifier_t>());
 
                     return {!!var, ident, expr};
                 }

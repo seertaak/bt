@@ -17,6 +17,7 @@ set(sources
     src/lexer/numeric_token.cpp
     src/lexer/string_token.cpp
     src/lexer/identifier.cpp
+    src/lexer/location.cpp
     src/parser/ast.cpp
     src/parser/parser.cpp
     src/parser/location.cpp

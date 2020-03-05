@@ -23,20 +23,6 @@ namespace bt {
             return visit([&](auto t) { return token_symbol(t); }, t);
         }
 
-        auto operator==(const location_t& lhs, const location_t& rhs) -> bool {
-            return lhs.line == rhs.line && lhs.first_col == rhs.first_col &&
-                   lhs.last_col == rhs.last_col;
-        }
-
-        auto operator!=(const location_t& lhs, const location_t& rhs) -> bool {
-            return !(lhs == rhs);
-        }
-
-        auto operator<<(ostream& os, const location_t& l) -> ostream& {
-            os << l.line << ':' << l.first_col;
-            return os;
-        }
-
         auto operator==(const source_token_t& lhs, const source_token_t& rhs) -> bool {
             return lhs.token == rhs.token && lhs.location == rhs.location;
         }

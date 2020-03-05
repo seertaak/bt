@@ -4,6 +4,7 @@
 
 #include <boost/hana/all.hpp>
 
+#include <bullet/lexer/location.hpp>
 #include <bullet/parser/ast/data.hpp>
 #include <bullet/parser/ast_fwd.hpp>
 
@@ -14,7 +15,8 @@ namespace bt {
             struct fn_closure_param_t {
                 BOOST_HANA_DEFINE_STRUCT(fn_closure_param_t,
                                          (bool, var),
-                                         (std::optional<lexer::identifier_t>, identifier),
+                                         (std::optional<lexer::with_loc<lexer::identifier_t>>,
+                                          identifier),
                                          (attr_node_t<Attr>, expression));
 
                 auto operator<=>(const fn_closure_param_t&) const = default;
@@ -31,7 +33,8 @@ namespace bt {
             template <typename Attr>
             struct fn_expr_t {
                 BOOST_HANA_DEFINE_STRUCT(fn_expr_t,
-                                         (std::vector<lexer::identifier_t>, arg_names),
+                                         (std::vector<lexer::with_loc<lexer::identifier_t>>,
+                                          arg_names),
                                          (std::vector<attr_node_t<Attr>>, arg_types),
                                          (attr_node_t<Attr>, result_type),
                                          (attr_node_t<Attr>, body),

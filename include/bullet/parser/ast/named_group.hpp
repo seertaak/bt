@@ -4,6 +4,7 @@
 #include <tuple>
 #include <vector>
 
+#include <bullet/lexer/location.hpp>
 #include <bullet/parser/ast_fwd.hpp>
 #include <bullet/util.hpp>
 
@@ -11,7 +12,7 @@ namespace bt {
     namespace parser {
         namespace syntax {
             template <typename Attr>
-            using named_node_t = std::pair<lexer::identifier_t, attr_node_t<Attr>>;
+            using named_node_t = std::pair<lexer::with_loc<lexer::identifier_t>, attr_node_t<Attr>>;
 
             template <typename Attr>
             using named_tree_vector_t = std::vector<named_node_t<Attr>>;
