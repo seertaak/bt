@@ -1,3 +1,2 @@
-type Foo = sum:
-    int
-    float
+x is not xs
+

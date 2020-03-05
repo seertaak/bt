@@ -6,9 +6,9 @@
 
 namespace bt { namespace lexer {
     struct location_t {
-        uint32_t line;
-        uint16_t first_col;
-        uint16_t last_col;
+        uint32_t line = 0;
+        uint16_t first_col = 0;
+        uint16_t last_col = 0;
 
         auto operator<=>(const location_t&) const = default;
     };
@@ -28,7 +28,7 @@ namespace bt { namespace lexer {
 
         with_loc(const T& t, const location_t& loc) : T{t}, location{loc} {}
 
-        with_loc(T&& t, const location_t& loc) noexcept : T{std::forward(t)}, location{loc} {}
+        // with_loc(T&& t, const location_t& loc) noexcept : T{std::forward(t)}, location{loc} {}
     };
 
     template <typename T>

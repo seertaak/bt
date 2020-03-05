@@ -551,16 +551,19 @@ namespace bt { namespace parser {
                 if (!cmp) return result;
 
                 if (cmp->token == NOT) {
-                    tree_t result = unary_op_t<empty_attribute_t>{
+                    result = unary_op_t<empty_attribute_t>{
                         cmp->token,
                         p_node_t(bin_op_t<empty_attribute_t>{expect<in_t>(), result, atom_expr()})};
                     result.location = location(l);
+
+                    return result;
                 } else if (cmp->token == IS) {
                     if (auto not_ = eat_if<not_t>()) {
-                        tree_t result = unary_op_t<empty_attribute_t>{
+                        result = unary_op_t<empty_attribute_t>{
                             not_->token,
                             p_node_t(bin_op_t<empty_attribute_t>{cmp->token, result, atom_expr()})};
                         result.location = location(l);
+                        return result;
                     }
                 }
 

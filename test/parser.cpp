@@ -21,12 +21,16 @@ using namespace lexer::token;
 using namespace parser;
 using namespace syntax;
 
-TEST_CASE("Integral literal parsing.", "[parser]") {
-    REQUIRE(true);
-}
-/*
 namespace {
-    auto ast(string_view input) -> syntax::tree_t { return input | tokenize | parse; }
+using id = with_loc<identifier_t>;
+
+template <template <typename> class T>
+using noattr = T<empty_attribute_t>;
+
+using node_t = noattr<attr_node_t>;
+auto ast(string_view input) -> syntax::tree_t {
+    return input | tokenize | parse;
+}
 }  // namespace
 
 TEST_CASE("Integral literal parsing.", "[parser]") {
@@ -60,68 +64,67 @@ TEST_CASE("Boolean literals", "[parser]") {
 
 TEST_CASE("Boolean operations", "[parser]") {
     REQUIRE(ast("true or false") ==
-            tree_t(bin_op_t{OR, node_t(token::true_t{}), node_t(token::false_t{})}));
+            tree_t(noattr<bin_op_t>{OR, node_t(token::true_t{}), node_t(token::false_t{})}));
 
     REQUIRE(ast("false and true") ==
-            tree_t(bin_op_t{AND, node_t(token::false_t{}), node_t(token::true_t{})}));
+            tree_t(noattr<bin_op_t>{AND, node_t(token::false_t{}), node_t(token::true_t{})}));
 }
 
 TEST_CASE("Boolean comparisons", "[parser]") {
-    REQUIRE(ast("x > 5") == tree_t(bin_op_t{GT, node_t(identifier_t("x")),
-                                            node_t(integral_literal_t(5, 'i', 64))}));
+    const auto x = node_t(id("x"));
+    REQUIRE(ast("x > 5") ==
+            tree_t(noattr<bin_op_t>{GT, x, node_t(integral_literal_t(5, 'i', 64))}));
 
-    REQUIRE(ast("x<5.0") == tree_t(bin_op_t{LT, node_t(identifier_t("x")),
-                                            node_t(floating_point_literal_t(5, 64))}));
+    REQUIRE(ast("x<5.0") ==
+            tree_t(noattr<bin_op_t>{LT, x, node_t(floating_point_literal_t(5, 64))}));
 
-    REQUIRE(ast("10.0f32 >= 5") == tree_t(bin_op_t{GEQ, node_t(floating_point_literal_t(10, 32)),
-                                                   node_t(integral_literal_t(5, 'i', 64))}));
+    REQUIRE(ast("10.0f32 >= 5") ==
+            tree_t(noattr<bin_op_t>{GEQ, node_t(floating_point_literal_t(10, 32)),
+                                    node_t(integral_literal_t(5, 'i', 64))}));
 
-    REQUIRE(ast("x == y") ==
-            tree_t(bin_op_t{EQUAL, node_t(identifier_t("x")), node_t(identifier_t("y"))}));
+    REQUIRE(ast("x == y") == tree_t(noattr<bin_op_t>{EQUAL, node_t(id("x")), node_t(id("y"))}));
 
-    REQUIRE(ast("x!=y") ==
-            tree_t(bin_op_t{NOT_EQUAL, node_t(identifier_t("x")), node_t(identifier_t("y"))}));
+    REQUIRE(ast("x!=y") == tree_t(noattr<bin_op_t>{NOT_EQUAL, x, node_t(id("y"))}));
 
-    REQUIRE(ast("x in xs") ==
-            tree_t(bin_op_t{IN, node_t(identifier_t("x")), node_t(identifier_t("xs"))}));
+    REQUIRE(ast("x in xs") == tree_t(noattr<bin_op_t>{IN, x, node_t(id("xs"))}));
 
     REQUIRE(ast("x not in xs") ==
-            tree_t(unary_op_t{NOT, node_t(bin_op_t{token::in_t{}, node_t(identifier_t("x")),
-                                                   node_t(identifier_t("xs"))})}));
+            tree_t(noattr<unary_op_t>{NOT, node_t(noattr<bin_op_t>{IN, x, node_t(id("xs"))})}));
 
-    REQUIRE(ast("x is y") ==
-            tree_t(bin_op_t{IS, node_t(identifier_t("x")), node_t(identifier_t("y"))}));
+    REQUIRE(ast("x is y") == tree_t(noattr<bin_op_t>{IS, x, node_t(id("y"))}));
 
     REQUIRE(ast("x is not y") ==
-            tree_t(unary_op_t{
-                NOT, node_t(bin_op_t{IS, node_t(identifier_t("x")), node_t(identifier_t("y"))})}));
+            tree_t(noattr<unary_op_t>{
+                NOT, node_t(noattr<bin_op_t>{IS, node_t(id("x")), node_t(id("y"))})}));
 }
 
 TEST_CASE("Arithmetic expressions", "[parser]") {
-    const auto x = node_t(identifier_t("x"));
-    const auto y = node_t(identifier_t("y"));
-    const auto z = node_t(identifier_t("z"));
+    const auto x = node_t(id("x"));
+    const auto y = node_t(id("y"));
+    const auto z = node_t(id("z"));
 
-    REQUIRE(ast("x | y") == tree_t(bin_op_t{BAR, x, y}));
+    REQUIRE(ast("x | y") == tree_t(noattr<bin_op_t>{BAR, x, y}));
 
-    REQUIRE(ast("x | y | z") == tree_t(bin_op_t{BAR, tree_t(bin_op_t{BAR, x, y}), z}));
+    REQUIRE(ast("x | y | z") ==
+            tree_t(noattr<bin_op_t>{BAR, tree_t(noattr<bin_op_t>{BAR, x, y}), z}));
 }
 
 TEST_CASE("Statements", "[parser]") {
-    const auto x = node_t(identifier_t("x"));
-    const auto y = node_t(identifier_t("y"));
-    const auto z = node_t(identifier_t("z"));
+    const auto x = node_t(id("x"));
+    const auto y = node_t(id("y"));
+    const auto z = node_t(id("z"));
 
     const auto two = node_t(integral_literal_t(2, 'i', 64));
     const auto three = node_t(integral_literal_t(3, 'i', 64));
     const auto four = node_t(integral_literal_t(4, 'i', 64));
 
-    REQUIRE(ast("x = y + 2") == tree_t(syntax::assign_t{x, node_t(bin_op_t{PLUS, y, two})}));
+    REQUIRE(ast("x = y + 2") ==
+            tree_t(noattr<syntax::assign_t>{x, node_t(noattr<bin_op_t>{PLUS, y, two})}));
 
     REQUIRE(ast("var x = y + 2") ==
-            tree_t(syntax::var_def_t{identifier_t("x"), node_t(), node_t(bin_op_t{PLUS, y, two})}));
+            tree_t(noattr<syntax::var_def_t>{id("x"), node_t(),
+                                             node_t(noattr<bin_op_t>{PLUS, y, two})}));
 
-    REQUIRE(ast(R"(some_fn("foo"))") ==
-            tree_t(syntax::var_def_t{identifier_t("x"), node_t(), node_t(bin_op_t{PLUS, y, two})}));
+    REQUIRE(ast(R"(some_fn(x))") ==
+            tree_t(noattr<syntax::invoc_t>{node_t(id("some_fn")), noattr<syntax::data_t>{x}}));
 }
-*/

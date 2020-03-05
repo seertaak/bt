@@ -558,17 +558,17 @@ namespace bt { namespace lexer {
                 } else {
                     if (colon_indent) throw runtime_error("Indent expected");
 
-                    auto all_ws = true;
+                    // auto all_ws = true;
                     while (!empty(margins) && n_spaces < get<int16_t>(margins.back())) {
                         if (get<bool>(margins.back()))
                             tokens.emplace_back(CPAREN, line, column, column);
-                        else
-                            all_ws = false;
+                        // else all_ws = false;
 
                         margins.pop_back();
                     }
 
-                    if (all_ws) tokens.emplace_back(LINE_END, line, column, column);
+                    // if (all_ws) tokens.emplace_back(LINE_END, line, column, column);
+                    tokens.emplace_back(LINE_END, line, column, column);
                 }
                 pos += n_spaces;
             }
