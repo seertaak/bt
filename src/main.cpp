@@ -73,16 +73,14 @@ int main(int argc, const char* argv[]) {
                 for (auto& stmt : block) {
                     if (!stmt.get().is<var_def_t<st_node_t>>()) continue;
 
-                    auto& bindings = stmt.get().attribute;
-                    for (auto i = bindings.begin(); i != bindings.end(); ++i) {
-                        if (auto pvdef = scope.lookup(i->first)) {
-                            auto msg = std::stringstream();
-                            msg << "Duplicate variable definition ("
-                                << "with duplicate at " << pvdef->get().location << ")";
-                            throw analysis::error(msg, stmt.get().location);
-                        }
-                        scope.insert(i->first, i->second);
+                    auto& [name, vdef] = *stmt.get().attribute.begin();
+                    if (auto pvdef = scope.lookup(name)) {
+                        auto msg = std::stringstream();
+                        msg << "Duplicate variable definition ("
+                            << "with duplicate at " << pvdef->get().location << ")";
+                        throw analysis::error(msg, stmt.get().location);
                     }
+                    scope.insert(name, vdef);
                 }
 
                 return scope;
