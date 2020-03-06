@@ -65,15 +65,11 @@ struct ref {
     ptr<T> value;
 
     ref(const T& t) : value{std::make_shared<T>(t)} {}
-    ref(T&& t) noexcept : value{std::make_shared<T>(std::move(t))} {}
 
     ref() : value{std::make_shared<T>()} {}
     ref(const ref&) = default;
-    ref(ref&&) noexcept = default;
     ref& operator=(const ref&) = default;
-    ref& operator=(ref&&) noexcept = default;
     ref& operator=(const T& t) { *value = t; }
-    ref& operator=(T&& t) noexcept { value.emplace(std::forward(t)); }
 
     T& get() { return *value; }
     const T& get() const { return *value; }

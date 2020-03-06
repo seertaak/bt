@@ -10,6 +10,7 @@
 #include <range/v3/view/tail.hpp>
 #include <range/v3/view/transform.hpp>
 
+#include <bullet/analysis/symtab.hpp>
 #include <bullet/analysis/walk.hpp>
 #include <bullet/lexer/lexer.hpp>
 #include <bullet/lexer/token.hpp>
@@ -60,9 +61,30 @@ int main(int argc, const char* argv[]) {
     using noattr = const empty_attribute_t&;
 
     {
-        const auto test = analysis::walk_synth<int>(
-            ast, [](const string_literal_t& node, noattr) -> int { return 1; },
-            [](const block_t<int>& node, noattr) -> int { return node.size(); });
+        using st_node_t = symtab<node_t>;
+        const auto test = walk_synth<st_node_t>(
+            ast,
+            [](const var_def_t<st_node_t>& vardef, const syntax::node_t& node) {
+                return st_node_t(vardef.name.name, node);
+            },
+            [](const block_t<st_node_t>& block, const syntax::node_t& node) {
+                auto scope = st_node_t();
+
+                for (auto& stmt : block) {
+                    auto& bindings = stmt.get().attribute;
+                    for (auto i = bindings.begin(); i != bindings.end(); ++i) {
+                        if (auto pvdef = scope.lookup(i->first)) {
+                            auto msg = std::stringstream();
+                            msg << "Duplicate variable definition ("
+                                << "with duplicate at " << pvdef->get().location << ")";
+                            throw analysis::error(msg, stmt.get().location);
+                        }
+                        scope.insert(i->first, i->second);
+                    }
+                }
+
+                return scope;
+            });
 
         auto s = std::stringstream();
         parser::pretty_print(test, s, 0);

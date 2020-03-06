@@ -32,9 +32,13 @@ add_library(
 )
 conan_target_link_libraries(bt)
 target_compile_features(bt PUBLIC cxx_std_20)
-target_compile_options(bt PUBLIC -Wno-logical-op-parentheses)
+target_compile_options(bt PUBLIC 
+    -Wno-logical-op-parentheses 
+    -Wno-ambiguous-reversed-operator
+    "-Wno-#warnings"
+)
 target_compile_definitions(bt PUBLIC BOOST_HANA_CONFIG_ENABLE_STRING_UDL)
-target_include_directories(bt PUBLIC include)
+target_include_directories(bt PUBLIC include third_party)
 
 ###################################################################
 # Compiler

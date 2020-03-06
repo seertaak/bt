@@ -84,6 +84,12 @@ namespace bt { namespace parser {
 
             inline operator bool() const { return !is<std::monostate>(); }
 
+            auto to_node() const -> attr_node_t<empty_attribute_t> {
+                const attr_tree_t<empty_attribute_t>& sliced =
+                    *reinterpret_cast<const attr_tree_t<empty_attribute_t>*>(this);
+                return attr_node_t<empty_attribute_t>(sliced);
+            }
+
             template <typename T>
             inline auto get() const -> const T& {
                 return std::get<T>(*this);
@@ -116,6 +122,7 @@ namespace bt { namespace parser {
         };
 
         using tree_t = attr_tree_t<empty_attribute_t>;
+        using node_t = attr_node_t<empty_attribute_t>;
 
         template <typename Attr>
         auto operator<<(std::ostream& os, const attr_node_t<Attr>& t) -> std::ostream& {

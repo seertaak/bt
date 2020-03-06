@@ -1,41 +1,65 @@
 #pragma once
 
-#include <ranges>
-#include <unordered_map>
-#include <vector>
+#include <iostream>
+#include <string>
+
+#include <immer/map.hpp>
 
 namespace bt { namespace analysis {
 
     template <typename T>
-    class symtab {
-        std::vector<std::unordered_map<std::string, T>> scopes;
+    struct symtab {
+        using dict_t = immer::map<std::string, T>;
 
-        auto lookup_in_scope(const std::unordered_map<std::string, T>& scope,
-                             const std::string& s) const -> const T* {
-            const auto& scope = dict.back();
-            if (auto i = scope.find(s); i != scope.end()) return &i->second;
-            return nullptr;
-        }
+        dict_t scope;
 
     public:
-        symtab() { dict.push_back({}); }
+        symtab() = default;
+        symtab(const symtab&) = default;
+        symtab(symtab&&) noexcept = default;
+        symtab& operator=(const symtab&) = default;
+        symtab& operator=(symtab&&) noexcept = default;
+        auto operator<=>(const symtab&) const = default;
 
-        auto enter_scope() -> void { dict.push_back({}); }
-        auto exit_scope() -> void { dict.pop_back(); }
+        symtab(std::string s, T t) { insert(s, t); }
 
-        auto lookup_local(const std::string& s) const -> const T* {
-            return lookup_in_scope(scopes.back(), s);
+        auto lookup(const std::string& s) const -> const T* { return scope.find(s); }
+
+        auto insert(std::string s, T t) -> void { scope = scope.set(s, t); }
+
+        auto begin() const { return scope.begin(); }
+
+        auto begin() { return scope.begin(); }
+
+        auto end() const { return scope.end(); }
+
+        auto end() { return scope.end(); }
+
+        auto insert(const symtab& s) -> void {
+            for (auto i = s.scope.begin(); !(i == s.scope.end()); ++i) insert(i->first, i->second);
         }
 
-        auto lookup(std::stringview s) const -> const T* {
-            for (const auto& scope : scopes | std::views::reverse)
-                if (auto pt = lookup_in_scope(scope, s)) return pt;
-            return nullptr;
-        }
+        auto print(std::ostream& os) const -> void {
+            auto first = true;
 
-        auto insert(stringview s, T&& t) -> void {
-            scopes.back().emplace(std::string(s), std::forward(t));
+            os << "symtab[";
+
+            for (auto i = scope.begin(); !(i == scope.end()); ++i) {
+                if (first)
+                    first = false;
+                else
+                    os << ", ";
+                os << i->first << " -> " << i->second;
+            }
+
+            os << "]";
         }
     };
+
+    template <typename T>
+    auto operator<<(std::ostream& os, const symtab<T>& scope) -> std::ostream& {
+        scope.print(os);
+        return os;
+    }
 
 }}  // namespace bt::analysis
