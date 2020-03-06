@@ -71,6 +71,8 @@ int main(int argc, const char* argv[]) {
                 auto scope = st_node_t();
 
                 for (auto& stmt : block) {
+                    if (!stmt.get().is<var_def_t<st_node_t>>()) continue;
+
                     auto& bindings = stmt.get().attribute;
                     for (auto i = bindings.begin(); i != bindings.end(); ++i) {
                         if (auto pvdef = scope.lookup(i->first)) {

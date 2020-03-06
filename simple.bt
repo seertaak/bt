@@ -1,5 +1,5 @@
-var z = 10
-var xs: int.array(10) =
-    1
-    2
-    3
+var x = 50
+var z = 25
+do:
+    var x = 10
+

@@ -222,6 +222,11 @@ namespace bt { namespace parser {
                 code = false;
                 expect<token::oparen_t>();
                 auto result = block();
+                if (!result.is<p_block_t>()) {
+                    auto b = p_block_t();
+                    b.push_back(p_node_t(result));
+                    result = b;
+                }
                 expect<token::cparen_t>();
                 code = old_code;
                 const auto L = loc_last();
