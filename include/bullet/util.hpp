@@ -6,8 +6,13 @@
 #include <variant>
 
 #include <boost/filesystem.hpp>
+#include <boost/function_types/function_arity.hpp>
+#include <boost/function_types/function_type.hpp>
+#include <boost/function_types/parameter_types.hpp>
+#include <boost/function_types/result_type.hpp>
 #include <boost/hana.hpp>
 #include <boost/hof.hpp>
+#include <boost/type_index.hpp>
 
 namespace bt {
 namespace file = boost::filesystem;
@@ -17,6 +22,11 @@ using clock = std::chrono::system_clock;
 auto match = [](auto&& x, auto&&... fn) {
     return std::visit(boost::hana::overload(std::forward(fn)...), std::forward(x));
 };
+
+template <typename Fn>
+using lambda_arg_t = std::remove_const_t<std::remove_reference_t<
+    typename boost::mpl::at_c<boost::function_types::parameter_types<decltype(&Fn::operator())>,
+                              1>::type>>;
 
 class ephemeral_file {
     const file::path file_;
@@ -102,4 +112,12 @@ auto operator!=(const T& l, const ref<T>& r) -> bool {
     return !(l == r);
 }
 
+template <typename Node, typename Attr>
+struct attr {
+    using node_type = Node;
+    using attribute_type = Attr;
+
+    const Node& node;
+    Attr& attribute;
+};
 }  // namespace bt

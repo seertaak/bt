@@ -6,7 +6,7 @@
 
 #include <bullet/lexer/token.hpp>
 
-namespace bt { namespace parser { namespace syntax {
+namespace bt { namespace parser {
     struct location_t {
         uint32_t first_line, last_line;
         uint16_t first_col, last_col;
@@ -28,4 +28,4 @@ namespace bt { namespace parser { namespace syntax {
     };
 
     auto operator<<(std::ostream& os, const location_t& l) -> std::ostream&;
-}}}  // namespace bt::parser::syntax
+}}  // namespace bt::parser

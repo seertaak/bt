@@ -15,4 +15,8 @@ namespace bt { namespace parser { namespace syntax {
         Attr attribute;
     };
 
+    struct with_loc_t {
+        location_t location;
+    };
+
 }}}  // namespace bt::parser::syntax

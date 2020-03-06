@@ -1,6 +1,6 @@
 #include <bullet/parser/location.hpp>
 
-namespace bt { namespace parser { namespace syntax {
+namespace bt { namespace parser {
     using namespace std;
 
     auto operator<<(ostream& os, const location_t& l) -> ostream& {
@@ -9,4 +9,4 @@ namespace bt { namespace parser { namespace syntax {
         return os;
     }
 
-}}}  // namespace bt::parser::syntax
+}}  // namespace bt::parser

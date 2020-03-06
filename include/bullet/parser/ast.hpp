@@ -73,11 +73,9 @@ namespace bt { namespace parser {
                                          attr_node_t<Attr>>;
 
         template <typename Attr>
-        struct attr_tree_t : node_base_t<Attr>, with_attr<Attr> {
+        struct attr_tree_t : node_base_t<Attr>, with_loc_t, with_attr<Attr> {
             using base_t = node_base_t<Attr>;
             using base_t::base_t;
-
-            location_t location;
 
             template <typename T>
             inline auto is() const -> bool {
@@ -158,7 +156,8 @@ namespace bt { namespace parser {
         using namespace syntax;
         using namespace std;
 
-        out << margin() << tree.location << endl;
+        out << margin() << "location=" << tree.location << endl;
+        out << margin() << "attribute=" << tree.attribute << endl;
         std::visit(
             boost::hana::overload(
                 [&](const string_literal_t& s) { out << margin() << s << endl; },

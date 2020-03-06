@@ -10,6 +10,7 @@
 #include <range/v3/view/tail.hpp>
 #include <range/v3/view/transform.hpp>
 
+#include <bullet/analysis/walk.hpp>
 #include <bullet/lexer/lexer.hpp>
 #include <bullet/lexer/token.hpp>
 #include <bullet/parser/ast.hpp>
@@ -22,6 +23,7 @@ using namespace lexer::token;
 using namespace parser;
 using namespace syntax;
 using namespace rang;
+using namespace analysis;
 
 constexpr auto title = R"(
      / /_  __  __/ / /__  / /_
@@ -55,77 +57,17 @@ int main(int argc, const char* argv[]) {
     parser::pretty_print<empty_attribute_t>(ast, s, 0);
     cout << s.str() << endl;
 
-    // namespace hana = boost::hana;
-    /*
+    using noattr = const empty_attribute_t&;
 
-    using vt = std::variant<int, float>;
-    constexpr auto uuu = annotated::variant_tags(hana::type_c<vt>);
+    {
+        const auto test = analysis::walk_synth<int>(
+            ast, [](const string_literal_t& node, noattr) -> int { return 1; },
+            [](const block_t<int>& node, noattr) -> int { return node.size(); });
 
-    static_assert(hana::equal(uuu,
-        hana::tuple_t<std::tuple<syntax::ref<int>, int>,
-        std::tuple<syntax::ref<float>, int>>));
-    static_assert(hana::equal(
-        bt::analysis::annotated::ref_type_c<parser::syntax::ref<int>>,
-        hana::type_c<int>
-    ));
-
-    static_assert(annotated::is_ref(hana::type_c<parser::syntax::ref<int>>));
-    static_assert(!annotated::is_ref(hana::type_c<int>));
-
-    static_assert(!annotated::is_recursive(uuu));
-    static_assert(annotated::is_recursive(
-        annotated::variant_tags(hana::type_c<parser::syntax::node_base_t>)
-    ));
-    static_assert(annotated::is_recursive(
-        annotated::variant_tags(hana::type_c<parser::syntax::tree_t>)
-    ));
-    namespace st = second_try;
-    using namespace second_try;
-
-    static_assert(
-        hana::equal(
-            hana::type_c<std::variant<int, float>>,
-            to_variant_type(hana::tuple_t<int, float>)
-        )
-    );
-
-    static_assert(
-        hana::equal(
-            hana::type_c<st::tree_t<int, float>>,
-            to_recursive_variant_type(hana::tuple_t<int, float>)
-        )
-    );
-
-    using namespace std;
-
-    static_assert(
-        hana::equal(
-            hana::tuple_t<tuple<int, bool>, tuple<float, bool>>,
-            annotated_types(
-                hana::tuple_t<int, float>,
-                hana::tuple_t<bool>
-            )
-        )
-    );
-
-    static_assert(
-        hana::equal(
-            hana::type_c<st::tree_t<tuple<int, bool>, tuple<float, bool>>>,
-            to_recursive_variant_type(
-                annotated_types(
-                    hana::tuple_t<int, float>,
-                    hana::tuple_t<bool>
-                )
-            )
-        )
-    );
-
-    using namespace std;
-
-    namespace st = second_try;
-    auto t = st::attr_tree_t<std::string, st::foo, st::bar>();
-    auto u = st::attr_tree_t<float, st::foo, st::bar>();
-    */
+        auto s = std::stringstream();
+        parser::pretty_print(test, s, 0);
+        cout << s.str() << endl;
+    }
 
     return 0;
 }

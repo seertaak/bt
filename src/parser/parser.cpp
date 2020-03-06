@@ -4,12 +4,7 @@
 #include <string_view>
 #include <vector>
 
-#include <boost/function_types/function_arity.hpp>
-#include <boost/function_types/function_type.hpp>
-#include <boost/function_types/parameter_types.hpp>
-#include <boost/function_types/result_type.hpp>
 #include <boost/hof.hpp>
-#include <boost/type_index.hpp>
 
 #include <bullet/parser/error.hpp>
 #include <bullet/util.hpp>
@@ -24,11 +19,6 @@ namespace bt { namespace parser {
         using p_block_t = block_t<empty_attribute_t>;
         using p_data_t = data_t<empty_attribute_t>;
         using p_node_t = attr_node_t<empty_attribute_t>;
-
-        template <typename Fn>
-        using lambda_arg_t = std::remove_const_t<std::remove_reference_t<typename boost::mpl::at_c<
-            boost::function_types::parameter_types<decltype(&Fn::operator())>,
-            1>::type>>;
 
         class parser {
             using source_token_list_t = decltype(lexer::output_t().tokens);
