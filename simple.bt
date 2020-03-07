@@ -1,5 +1,4 @@
 var x = 50
-var z = 25
 do:
-    var x = 10
+    var y = 10
 

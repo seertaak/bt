@@ -69,7 +69,10 @@ struct ref {
     ref() : value{std::make_shared<T>()} {}
     ref(const ref&) = default;
     ref& operator=(const ref&) = default;
-    ref& operator=(const T& t) { *value = t; }
+    ref& operator=(const T& t) {
+        *value = t;
+        return *this;
+    }
 
     T& get() { return *value; }
     const T& get() const { return *value; }

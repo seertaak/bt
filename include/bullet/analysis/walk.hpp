@@ -20,9 +20,7 @@ namespace bt { namespace analysis {
 
             namespace hana = boost::hana;
 
-            auto fn_dict_t = hana::make_map(
-                hana::make_pair(hana::type_c<lambda_arg_t<remove_pointer_t<decltype(fn)>>>, fn)...);
-
+            const auto f = hana::overload((*fn)...);
             const auto l = node.get().location;
             const auto& attribute = node.get().attribute;
 
@@ -31,76 +29,37 @@ namespace bt { namespace analysis {
                     [&](const string_literal_t& literal) {
                         auto result = out_tree_t(literal);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<string_literal_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<string_literal_t>(), node);
-                        }
+                        result.attribute = f(result.template get<string_literal_t>(), node);
                         return result;
                     },
                     [&](const integral_literal_t& literal) {
                         auto result = out_tree_t(literal);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<integral_literal_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<integral_literal_t>(), node);
-                        }
+                        result.attribute = f(result.template get<integral_literal_t>(), node);
                         return result;
                     },
                     [&](const floating_point_literal_t& literal) {
                         auto result = out_tree_t(literal);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<floating_point_literal_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<floating_point_literal_t>(), node);
-                        }
+                        result.attribute = f(result.template get<floating_point_literal_t>(), node);
                         return result;
                     },
                     [&](const lexer::identifier_t& id) {
                         auto result = out_tree_t(id);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<lexer::identifier_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<lexer::identifier_t>(), node);
-                        }
+                        result.attribute = f(result.template get<lexer::identifier_t>(), node);
                         return result;
                     },
                     [&](const lexer::token::true_t& t) {
                         auto result = out_tree_t(t);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<lexer::token::true_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<lexer::token::true_t>(), node);
-                        }
+                        result.attribute = f(result.template get<lexer::token::true_t>(), node);
                         return result;
                     },
                     [&](const lexer::token::false_t& t) {
                         auto result = out_tree_t(t);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<lexer::token::false_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<lexer::token::false_t>(), node);
-                        }
+                        result.attribute = f(result.template get<lexer::token::true_t>(), node);
                         return result;
                     },
                     [&](const block_t<InputAttr>& block) {
@@ -112,12 +71,7 @@ namespace bt { namespace analysis {
                             result.template get<block_t<OutputAttr>>().push_back(
                                 walk_synth_impl<OutputAttr>(stmt, fn...));
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<block_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<block_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<block_t<OutputAttr>>(), node);
 
                         return result;
                     },
@@ -130,12 +84,7 @@ namespace bt { namespace analysis {
                             result.template get<data_t<OutputAttr>>().push_back(
                                 walk_synth_impl<OutputAttr>(stmt, fn...));
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<data_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<data_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<data_t<OutputAttr>>(), node);
 
                         return result;
                     },
@@ -143,14 +92,7 @@ namespace bt { namespace analysis {
                         auto result = out_tree_t(unary_op_t<OutputAttr>{
                             op.op, walk_synth_impl<OutputAttr>(op.operand, fn...)});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<unary_op_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<unary_op_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<unary_op_t<OutputAttr>>(), node);
 
                         return result;
                     },
@@ -159,14 +101,7 @@ namespace bt { namespace analysis {
                             bin_op_t<OutputAttr>{op.op, walk_synth_impl<OutputAttr>(op.lhs, fn...),
                                                  walk_synth_impl<OutputAttr>(op.rhs, fn...)});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<bin_op_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<bin_op_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<bin_op_t<OutputAttr>>(), node);
 
                         return result;
                     },
@@ -182,12 +117,7 @@ namespace bt { namespace analysis {
                         for (const auto& arg : i.arguments)
                             o.arguments.push_back(walk_synth_impl<OutputAttr>(arg, fn...));
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<invoc_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<invoc_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(o, node);
 
                         return result;
                     },
@@ -209,12 +139,7 @@ namespace bt { namespace analysis {
                         o.else_branch = attr_node_t<OutputAttr>(
                             walk_synth_impl<OutputAttr>(i.else_branch, fn...));
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<if_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<if_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(o, node);
 
                         return result;
                     },
@@ -249,12 +174,7 @@ namespace bt { namespace analysis {
                                 walk_synth_impl<OutputAttr>(p.expression, fn...)});
                         }
 
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<fn_expr_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<fn_expr_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(o, node);
 
                         return result;
                     },
@@ -263,14 +183,7 @@ namespace bt { namespace analysis {
                             i.name, walk_synth_impl<OutputAttr>(i.type, fn...),
                             walk_synth_impl<OutputAttr>(i.rhs, fn...)});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<var_def_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<var_def_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<var_def_t<OutputAttr>>(), node);
 
                         return result;
                     },
@@ -279,14 +192,7 @@ namespace bt { namespace analysis {
                             i.var_lhs, walk_synth_impl<OutputAttr>(i.var_rhs, fn...),
                             walk_synth_impl<OutputAttr>(i.body, fn...)});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<for_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<for_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<for_t<OutputAttr>>(), node);
 
                         return result;
                     },
@@ -295,37 +201,20 @@ namespace bt { namespace analysis {
                             while_t<OutputAttr>{walk_synth_impl<OutputAttr>(i.test, fn...),
                                                 walk_synth_impl<OutputAttr>(i.body, fn...)});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<while_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<while_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<while_t<OutputAttr>>(), node);
 
                         return result;
                     },
                     [&](const break_t& i) {
                         auto result = out_tree_t(i);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t, hana::type_c<break_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(result.template get<break_t>(), node);
-                        }
+                        result.attribute = f(result.template get<break_t>(), node);
                         return result;
                     },
                     [&](const continue_t& i) {
                         auto result = out_tree_t(i);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t, hana::type_c<break_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(result.template get<break_t>(), node);
-                        }
+                        result.attribute = f(result.template get<continue_t>(), node);
                         return result;
                     },
                     [&](const return_t<InputAttr>& i) {
@@ -333,14 +222,7 @@ namespace bt { namespace analysis {
                             walk_synth_impl<OutputAttr>(i.value, fn...),
                         });
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<return_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<return_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<return_t<OutputAttr>>(), node);
 
                         return result;
                     },
@@ -349,14 +231,7 @@ namespace bt { namespace analysis {
                             walk_synth_impl<OutputAttr>(i.value, fn...),
                         });
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<yield_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<yield_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<yield_t<OutputAttr>>(), node);
 
                         return result;
                     },
@@ -370,12 +245,7 @@ namespace bt { namespace analysis {
                         for (const auto& e : i)
                             o.emplace_back(e.first, walk_synth_impl<OutputAttr>(e.second, fn...));
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<struct_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<struct_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(o, node);
 
                         return result;
                     },
@@ -385,14 +255,7 @@ namespace bt { namespace analysis {
                             walk_synth_impl<OutputAttr>(i.type, fn...),
                         });
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<def_type_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<def_type_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<def_type_t<OutputAttr>>(), node);
 
                         return result;
                     },
@@ -402,14 +265,7 @@ namespace bt { namespace analysis {
                             walk_synth_impl<OutputAttr>(i.type, fn...),
                         });
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<let_type_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<let_type_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(result.template get<let_type_t<OutputAttr>>(), node);
 
                         return result;
                     },
@@ -427,12 +283,7 @@ namespace bt { namespace analysis {
                         o.body =
                             attr_node_t<OutputAttr>(walk_synth_impl<OutputAttr>(i.body, fn...));
 
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<template_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<template_t<OutputAttr>>(), node);
-                        }
+                        result.attribute = f(o, node);
 
                         return result;
                     },
@@ -440,15 +291,7 @@ namespace bt { namespace analysis {
                         auto result = out_tree_t(
                             attr_node_t<OutputAttr>(walk_synth_impl<OutputAttr>(i, fn...)));
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<attr_node_t<OutputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute =
-                                (**pf)(result.template get<attr_node_t<OutputAttr>>(), node);
-                        }
-
+                        result.attribute = f(result.template get<attr_node_t<OutputAttr>>(), node);
                         return result;
                     },
                     [&](const auto&) {
@@ -461,8 +304,9 @@ namespace bt { namespace analysis {
         }
 
         template <typename OutputAttr, class... Fn, typename InputAttr>
-        inline auto walk_inherit_impl(const parser::syntax::attr_node_t<InputAttr>& node, Fn*... fn)
-            -> parser::syntax::attr_tree_t<OutputAttr> {
+        inline auto walk_inherit_impl(const parser::syntax::attr_node_t<InputAttr>& node,
+                                      const InputAttr& parent_attrib,
+                                      Fn*... fn) -> parser::syntax::attr_tree_t<OutputAttr> {
             using namespace parser::syntax;
             using namespace std;
             using namespace boost::hana;
@@ -472,130 +316,78 @@ namespace bt { namespace analysis {
 
             namespace hana = boost::hana;
 
-            auto fn_dict_t = hana::make_map(
-                hana::make_pair(hana::type_c<lambda_arg_t<remove_pointer_t<decltype(fn)>>>, fn)...);
-
             const auto l = node.get().location;
             const auto& attribute = node.get().attribute;
+
+            const auto f = hana::overload((*fn)...);
 
             return std::visit(
                 boost::hana::overload(
                     [&](const string_literal_t& literal) {
                         auto result = out_tree_t(literal);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<string_literal_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(literal, node);
-                        }
+                        result.attribute = f(literal, node, parent_attrib);
                         return result;
                     },
                     [&](const integral_literal_t& literal) {
                         auto result = out_tree_t(literal);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<integral_literal_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(literal, node);
-                        }
+                        result.attribute = f(literal, node, parent_attrib);
                         return result;
                     },
                     [&](const floating_point_literal_t& literal) {
                         auto result = out_tree_t(literal);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<floating_point_literal_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(literal, node);
-                        }
+                        result.attribute = f(literal, node, parent_attrib);
                         return result;
                     },
                     [&](const lexer::identifier_t& id) {
                         auto result = out_tree_t(id);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<lexer::identifier_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(id, node);
-                        }
+                        result.attribute = f(id, node, parent_attrib);
                         return result;
                     },
                     [&](const lexer::token::true_t& t) {
                         auto result = out_tree_t(t);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<lexer::token::true_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(t, node);
-                        }
+                        result.attribute = f(t, node, parent_attrib);
                         return result;
                     },
                     [&](const lexer::token::false_t& t) {
                         auto result = out_tree_t(t);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<lexer::token::false_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(t, node);
-                        }
+                        result.attribute = f(t, node, parent_attrib);
                         return result;
                     },
                     [&](const block_t<InputAttr>& block) {
                         auto result = out_tree_t(block_t<OutputAttr>{});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<block_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(block, node);
-                        }
+                        result.attribute = f(block, node, parent_attrib);
 
                         for (const auto& stmt : block)
                             result.template get<block_t<OutputAttr>>().push_back(
-                                walk_inherit_impl<OutputAttr>(stmt, fn...));
+                                walk_inherit_impl<OutputAttr>(stmt, result.attribute, fn...));
 
                         return result;
                     },
                     [&](const data_t<InputAttr>& data) {
                         auto result = out_tree_t(data_t<OutputAttr>{});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<data_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(data, node);
-                        }
-
+                        result.attribute = f(data, node, parent_attrib);
                         for (const auto& stmt : data)
                             result.template get<data_t<OutputAttr>>().push_back(
-                                walk_inherit_impl<OutputAttr>(stmt, fn...));
+                                walk_inherit_impl<OutputAttr>(stmt, result.attribute, fn...));
 
                         return result;
                     },
                     [&](const unary_op_t<InputAttr>& op) {
                         auto result = out_tree_t(unary_op_t<OutputAttr>{});
+                        result.attribute = f(op, node, parent_attrib);
+
                         auto& o = result.template get<unary_op_t<OutputAttr>>();
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<unary_op_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(op, node);
-                        }
-
-                        result.op = op.op;
-                        result.operand = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(op.operand, fn...));
+                        o.op = op.op;
+                        o.operand = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(op.operand, result.attribute, fn...));
                         result.location = l;
 
                         return result;
@@ -604,65 +396,48 @@ namespace bt { namespace analysis {
                         auto result = out_tree_t(bin_op_t<OutputAttr>{});
                         auto& o = result.template get<bin_op_t<OutputAttr>>();
                         result.location = l;
-                        result.attribute = OutputAttr{};
+                        result.attribute = f(op, node, parent_attrib);
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<bin_op_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(op, node);
-                        }
-
-                        result.op = op.op;
-                        result.lhs =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(op.lhs, fn...));
-                        result.rhs =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(op.rhs, fn...));
+                        o.op = op.op;
+                        o.lhs = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(op.lhs, result.attribute, fn...));
+                        o.rhs = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(op.rhs, result.attribute, fn...));
 
                         return result;
                     },
                     [&](const invoc_t<InputAttr>& i) {
                         auto result = out_tree_t(invoc_t<OutputAttr>{});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<invoc_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
+                        result.attribute = f(i, node, parent_attrib);
 
                         auto& o = result.template get<invoc_t<OutputAttr>>();
-                        o.target =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.target, fn...));
+                        o.target = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.target, result.attribute, fn...));
 
                         for (const auto& arg : i.arguments)
-                            o.arguments.push_back(walk_inherit_impl<OutputAttr>(arg, fn...));
+                            o.arguments.push_back(
+                                walk_inherit_impl<OutputAttr>(arg, result.attribute, fn...));
 
                         return result;
                     },
                     [&](const if_t<InputAttr>& i) {
                         auto result = out_tree_t(if_t<OutputAttr>{});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<if_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
+                        result.attribute = f(i, node, parent_attrib);
 
                         auto& o = result.template get<if_t<OutputAttr>>();
 
                         for (int j = 0; j < i.elif_tests.size(); j++) {
-                            o.elif_tests.push_back(
-                                walk_inherit_impl<OutputAttr>(i.elif_tests[j], fn...));
+                            o.elif_tests.push_back(walk_inherit_impl<OutputAttr>(
+                                i.elif_tests[j], result.attribute, fn...));
 
-                            o.elif_branches.push_back(
-                                walk_inherit_impl<OutputAttr>(i.elif_branches[j], fn...));
+                            o.elif_branches.push_back(walk_inherit_impl<OutputAttr>(
+                                i.elif_branches[j], result.attribute, fn...));
                         }
 
                         o.else_branch = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.else_branch, fn...));
+                            walk_inherit_impl<OutputAttr>(i.else_branch, result.attribute, fn...));
 
                         return result;
                     },
@@ -675,32 +450,27 @@ namespace bt { namespace analysis {
                     [&](const fn_expr_t<InputAttr>& i) {
                         auto result = out_tree_t(fn_expr_t<OutputAttr>{});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<fn_expr_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
+                        result.attribute = f(i, node, parent_attrib);
 
                         auto& o = result.template get<fn_expr_t<OutputAttr>>();
 
                         o.arg_names = i.arg_names;
 
                         for (int j = 0; j < i.arg_names.size(); j++)
-                            o.arg_types.push_back(
-                                walk_inherit_impl<OutputAttr>(i.arg_types[j], fn...));
+                            o.arg_types.push_back(walk_inherit_impl<OutputAttr>(
+                                i.arg_types[j], result.attribute, fn...));
 
                         o.result_type = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.result_type, fn...));
-                        o.body =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.body, fn...));
+                            walk_inherit_impl<OutputAttr>(i.result_type, result.attribute, fn...));
+                        o.body = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.body, result.attribute, fn...));
 
                         for (int j = 0; j < i.closure_params.size(); j++) {
                             const auto& p = i.closure_params[j];
                             o.closure_params.push_back(fn_closure_param_t<OutputAttr>{
                                 p.var, p.identifier,
-                                walk_inherit_impl<OutputAttr>(p.expression, fn...)});
+                                walk_inherit_impl<OutputAttr>(p.expression, result.attribute,
+                                                              fn...)});
                         }
 
                         return result;
@@ -709,21 +479,15 @@ namespace bt { namespace analysis {
                         auto result = out_tree_t(var_def_t<OutputAttr>{});
 
                         result.location = l;
-                        result.attribute = OutputAttr{};
+                        result.attribute = f(i, node, parent_attrib);
 
                         auto& o = result.template get<var_def_t<OutputAttr>>();
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<var_def_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
-
                         o.name = i.name;
-                        o.type =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.type, fn...));
-                        o.rhs =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.rhs, fn...));
+                        o.type = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.type, result.attribute, fn...));
+                        o.rhs = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.rhs, result.attribute, fn...));
 
                         return result;
                     },
@@ -733,18 +497,13 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<for_t<OutputAttr>>();
 
                         result.location = l;
-                        result.attribute = OutputAttr{};
+                        result.attribute = f(i, node, parent_attrib);
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<for_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
-
-                        o.var_lhs = i.var_lhs, o.var_rhs = attr_node_t<OutputAttr>(
-                                                   walk_inherit_impl<OutputAttr>(i.var_rhs, fn...));
-                        o.body =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.body, fn...));
+                        o.var_lhs = i.var_lhs,
+                        o.var_rhs = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.var_rhs, result.attribute, fn...));
+                        o.body = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.body, result.attribute, fn...));
                         return result;
                     },
                     [&](const while_t<InputAttr>& i) {
@@ -752,40 +511,24 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<while_t<OutputAttr>>();
 
                         result.location = l;
-                        result.attribute = OutputAttr{};
+                        result.attribute = f(i, node, parent_attrib);
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<while_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
-
-                        o.test =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.test, fn...));
-                        o.body =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.body, fn...));
+                        o.test = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.test, result.attribute, fn...));
+                        o.body = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.body, result.attribute, fn...));
                         return result;
                     },
                     [&](const break_t& i) {
                         auto result = out_tree_t(i);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t, hana::type_c<break_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
+                        result.attribute = f(i, node, parent_attrib);
                         return result;
                     },
                     [&](const continue_t& i) {
                         auto result = out_tree_t(i);
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t, hana::type_c<break_t>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
+                        result.attribute = f(i, node, parent_attrib);
                         return result;
                     },
                     [&](const return_t<InputAttr>& i) {
@@ -793,16 +536,10 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<return_t<OutputAttr>>();
 
                         result.location = l;
-                        result.attribute = OutputAttr{};
+                        result.attribute = f(i, node, parent_attrib);
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<return_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
-
-                        o.value =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.value, fn...));
+                        o.value = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.value, result.attribute, fn...));
 
                         return result;
                     },
@@ -811,16 +548,10 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<yield_t<OutputAttr>>();
 
                         result.location = l;
-                        result.attribute = OutputAttr{};
+                        result.attribute = f(i, node, parent_attrib);
 
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<yield_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
-
-                        o.value =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.value, fn...));
+                        o.value = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.value, result.attribute, fn...));
 
                         return result;
                     },
@@ -829,16 +560,11 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<struct_t<OutputAttr>>();
 
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf =
-                                          hana::find(fn_dict_t, hana::type_c<struct_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
+                        result.attribute = f(i, node, parent_attrib);
 
                         for (const auto& e : i)
-                            o.emplace_back(e.first, walk_inherit_impl<OutputAttr>(e.second, fn...));
+                            o.emplace_back(e.first, walk_inherit_impl<OutputAttr>(
+                                                        e.second, result.attribute, fn...));
 
                         return result;
                     },
@@ -848,17 +574,11 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<def_type_t<OutputAttr>>();
 
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<def_type_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
+                        result.attribute = f(i, node, parent_attrib);
 
                         o.name = i.name;
-                        o.type =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.type, fn...));
+                        o.type = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.type, result.attribute, fn...));
 
                         return result;
                     },
@@ -868,39 +588,28 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<let_type_t<OutputAttr>>();
 
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<let_type_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
+                        result.attribute = f(i, node, parent_attrib);
 
                         o.name = i.name;
-                        o.type =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.type, fn...));
+                        o.type = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.type, result.attribute, fn...));
 
                         return result;
                     },
                     [&](const template_t<InputAttr>& i) {
                         auto result = out_tree_t(template_t<OutputAttr>{});
                         result.location = l;
-                        result.attribute = OutputAttr{};
-
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<template_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
+                        result.attribute = f(i, node, parent_attrib);
 
                         auto& o = result.template get<template_t<OutputAttr>>();
 
                         for (const auto& e : i.arguments)
                             o.arguments.emplace_back(
-                                e.first, walk_inherit_impl<OutputAttr>(e.second, fn...));
+                                e.first,
+                                walk_inherit_impl<OutputAttr>(e.second, result.attribute, fn...));
 
-                        o.body =
-                            attr_node_t<OutputAttr>(walk_inherit_impl<OutputAttr>(i.body, fn...));
+                        o.body = attr_node_t<OutputAttr>(
+                            walk_inherit_impl<OutputAttr>(i.body, result.attribute, fn...));
 
                         return result;
                     },
@@ -910,15 +619,9 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<attr_node_t<OutputAttr>>();
 
                         result.location = l;
-                        result.attribute = OutputAttr{};
+                        result.attribute = f(i, node, parent_attrib);
 
-                        if constexpr (auto pf = hana::find(fn_dict_t,
-                                                           hana::type_c<attr_node_t<InputAttr>>);
-                                      !hana::is_nothing(pf)) {
-                            result.attribute = (**pf)(i, node);
-                        }
-
-                        o = walk_inherit_impl<OutputAttr>(i, fn...);
+                        o = walk_inherit_impl<OutputAttr>(i, result.attribute, fn...);
 
                         return result;
                     },
@@ -933,7 +636,7 @@ namespace bt { namespace analysis {
     }  // namespace details
 
     template <typename OutputAttr, class... Fn, typename InputAttr = parser::empty_attribute_t>
-    inline auto walk_synth(const parser::syntax::attr_tree_t<InputAttr>& tree, Fn&&... fn)
+    inline auto synthesize(const parser::syntax::attr_tree_t<InputAttr>& tree, Fn&&... fn)
         -> parser::syntax::attr_tree_t<OutputAttr> {
         using namespace parser::syntax;
         using namespace std;
@@ -941,18 +644,14 @@ namespace bt { namespace analysis {
         using out_tree_t = attr_tree_t<OutputAttr>;
 
         namespace hana = boost::hana;
-
         auto fns = std::tuple(std::move(fn)...);
-
-        auto fn_dict_t = hana::make_map(hana::make_pair(
-            hana::type_c<lambda_arg_t<remove_reference_t<decltype(fn)>>>, &std::get<Fn>(fns))...);
 
         const auto node = parser::syntax::attr_node_t<InputAttr>(tree);
         return details::walk_synth_impl<OutputAttr>(node, &fn...);
     }
 
     template <typename OutputAttr, class... Fn, typename InputAttr = parser::empty_attribute_t>
-    inline auto walk_inherit(const parser::syntax::attr_tree_t<InputAttr>& tree, Fn&&... fn)
+    inline auto inherit(const parser::syntax::attr_tree_t<InputAttr>& tree, Fn&&... fn)
         -> parser::syntax::attr_tree_t<OutputAttr> {
         using namespace parser::syntax;
         using namespace std;
@@ -963,11 +662,9 @@ namespace bt { namespace analysis {
 
         auto fns = std::tuple(std::move(fn)...);
 
-        auto fn_dict_t = hana::make_map(hana::make_pair(
-            hana::type_c<lambda_arg_t<remove_reference_t<decltype(fn)>>>, &std::get<Fn>(fns))...);
-
+        const auto root_attribute = InputAttr{};
         const auto node = parser::syntax::attr_node_t<InputAttr>(tree);
-        return details::walk_inherit_impl<OutputAttr>(node, &fn...);
+        return details::walk_inherit_impl<OutputAttr>(node, root_attribute, &fn...);
     }
 
     template <typename Attr>
