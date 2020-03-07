@@ -27,6 +27,7 @@
 #include <bullet/parser/ast/return.hpp>
 #include <bullet/parser/ast/struct.hpp>
 #include <bullet/parser/ast/template.hpp>
+#include <bullet/parser/ast/type_expr.hpp>
 #include <bullet/parser/ast/unary_op.hpp>
 #include <bullet/parser/ast/var_def.hpp>
 #include <bullet/parser/ast/while.hpp>
@@ -41,14 +42,60 @@ namespace bt { namespace parser {
         using integral_literal_t = lexer::literal::numeric::integral_t;
         using floating_point_literal_t = lexer::literal::numeric::floating_point_t;
 
+        using primitive_type_t = std::variant<lexer::token::char_t,
+                                              lexer::token::byte_t,
+                                              lexer::token::short_t,
+                                              lexer::token::int_t,
+                                              lexer::token::long_t,
+                                              lexer::token::ushort_t,
+                                              lexer::token::uint_t,
+                                              lexer::token::ulong_t,
+                                              lexer::token::float_t,
+                                              lexer::token::double_t,
+                                              lexer::token::i8_t,
+                                              lexer::token::i16_t,
+                                              lexer::token::i32_t,
+                                              lexer::token::i64_t,
+                                              lexer::token::u8_t,
+                                              lexer::token::u16_t,
+                                              lexer::token::u32_t,
+                                              lexer::token::u64_t,
+                                              lexer::token::ptr_t,
+                                              lexer::token::array_t,
+                                              lexer::token::slice_t,
+                                              lexer::token::variant_t,
+                                              lexer::token::tuple_t>;
+
+        inline auto operator<<(std::ostream& os, const primitive_type_t& t) -> std::ostream& {
+            std::visit([&](auto t) { os << lexer::token_symbol(t); }, t);
+            return os;
+        }
+
+        using literal_t = std::variant<string_literal_t,
+                                       integral_literal_t,
+                                       floating_point_literal_t,
+                                       lexer::token::true_t,
+                                       lexer::token::false_t>;
+
+        inline auto operator<<(std::ostream& os, const literal_t& t) -> std::ostream& {
+            std::visit(
+                [&](const auto& t) {
+                    if constexpr (std::is_same_v<decltype(t), lexer::token::true_t> ||
+                                  std::is_same_v<decltype(t), lexer::token::false_t>) {
+                        os << lexer::token_symbol(t);
+                    } else {
+                        os << t;
+                    }
+                },
+                t);
+            return os;
+        }
+
         template <typename Attr>
         using node_base_t = std::variant<std::monostate,
-                                         string_literal_t,
-                                         integral_literal_t,
-                                         floating_point_literal_t,
+                                         primitive_type_t,
+                                         literal_t,
                                          lexer::identifier_t,
-                                         lexer::token::true_t,
-                                         lexer::token::false_t,
                                          break_t,
                                          continue_t,
                                          unary_op_t<Attr>,
@@ -60,6 +107,7 @@ namespace bt { namespace parser {
                                          else_t<Attr>,
                                          var_def_t<Attr>,
                                          fn_expr_t<Attr>,
+                                         type_expr_t<Attr>,
                                          block_t<Attr>,
                                          assign_t<Attr>,
                                          for_t<Attr>,
@@ -167,12 +215,8 @@ namespace bt { namespace parser {
         out << margin() << "attribute=" << tree.attribute << endl;
         std::visit(
             boost::hana::overload(
-                [&](const string_literal_t& s) { out << margin() << s << endl; },
-                [&](const integral_literal_t& s) { out << margin() << s << endl; },
-                [&](const floating_point_literal_t& f) { out << margin() << f << endl; },
-                [&](const lexer::identifier_t& i) { out << margin() << i << endl; },
-                [&](const lexer::token::true_t& i) { out << margin() << i << endl; },
-                [&](const lexer::token::false_t& i) { out << margin() << i << endl; },
+                [&](const primitive_type_t& i) { out << margin() << i << endl; },
+                [&](const literal_t& i) { out << margin() << i << endl; },
                 [&](const block_t<Attr>& block) {
                     out << margin() << "block:" << endl;
                     indent();
@@ -346,6 +390,12 @@ namespace bt { namespace parser {
                 },
                 [&](const break_t& v) { out << margin() << "break" << endl; },
                 [&](const continue_t& v) { out << margin() << "continue" << endl; },
+                [&](const type_expr_t<Attr>& v) {
+                    out << margin() << "type_expr:" << endl;
+                    indent();
+                    pretty_print<Attr>(v.type.get(), out, indent_level);
+                    dedent();
+                },
                 [&](const return_t<Attr>& v) {
                     out << margin() << "return:" << endl;
                     indent();

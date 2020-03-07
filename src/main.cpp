@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include <array>
 #include <fstream>
 #include <sstream>
 
@@ -62,36 +63,57 @@ int main(int argc, const char* argv[]) {
 
     {
         using st_node_t = symtab<node_t>;
-        const auto var_def_bottom_up_pass = walk_post_order<st_node_t>(
+        const auto name_attributes = walk_post_order<st_node_t>(
             ast,
-            [](const var_def_t<st_node_t>& vardef, const syntax::node_t& node) {
-                return st_node_t(vardef.name.name, node);
+            [](const def_type_t<st_node_t>& e, const auto& node) {
+                auto result = st_node_t();
+                result.insert(e.name.name, node);
+                return result;
             },
-            [](const block_t<st_node_t>& block, const syntax::node_t& node) {
+            [](const let_type_t<st_node_t>& e, const auto& node) {
+                auto result = st_node_t();
+                result.insert(e.name.name, node);
+                return result;
+            },
+            [](const var_def_t<st_node_t>& e, const auto& node) {
+                auto result = st_node_t();
+                result.insert(e.name.name, node);
+                return result;
+            },
+            [&](const block_t<st_node_t>& block, const auto& node) {
                 auto scope = st_node_t();
-
                 for (auto& stmt : block) {
-                    if (!stmt.get().is<var_def_t<st_node_t>>()) continue;
-
-                    auto& [name, vdef] = *stmt.get().attribute.begin();
-                    if (auto pvdef = scope.lookup(name)) {
-                        auto msg = std::stringstream();
-                        msg << "Duplicate variable definition ("
-                            << "with duplicate at " << pvdef->get().location << ")";
-                        throw analysis::error(msg, stmt.get().location);
+                    if (stmt.get().is<def_type_t<st_node_t>>() ||
+                        stmt.get().is<let_type_t<st_node_t>>() ||
+                        stmt.get().is<var_def_t<st_node_t>>()) {
+                        auto& [name, def] = *stmt.get().attribute.begin();
+                        if (auto pdef = scope.lookup(name)) {
+                            auto msg = std::stringstream();
+                            msg << "Duplicate type/variable/fn/template declaration ("
+                                << "with duplicate at " << pdef->get().location << ")";
+                            throw analysis::error(msg, stmt.get().location);
+                        }
+                        scope.insert(name, def);
                     }
-                    scope.insert(name, vdef);
                 }
-
                 return scope;
             },
-            [](auto, auto) -> st_node_t { return st_node_t(); });
+            [](auto, auto) { return st_node_t(); });
 
         const auto var_def_top_down_pass = walk_pre_order<st_node_t>(
-            var_def_bottom_up_pass,
-            [](const auto& value, const auto& node, const auto& parent_scope) {
-                auto scope = node.get().attribute;
-                scope.insert(parent_scope);
+            name_attributes,
+            [&](const identifier_t& id, const auto& node, const auto& parent_scope) {
+                if (!parent_scope.lookup(id.name)) {
+                    auto msg = std::stringstream();
+                    msg << "Use of undefined type/variable/fn/template identifier \"" << id.name
+                        << "\"";
+                    throw analysis::error(msg, node.get().location);
+                }
+                return parent_scope;
+            },
+            [&](const auto& value, const auto& node, const auto& parent_scope) {
+                auto scope = parent_scope;
+                scope.insert(node.get().attribute);
                 return scope;
             });
 

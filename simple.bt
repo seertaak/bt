@@ -1,4 +1,10 @@
 var x = 50
+
+var zz = flaing -- blah could be a TYPE or a VAR.
+
+type foo = blah -- blah must be a TYPE.
+alias bar = foo
 do:
-    var y = 10
+    var y = x + 5
+
 

@@ -42,6 +42,9 @@ def run():
         elif symbol.lower().isalpha():
             categories.append('reserved_word')
             is_reserved_word = True
+        elif symbol.lower()[0].isalpha() and symbol.lower()[1:].isalnum():
+            categories.append('reserved_word')
+            is_reserved_word = True
         elif symbol in "{}[]()":
             categories.append('grouping_token')
         elif symbol in r'.,;\\':

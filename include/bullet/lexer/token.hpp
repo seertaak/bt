@@ -81,6 +81,18 @@ namespace bt { namespace lexer {
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
+        struct variant_t : token_tag {
+            static constexpr const std::string_view name{"VARIANT"};
+            static constexpr const std::string_view token{"variant"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct double_t : token_tag {
+            static constexpr const std::string_view name{"DOUBLE"};
+            static constexpr const std::string_view token{"double"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
         struct import_t : token_tag {
             static constexpr const std::string_view name{"IMPORT"};
             static constexpr const std::string_view token{"import"};
@@ -111,9 +123,21 @@ namespace bt { namespace lexer {
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
+        struct ushort_t : token_tag {
+            static constexpr const std::string_view name{"USHORT"};
+            static constexpr const std::string_view token{"ushort"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
         struct alias_t : token_tag {
             static constexpr const std::string_view name{"ALIAS"};
             static constexpr const std::string_view token{"alias"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct array_t : token_tag {
+            static constexpr const std::string_view name{"ARRAY"};
+            static constexpr const std::string_view token{"array"};
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
@@ -141,15 +165,45 @@ namespace bt { namespace lexer {
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
+        struct float_t : token_tag {
+            static constexpr const std::string_view name{"FLOAT"};
+            static constexpr const std::string_view token{"float"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
         struct macro_t : token_tag {
             static constexpr const std::string_view name{"MACRO"};
             static constexpr const std::string_view token{"macro"};
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
+        struct short_t : token_tag {
+            static constexpr const std::string_view name{"SHORT"};
+            static constexpr const std::string_view token{"short"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct slice_t : token_tag {
+            static constexpr const std::string_view name{"SLICE"};
+            static constexpr const std::string_view token{"slice"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
         struct throw_t : token_tag {
             static constexpr const std::string_view name{"THROW"};
             static constexpr const std::string_view token{"throw"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct tuple_t : token_tag {
+            static constexpr const std::string_view name{"TUPLE"};
+            static constexpr const std::string_view token{"tuple"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct ulong_t : token_tag {
+            static constexpr const std::string_view name{"ULONG"};
+            static constexpr const std::string_view token{"ulong"};
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
@@ -177,9 +231,21 @@ namespace bt { namespace lexer {
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
+        struct byte_t : token_tag {
+            static constexpr const std::string_view name{"BYTE"};
+            static constexpr const std::string_view token{"byte"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
         struct case_t : token_tag {
             static constexpr const std::string_view name{"CASE"};
             static constexpr const std::string_view token{"case"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct char_t : token_tag {
+            static constexpr const std::string_view name{"CHAR"};
+            static constexpr const std::string_view token{"char"};
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
@@ -210,6 +276,12 @@ namespace bt { namespace lexer {
         struct help_t : token_tag {
             static constexpr const std::string_view name{"HELP"};
             static constexpr const std::string_view token{"help"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct long_t : token_tag {
+            static constexpr const std::string_view name{"LONG"};
+            static constexpr const std::string_view token{"long"};
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
@@ -255,6 +327,12 @@ namespace bt { namespace lexer {
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
+        struct uint_t : token_tag {
+            static constexpr const std::string_view name{"UINT"};
+            static constexpr const std::string_view token{"uint"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
         struct with_t : token_tag {
             static constexpr const std::string_view name{"WITH"};
             static constexpr const std::string_view token{"with"};
@@ -285,6 +363,30 @@ namespace bt { namespace lexer {
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
+        struct i16_t : token_tag {
+            static constexpr const std::string_view name{"I16"};
+            static constexpr const std::string_view token{"i16"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct i32_t : token_tag {
+            static constexpr const std::string_view name{"I32"};
+            static constexpr const std::string_view token{"i32"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct i64_t : token_tag {
+            static constexpr const std::string_view name{"I64"};
+            static constexpr const std::string_view token{"i64"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct int_t : token_tag {
+            static constexpr const std::string_view name{"INT"};
+            static constexpr const std::string_view token{"int"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
         struct not_t : token_tag {
             static constexpr const std::string_view name{"NOT"};
             static constexpr const std::string_view token{"not"};
@@ -295,6 +397,30 @@ namespace bt { namespace lexer {
         struct pre_t : token_tag {
             static constexpr const std::string_view name{"PRE"};
             static constexpr const std::string_view token{"pre"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct ptr_t : token_tag {
+            static constexpr const std::string_view name{"PTR"};
+            static constexpr const std::string_view token{"ptr"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct u16_t : token_tag {
+            static constexpr const std::string_view name{"U16"};
+            static constexpr const std::string_view token{"u16"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct u32_t : token_tag {
+            static constexpr const std::string_view name{"U32"};
+            static constexpr const std::string_view token{"u32"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
+        struct u64_t : token_tag {
+            static constexpr const std::string_view name{"U64"};
+            static constexpr const std::string_view token{"u64"};
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
@@ -363,6 +489,12 @@ namespace bt { namespace lexer {
             static constexpr const std::string_view token{"^="};
             static constexpr const uint32_t categories = binary_op;
             static constexpr const bool is_reserved_word = false;
+        };
+        struct i8_t : token_tag {
+            static constexpr const std::string_view name{"I8"};
+            static constexpr const std::string_view token{"i8"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
         };
         struct if_t : token_tag {
             static constexpr const std::string_view name{"IF"};
@@ -459,6 +591,12 @@ namespace bt { namespace lexer {
             static constexpr const std::string_view token{"->"};
             static constexpr const uint32_t categories = binary_op;
             static constexpr const bool is_reserved_word = false;
+        };
+        struct u8_t : token_tag {
+            static constexpr const std::string_view name{"U8"};
+            static constexpr const std::string_view token{"u8"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
         };
         struct ampersand_t : token_tag {
             static constexpr const std::string_view name{"AMPERSAND"};
@@ -662,28 +800,40 @@ namespace bt { namespace lexer {
         constexpr auto types = hana::tuple_t<continue_t,
                                              verbatim_t,
                                              private_t,
+                                             variant_t,
+                                             double_t,
                                              import_t,
                                              object_t,
                                              public_t,
                                              repeat_t,
                                              return_t,
+                                             ushort_t,
                                              alias_t,
+                                             array_t,
                                              break_t,
                                              catch_t,
                                              const_t,
                                              false_t,
+                                             float_t,
                                              macro_t,
+                                             short_t,
+                                             slice_t,
                                              throw_t,
+                                             tuple_t,
+                                             ulong_t,
                                              until_t,
                                              where_t,
                                              while_t,
                                              yield_t,
+                                             byte_t,
                                              case_t,
+                                             char_t,
                                              data_t,
                                              elif_t,
                                              else_t,
                                              goto_t,
                                              help_t,
+                                             long_t,
                                              meta_t,
                                              note_t,
                                              null_lit_t,
@@ -691,13 +841,22 @@ namespace bt { namespace lexer {
                                              then_t,
                                              true_t,
                                              type_t,
+                                             uint_t,
                                              with_t,
                                              and_t,
                                              def_t,
                                              doc_t,
                                              for_t,
+                                             i16_t,
+                                             i32_t,
+                                             i64_t,
+                                             int_t,
                                              not_t,
                                              pre_t,
+                                             ptr_t,
+                                             u16_t,
+                                             u32_t,
+                                             u64_t,
                                              var_t,
                                              xor_t,
                                              backslash_t,
@@ -709,6 +868,7 @@ namespace bt { namespace lexer {
                                              fn_t,
                                              geq_t,
                                              hat_equal_t,
+                                             i8_t,
                                              if_t,
                                              in_t,
                                              is_t,
@@ -725,6 +885,7 @@ namespace bt { namespace lexer {
                                              star_star_t,
                                              thick_arrow_t,
                                              thin_arrow_t,
+                                             u8_t,
                                              ampersand_t,
                                              assign_t,
                                              atsign_t,
@@ -763,28 +924,40 @@ namespace bt { namespace lexer {
     using token_t = variant<token::continue_t,
                             token::verbatim_t,
                             token::private_t,
+                            token::variant_t,
+                            token::double_t,
                             token::import_t,
                             token::object_t,
                             token::public_t,
                             token::repeat_t,
                             token::return_t,
+                            token::ushort_t,
                             token::alias_t,
+                            token::array_t,
                             token::break_t,
                             token::catch_t,
                             token::const_t,
                             token::false_t,
+                            token::float_t,
                             token::macro_t,
+                            token::short_t,
+                            token::slice_t,
                             token::throw_t,
+                            token::tuple_t,
+                            token::ulong_t,
                             token::until_t,
                             token::where_t,
                             token::while_t,
                             token::yield_t,
+                            token::byte_t,
                             token::case_t,
+                            token::char_t,
                             token::data_t,
                             token::elif_t,
                             token::else_t,
                             token::goto_t,
                             token::help_t,
+                            token::long_t,
                             token::meta_t,
                             token::note_t,
                             token::null_lit_t,
@@ -792,13 +965,22 @@ namespace bt { namespace lexer {
                             token::then_t,
                             token::true_t,
                             token::type_t,
+                            token::uint_t,
                             token::with_t,
                             token::and_t,
                             token::def_t,
                             token::doc_t,
                             token::for_t,
+                            token::i16_t,
+                            token::i32_t,
+                            token::i64_t,
+                            token::int_t,
                             token::not_t,
                             token::pre_t,
+                            token::ptr_t,
+                            token::u16_t,
+                            token::u32_t,
+                            token::u64_t,
                             token::var_t,
                             token::xor_t,
                             token::backslash_t,
@@ -810,6 +992,7 @@ namespace bt { namespace lexer {
                             token::fn_t,
                             token::geq_t,
                             token::hat_equal_t,
+                            token::i8_t,
                             token::if_t,
                             token::in_t,
                             token::is_t,
@@ -826,6 +1009,7 @@ namespace bt { namespace lexer {
                             token::star_star_t,
                             token::thick_arrow_t,
                             token::thin_arrow_t,
+                            token::u8_t,
                             token::ampersand_t,
                             token::assign_t,
                             token::atsign_t,
@@ -871,28 +1055,40 @@ namespace bt { namespace lexer {
     const token_t CONTINUE{token::continue_t{}};
     const token_t VERBATIM{token::verbatim_t{}};
     const token_t PRIVATE{token::private_t{}};
+    const token_t VARIANT{token::variant_t{}};
+    const token_t DOUBLE{token::double_t{}};
     const token_t IMPORT{token::import_t{}};
     const token_t OBJECT{token::object_t{}};
     const token_t PUBLIC{token::public_t{}};
     const token_t REPEAT{token::repeat_t{}};
     const token_t RETURN{token::return_t{}};
+    const token_t USHORT{token::ushort_t{}};
     const token_t ALIAS{token::alias_t{}};
+    const token_t ARRAY{token::array_t{}};
     const token_t BREAK{token::break_t{}};
     const token_t CATCH{token::catch_t{}};
     const token_t CONST{token::const_t{}};
     const token_t FALSE{token::false_t{}};
+    const token_t FLOAT{token::float_t{}};
     const token_t MACRO{token::macro_t{}};
+    const token_t SHORT{token::short_t{}};
+    const token_t SLICE{token::slice_t{}};
     const token_t THROW{token::throw_t{}};
+    const token_t TUPLE{token::tuple_t{}};
+    const token_t ULONG{token::ulong_t{}};
     const token_t UNTIL{token::until_t{}};
     const token_t WHERE{token::where_t{}};
     const token_t WHILE{token::while_t{}};
     const token_t YIELD{token::yield_t{}};
+    const token_t BYTE{token::byte_t{}};
     const token_t CASE{token::case_t{}};
+    const token_t CHAR{token::char_t{}};
     const token_t DATA{token::data_t{}};
     const token_t ELIF{token::elif_t{}};
     const token_t ELSE{token::else_t{}};
     const token_t GOTO{token::goto_t{}};
     const token_t HELP{token::help_t{}};
+    const token_t LONG{token::long_t{}};
     const token_t META{token::meta_t{}};
     const token_t NOTE{token::note_t{}};
     const token_t NULL_LIT{token::null_lit_t{}};
@@ -900,13 +1096,22 @@ namespace bt { namespace lexer {
     const token_t THEN{token::then_t{}};
     const token_t TRUE{token::true_t{}};
     const token_t TYPE{token::type_t{}};
+    const token_t UINT{token::uint_t{}};
     const token_t WITH{token::with_t{}};
     const token_t AND{token::and_t{}};
     const token_t DEF{token::def_t{}};
     const token_t DOC{token::doc_t{}};
     const token_t FOR{token::for_t{}};
+    const token_t I16{token::i16_t{}};
+    const token_t I32{token::i32_t{}};
+    const token_t I64{token::i64_t{}};
+    const token_t INT{token::int_t{}};
     const token_t NOT{token::not_t{}};
     const token_t PRE{token::pre_t{}};
+    const token_t PTR{token::ptr_t{}};
+    const token_t U16{token::u16_t{}};
+    const token_t U32{token::u32_t{}};
+    const token_t U64{token::u64_t{}};
     const token_t VAR{token::var_t{}};
     const token_t XOR{token::xor_t{}};
     const token_t BACKSLASH{token::backslash_t{}};
@@ -918,6 +1123,7 @@ namespace bt { namespace lexer {
     const token_t FN{token::fn_t{}};
     const token_t GEQ{token::geq_t{}};
     const token_t HAT_EQUAL{token::hat_equal_t{}};
+    const token_t I8{token::i8_t{}};
     const token_t IF{token::if_t{}};
     const token_t IN{token::in_t{}};
     const token_t IS{token::is_t{}};
@@ -934,6 +1140,7 @@ namespace bt { namespace lexer {
     const token_t STAR_STAR{token::star_star_t{}};
     const token_t THICK_ARROW{token::thick_arrow_t{}};
     const token_t THIN_ARROW{token::thin_arrow_t{}};
+    const token_t U8{token::u8_t{}};
     const token_t AMPERSAND{token::ampersand_t{}};
     const token_t ASSIGN{token::assign_t{}};
     const token_t ATSIGN{token::atsign_t{}};

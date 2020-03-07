@@ -206,7 +206,7 @@ namespace bt { namespace parser {
                     } while (eat_if<token::comma_t>());
 
                     if (eat_if<token::colon_t>()) {
-                        arg_types.emplace_back(expression());
+                        arg_types.emplace_back(type_expr_t<empty_attribute_t>{expression()});
 
                         while (!arg_types.empty() && arg_types.size() < arg_names.size())
                             arg_types.push_back(arg_types.back());
@@ -287,7 +287,8 @@ namespace bt { namespace parser {
                             const auto lhs = expect<lexer::identifier_t>();
 
                             auto result_type = p_node_t(tree_t());
-                            if (eat_if<token::colon_t>()) result_type = p_node_t(atom_expr());
+                            if (eat_if<token::colon_t>())
+                                result_type = type_expr_t<empty_attribute_t>{p_node_t(atom_expr())};
 
                             expect<token::assign_t>();
 
@@ -314,7 +315,9 @@ namespace bt { namespace parser {
                             // x -> x + y / z.size() | y, var z
 
                             auto result_type = p_node_t(tree_t());
-                            if (eat_if<token::colon_t>()) result_type = p_node_t(expression());
+                            if (eat_if<token::colon_t>())
+                                result_type =
+                                    type_expr_t<empty_attribute_t>{p_node_t(expression())};
 
                             expect<token::assign_t>();
 
@@ -366,7 +369,7 @@ namespace bt { namespace parser {
                             expect<token::oparen_t>();
                             ast.var_lhs = expect<identifier_t>();
                             expect<token::colon_t>();
-                            ast.var_rhs = p_node_t(expression());
+                            ast.var_rhs = type_expr_t<empty_attribute_t>{p_node_t(expression())};
                             expect<token::cparen_t>();
                             ast.body = p_node_t(expression());
 
@@ -479,7 +482,9 @@ namespace bt { namespace parser {
                                 }
                             }
 
-                            if (eat_if<token::colon_t>()) ast.result_type = p_node_t(expression());
+                            if (eat_if<token::colon_t>())
+                                ast.result_type =
+                                    type_expr_t<empty_attribute_t>{p_node_t(expression())};
 
                             expect<token::assign_t>();
 
@@ -764,11 +769,34 @@ namespace bt { namespace parser {
                     [this](token::data_t) -> tree_t { return delimited_data(); },
                     [this](token::do_t) -> tree_t { return delimited_code(); },
                     [](identifier_t id) { return tree_t(id); },
-                    [](string_literal_t s) { return tree_t(s); },
-                    [](integral_literal_t i) { return tree_t(i); },
-                    [](floating_point_literal_t x) { return tree_t(x); },
-                    [](token::true_t b) { return tree_t(b); },
-                    [](token::false_t b) { return tree_t(b); });
+                    [](string_literal_t s) { return tree_t(literal_t(s)); },
+                    [](integral_literal_t i) { return tree_t(literal_t(i)); },
+                    [](floating_point_literal_t x) { return tree_t(literal_t(x)); },
+                    [](token::true_t b) { return tree_t(literal_t(b)); },
+                    [](token::false_t b) { return tree_t(literal_t(b)); },
+                    [](token::char_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::byte_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::short_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::int_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::long_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::ushort_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::uint_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::ulong_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::float_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::double_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::i8_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::i16_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::i32_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::i64_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::u8_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::u16_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::u32_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::u64_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::ptr_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::array_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::slice_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::variant_t s) { return tree_t(primitive_type_t(s)); },
+                    [](token::tuple_t s) { return tree_t(primitive_type_t(s)); });
 
                 result.location = location(l);
                 return result;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <variant>
+
 #include <bullet/parser/location.hpp>
 #include <bullet/util.hpp>
 

@@ -26,40 +26,16 @@ namespace bt { namespace analysis {
 
             return std::visit(
                 boost::hana::overload(
-                    [&](const string_literal_t& literal) {
+                    [&](const primitive_type_t& i) {
+                        auto result = out_tree_t(i);
+                        result.location = l;
+                        result.attribute = f(result.template get<primitive_type_t>(), node);
+                        return result;
+                    },
+                    [&](const literal_t& literal) {
                         auto result = out_tree_t(literal);
                         result.location = l;
-                        result.attribute = f(result.template get<string_literal_t>(), node);
-                        return result;
-                    },
-                    [&](const integral_literal_t& literal) {
-                        auto result = out_tree_t(literal);
-                        result.location = l;
-                        result.attribute = f(result.template get<integral_literal_t>(), node);
-                        return result;
-                    },
-                    [&](const floating_point_literal_t& literal) {
-                        auto result = out_tree_t(literal);
-                        result.location = l;
-                        result.attribute = f(result.template get<floating_point_literal_t>(), node);
-                        return result;
-                    },
-                    [&](const lexer::identifier_t& id) {
-                        auto result = out_tree_t(id);
-                        result.location = l;
-                        result.attribute = f(result.template get<lexer::identifier_t>(), node);
-                        return result;
-                    },
-                    [&](const lexer::token::true_t& t) {
-                        auto result = out_tree_t(t);
-                        result.location = l;
-                        result.attribute = f(result.template get<lexer::token::true_t>(), node);
-                        return result;
-                    },
-                    [&](const lexer::token::false_t& t) {
-                        auto result = out_tree_t(t);
-                        result.location = l;
-                        result.attribute = f(result.template get<lexer::token::true_t>(), node);
+                        result.attribute = f(result.template get<literal_t>(), node);
                         return result;
                     },
                     [&](const block_t<InputAttr>& block) {
