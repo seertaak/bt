@@ -11,13 +11,13 @@ namespace bt { namespace analysis {
         error(const std::string& s, const parser::location_t& l)
             : std::runtime_error([&] {
                   auto msg = std::stringstream();
-                  msg << s << " at " << l;
+                  msg << s << " at " << l << ".";
                   return msg.str();
               }()) {}
 
         error(std::stringstream& msg, const parser::location_t& l)
             : std::runtime_error([&] {
-                  msg << " at " << l;
+                  msg << " at " << l << ".";
                   return msg.str();
               }()) {}
     };
