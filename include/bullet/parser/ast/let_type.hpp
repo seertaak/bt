@@ -4,6 +4,7 @@
 
 #include <boost/hana/all.hpp>
 
+#include <bullet/lexer/identifier.hpp>
 #include <bullet/lexer/location.hpp>
 #include <bullet/parser/ast_fwd.hpp>
 

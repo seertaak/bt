@@ -257,8 +257,9 @@ namespace bt { namespace parser {
                             if (const auto ident = eat_if<identifier_t>()) {
                                 name = ident->get_with_loc<identifier_t>();
                                 if (eat_if<token::assign_t>())
-                                    return def_type_t<empty_attribute_t>{*name,
-                                                                         p_node_t(atom_expr())};
+                                    return def_type_t<empty_attribute_t>{
+                                        *name, p_node_t(type_expr_t<empty_attribute_t>{
+                                                   p_node_t(atom_expr())})};
                             }
 
                             auto arg_names = std::vector<with_loc<lexer::identifier_t>>();
@@ -275,20 +276,26 @@ namespace bt { namespace parser {
                                 }
                             }
 
-                            if (name) return def_type_t<empty_attribute_t>{*name, p_node_t(type)};
+                            if (name)
+                                return def_type_t<empty_attribute_t>{
+                                    *name,
+                                    p_node_t(type_expr_t<empty_attribute_t>{p_node_t(type)})};
                             return type;
                         },
                         [this](token::alias_t) -> tree_t {
                             const auto name = expect<identifier_t>();
                             expect<token::assign_t>();
-                            return let_type_t<empty_attribute_t>{name, p_node_t(atom_expr())};
+                            return let_type_t<empty_attribute_t>{
+                                name,
+                                p_node_t(type_expr_t<empty_attribute_t>{p_node_t(atom_expr())})};
                         },
                         [this](token::var_t) -> tree_t {
                             const auto lhs = expect<lexer::identifier_t>();
 
                             auto result_type = p_node_t(tree_t());
                             if (eat_if<token::colon_t>())
-                                result_type = type_expr_t<empty_attribute_t>{p_node_t(atom_expr())};
+                                result_type =
+                                    p_node_t(type_expr_t<empty_attribute_t>{p_node_t(atom_expr())});
 
                             expect<token::assign_t>();
 
@@ -316,8 +323,8 @@ namespace bt { namespace parser {
 
                             auto result_type = p_node_t(tree_t());
                             if (eat_if<token::colon_t>())
-                                result_type =
-                                    type_expr_t<empty_attribute_t>{p_node_t(expression())};
+                                result_type = p_node_t(
+                                    type_expr_t<empty_attribute_t>{p_node_t(expression())});
 
                             expect<token::assign_t>();
 
@@ -369,7 +376,8 @@ namespace bt { namespace parser {
                             expect<token::oparen_t>();
                             ast.var_lhs = expect<identifier_t>();
                             expect<token::colon_t>();
-                            ast.var_rhs = type_expr_t<empty_attribute_t>{p_node_t(expression())};
+                            ast.var_rhs =
+                                p_node_t(type_expr_t<empty_attribute_t>{p_node_t(expression())});
                             expect<token::cparen_t>();
                             ast.body = p_node_t(expression());
 
@@ -483,8 +491,8 @@ namespace bt { namespace parser {
                             }
 
                             if (eat_if<token::colon_t>())
-                                ast.result_type =
-                                    type_expr_t<empty_attribute_t>{p_node_t(expression())};
+                                ast.result_type = p_node_t(
+                                    type_expr_t<empty_attribute_t>{p_node_t(expression())});
 
                             expect<token::assign_t>();
 

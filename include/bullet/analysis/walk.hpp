@@ -38,6 +38,12 @@ namespace bt { namespace analysis {
                         result.attribute = f(result.template get<literal_t>(), node);
                         return result;
                     },
+                    [&](const lexer::identifier_t& id) {
+                        auto result = out_tree_t(id);
+                        result.location = l;
+                        result.attribute = f(id, node);
+                        return result;
+                    },
                     [&](const block_t<InputAttr>& block) {
                         auto result = out_tree_t(block_t<OutputAttr>{});
                         result.location = l;
@@ -193,6 +199,15 @@ namespace bt { namespace analysis {
                         result.attribute = f(result.template get<continue_t>(), node);
                         return result;
                     },
+                    [&](const type_expr_t<InputAttr>& i) {
+                        auto result = out_tree_t(type_expr_t<OutputAttr>{
+                            walk_post_order_impl<OutputAttr>(i.type, fn...),
+                        });
+                        result.location = l;
+                        result.attribute = f(result.template get<type_expr_t<OutputAttr>>(), node);
+
+                        return result;
+                    },
                     [&](const return_t<InputAttr>& i) {
                         auto result = out_tree_t(return_t<OutputAttr>{
                             walk_post_order_impl<OutputAttr>(i.value, fn...),
@@ -300,19 +315,13 @@ namespace bt { namespace analysis {
 
             return std::visit(
                 boost::hana::overload(
-                    [&](const string_literal_t& literal) {
-                        auto result = out_tree_t(literal);
+                    [&](const primitive_type_t& i) {
+                        auto result = out_tree_t(i);
                         result.location = l;
-                        result.attribute = f(literal, node, parent_attrib);
+                        result.attribute = f(i, node, parent_attrib);
                         return result;
                     },
-                    [&](const integral_literal_t& literal) {
-                        auto result = out_tree_t(literal);
-                        result.location = l;
-                        result.attribute = f(literal, node, parent_attrib);
-                        return result;
-                    },
-                    [&](const floating_point_literal_t& literal) {
+                    [&](const literal_t& literal) {
                         auto result = out_tree_t(literal);
                         result.location = l;
                         result.attribute = f(literal, node, parent_attrib);
@@ -322,18 +331,6 @@ namespace bt { namespace analysis {
                         auto result = out_tree_t(id);
                         result.location = l;
                         result.attribute = f(id, node, parent_attrib);
-                        return result;
-                    },
-                    [&](const lexer::token::true_t& t) {
-                        auto result = out_tree_t(t);
-                        result.location = l;
-                        result.attribute = f(t, node, parent_attrib);
-                        return result;
-                    },
-                    [&](const lexer::token::false_t& t) {
-                        auto result = out_tree_t(t);
-                        result.location = l;
-                        result.attribute = f(t, node, parent_attrib);
                         return result;
                     },
                     [&](const block_t<InputAttr>& block) {
@@ -506,6 +503,18 @@ namespace bt { namespace analysis {
                         auto result = out_tree_t(i);
                         result.location = l;
                         result.attribute = f(i, node, parent_attrib);
+                        return result;
+                    },
+                    [&](const type_expr_t<InputAttr>& i) {
+                        auto result = out_tree_t(type_expr_t<OutputAttr>{});
+                        auto& o = result.template get<type_expr_t<OutputAttr>>();
+
+                        result.location = l;
+                        result.attribute = f(i, node, parent_attrib);
+
+                        o.type = attr_node_t<OutputAttr>(
+                            walk_pre_order_impl<OutputAttr>(i.type, result.attribute, fn...));
+
                         return result;
                     },
                     [&](const return_t<InputAttr>& i) {

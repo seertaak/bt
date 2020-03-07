@@ -6,6 +6,7 @@
 
 #include <bullet/lexer/location.hpp>
 #include <bullet/parser/ast/data.hpp>
+#include <bullet/parser/ast/type_expr.hpp>
 #include <bullet/parser/ast_fwd.hpp>
 
 namespace bt { namespace parser { namespace syntax {

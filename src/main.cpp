@@ -60,6 +60,7 @@ int main(int argc, const char* argv[]) {
     cout << s.str() << endl;
 
     using noattr = const empty_attribute_t&;
+    auto errors = std::vector<std::unique_ptr<std::runtime_error>>();
 
     {
         using st_node_t = symtab<node_t>;
@@ -91,7 +92,8 @@ int main(int argc, const char* argv[]) {
                             auto msg = std::stringstream();
                             msg << "Duplicate type/variable/fn/template declaration ("
                                 << "with duplicate at " << pdef->get().location << ")";
-                            throw analysis::error(msg, stmt.get().location);
+                            errors.emplace_back(unique_ptr<runtime_error>(
+                                new analysis::error(msg, stmt.get().location)));
                         }
                         scope.insert(name, def);
                     }
@@ -100,26 +102,55 @@ int main(int argc, const char* argv[]) {
             },
             [](auto, auto) { return st_node_t(); });
 
-        const auto var_def_top_down_pass = walk_pre_order<st_node_t>(
+        bool invoc = false;
+        bool type = false;
+
+        const auto type_check_pass = walk_pre_order<st_node_t>(
             name_attributes,
+            [&](const type_expr_t<st_node_t>& e, const auto& node, const auto& parent_scope) {
+                type = true;
+                return parent_scope;
+            },
+            [&](const invoc_t<st_node_t>& e, const auto& node, const auto& parent_scope) {
+                invoc = true;
+                return parent_scope;
+            },
             [&](const identifier_t& id, const auto& node, const auto& parent_scope) {
                 if (!parent_scope.lookup(id.name)) {
                     auto msg = std::stringstream();
-                    msg << "Use of undefined type/variable/fn/template identifier \"" << id.name
-                        << "\"";
-                    throw analysis::error(msg, node.get().location);
+                    msg << "Use of undefined ";
+
+                    if (type && invoc)
+                        msg << "template";
+                    else if (type && !invoc)
+                        msg << "type";
+                    else if (!type && invoc)
+                        msg << "function";
+                    else
+                        msg << "variable";
+                    msg << " \"" << id.name << "\"";
+                    errors.emplace_back(
+                        unique_ptr<runtime_error>(new analysis::error(msg, node.get().location)));
                 }
                 return parent_scope;
             },
             [&](const auto& value, const auto& node, const auto& parent_scope) {
+                invoc = type = false;
+
                 auto scope = parent_scope;
                 scope.insert(node.get().attribute);
                 return scope;
             });
 
-        auto s = std::stringstream();
-        parser::pretty_print(var_def_top_down_pass, s, 0);
-        cout << s.str() << endl;
+        if (errors.empty()) {
+            auto s = std::stringstream();
+            parser::pretty_print(type_check_pass, s, 0);
+            cout << s.str() << endl;
+        } else {
+            cout << fg::red;
+            for (auto&& e : errors) cout << e->what() << endl;
+            cout << style::reset << endl;
+        }
     }
 
     return 0;

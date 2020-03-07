@@ -4,6 +4,7 @@
 
 #include <boost/hana/all.hpp>
 
+#include <bullet/parser/ast/data.hpp>
 #include <bullet/parser/ast_fwd.hpp>
 
 namespace bt { namespace parser { namespace syntax {
@@ -17,9 +18,9 @@ namespace bt { namespace parser { namespace syntax {
     template <typename Attr>
     auto operator<<(std::ostream& os, const type_expr_t<Attr>& e) -> std::ostream& {
         if (e.type.get())
-            os << "type_expr[" << e.type.get() << "]";
+            os << e.type.get();
         else
-            os << "type_expr[]";
+            os << "IMPLDEF";
         return os;
     }
 

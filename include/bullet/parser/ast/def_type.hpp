@@ -5,6 +5,7 @@
 #include <boost/hana/all.hpp>
 
 #include <bullet/lexer/location.hpp>
+#include <bullet/parser/ast/data.hpp>
 #include <bullet/parser/ast_fwd.hpp>
 
 namespace bt { namespace parser { namespace syntax {
