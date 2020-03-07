@@ -11,8 +11,8 @@ namespace bt { namespace analysis {
 
     namespace details {
         template <typename OutputAttr, class... Fn, typename InputAttr>
-        inline auto walk_synth_impl(const parser::syntax::attr_node_t<InputAttr>& node, Fn*... fn)
-            -> parser::syntax::attr_tree_t<OutputAttr> {
+        inline auto walk_post_order_impl(const parser::syntax::attr_node_t<InputAttr>& node,
+                                         Fn*... fn) -> parser::syntax::attr_tree_t<OutputAttr> {
             using namespace parser::syntax;
             using namespace std;
             using in_tree_t = attr_tree_t<InputAttr>;
@@ -69,7 +69,7 @@ namespace bt { namespace analysis {
 
                         for (const auto& stmt : block)
                             result.template get<block_t<OutputAttr>>().push_back(
-                                walk_synth_impl<OutputAttr>(stmt, fn...));
+                                walk_post_order_impl<OutputAttr>(stmt, fn...));
 
                         result.attribute = f(result.template get<block_t<OutputAttr>>(), node);
 
@@ -82,7 +82,7 @@ namespace bt { namespace analysis {
 
                         for (const auto& stmt : data)
                             result.template get<data_t<OutputAttr>>().push_back(
-                                walk_synth_impl<OutputAttr>(stmt, fn...));
+                                walk_post_order_impl<OutputAttr>(stmt, fn...));
 
                         result.attribute = f(result.template get<data_t<OutputAttr>>(), node);
 
@@ -90,16 +90,16 @@ namespace bt { namespace analysis {
                     },
                     [&](const unary_op_t<InputAttr>& op) {
                         auto result = out_tree_t(unary_op_t<OutputAttr>{
-                            op.op, walk_synth_impl<OutputAttr>(op.operand, fn...)});
+                            op.op, walk_post_order_impl<OutputAttr>(op.operand, fn...)});
                         result.location = l;
                         result.attribute = f(result.template get<unary_op_t<OutputAttr>>(), node);
 
                         return result;
                     },
                     [&](const bin_op_t<InputAttr>& op) {
-                        auto result = out_tree_t(
-                            bin_op_t<OutputAttr>{op.op, walk_synth_impl<OutputAttr>(op.lhs, fn...),
-                                                 walk_synth_impl<OutputAttr>(op.rhs, fn...)});
+                        auto result = out_tree_t(bin_op_t<OutputAttr>{
+                            op.op, walk_post_order_impl<OutputAttr>(op.lhs, fn...),
+                            walk_post_order_impl<OutputAttr>(op.rhs, fn...)});
                         result.location = l;
                         result.attribute = f(result.template get<bin_op_t<OutputAttr>>(), node);
 
@@ -111,11 +111,11 @@ namespace bt { namespace analysis {
                         result.attribute = OutputAttr{};
 
                         auto& o = result.template get<invoc_t<OutputAttr>>();
-                        o.target =
-                            attr_node_t<OutputAttr>(walk_synth_impl<OutputAttr>(i.target, fn...));
+                        o.target = attr_node_t<OutputAttr>(
+                            walk_post_order_impl<OutputAttr>(i.target, fn...));
 
                         for (const auto& arg : i.arguments)
-                            o.arguments.push_back(walk_synth_impl<OutputAttr>(arg, fn...));
+                            o.arguments.push_back(walk_post_order_impl<OutputAttr>(arg, fn...));
 
                         result.attribute = f(o, node);
 
@@ -130,14 +130,14 @@ namespace bt { namespace analysis {
 
                         for (int j = 0; j < i.elif_tests.size(); j++) {
                             o.elif_tests.push_back(
-                                walk_synth_impl<OutputAttr>(i.elif_tests[j], fn...));
+                                walk_post_order_impl<OutputAttr>(i.elif_tests[j], fn...));
 
                             o.elif_branches.push_back(
-                                walk_synth_impl<OutputAttr>(i.elif_branches[j], fn...));
+                                walk_post_order_impl<OutputAttr>(i.elif_branches[j], fn...));
                         }
 
                         o.else_branch = attr_node_t<OutputAttr>(
-                            walk_synth_impl<OutputAttr>(i.else_branch, fn...));
+                            walk_post_order_impl<OutputAttr>(i.else_branch, fn...));
 
                         result.attribute = f(o, node);
 
@@ -160,18 +160,18 @@ namespace bt { namespace analysis {
 
                         for (int j = 0; j < i.arg_names.size(); j++)
                             o.arg_types.push_back(
-                                walk_synth_impl<OutputAttr>(i.arg_types[j], fn...));
+                                walk_post_order_impl<OutputAttr>(i.arg_types[j], fn...));
 
                         o.result_type = attr_node_t<OutputAttr>(
-                            walk_synth_impl<OutputAttr>(i.result_type, fn...));
-                        o.body =
-                            attr_node_t<OutputAttr>(walk_synth_impl<OutputAttr>(i.body, fn...));
+                            walk_post_order_impl<OutputAttr>(i.result_type, fn...));
+                        o.body = attr_node_t<OutputAttr>(
+                            walk_post_order_impl<OutputAttr>(i.body, fn...));
 
                         for (int j = 0; j < i.closure_params.size(); j++) {
                             const auto& p = i.closure_params[j];
                             o.closure_params.push_back(fn_closure_param_t<OutputAttr>{
                                 p.var, p.identifier,
-                                walk_synth_impl<OutputAttr>(p.expression, fn...)});
+                                walk_post_order_impl<OutputAttr>(p.expression, fn...)});
                         }
 
                         result.attribute = f(o, node);
@@ -180,8 +180,8 @@ namespace bt { namespace analysis {
                     },
                     [&](const var_def_t<InputAttr>& i) {
                         auto result = out_tree_t(var_def_t<OutputAttr>{
-                            i.name, walk_synth_impl<OutputAttr>(i.type, fn...),
-                            walk_synth_impl<OutputAttr>(i.rhs, fn...)});
+                            i.name, walk_post_order_impl<OutputAttr>(i.type, fn...),
+                            walk_post_order_impl<OutputAttr>(i.rhs, fn...)});
                         result.location = l;
                         result.attribute = f(result.template get<var_def_t<OutputAttr>>(), node);
 
@@ -189,8 +189,8 @@ namespace bt { namespace analysis {
                     },
                     [&](const for_t<InputAttr>& i) {
                         auto result = out_tree_t(for_t<OutputAttr>{
-                            i.var_lhs, walk_synth_impl<OutputAttr>(i.var_rhs, fn...),
-                            walk_synth_impl<OutputAttr>(i.body, fn...)});
+                            i.var_lhs, walk_post_order_impl<OutputAttr>(i.var_rhs, fn...),
+                            walk_post_order_impl<OutputAttr>(i.body, fn...)});
                         result.location = l;
                         result.attribute = f(result.template get<for_t<OutputAttr>>(), node);
 
@@ -198,8 +198,8 @@ namespace bt { namespace analysis {
                     },
                     [&](const while_t<InputAttr>& i) {
                         auto result = out_tree_t(
-                            while_t<OutputAttr>{walk_synth_impl<OutputAttr>(i.test, fn...),
-                                                walk_synth_impl<OutputAttr>(i.body, fn...)});
+                            while_t<OutputAttr>{walk_post_order_impl<OutputAttr>(i.test, fn...),
+                                                walk_post_order_impl<OutputAttr>(i.body, fn...)});
                         result.location = l;
                         result.attribute = f(result.template get<while_t<OutputAttr>>(), node);
 
@@ -219,7 +219,7 @@ namespace bt { namespace analysis {
                     },
                     [&](const return_t<InputAttr>& i) {
                         auto result = out_tree_t(return_t<OutputAttr>{
-                            walk_synth_impl<OutputAttr>(i.value, fn...),
+                            walk_post_order_impl<OutputAttr>(i.value, fn...),
                         });
                         result.location = l;
                         result.attribute = f(result.template get<return_t<OutputAttr>>(), node);
@@ -228,7 +228,7 @@ namespace bt { namespace analysis {
                     },
                     [&](const yield_t<InputAttr>& i) {
                         auto result = out_tree_t(yield_t<OutputAttr>{
-                            walk_synth_impl<OutputAttr>(i.value, fn...),
+                            walk_post_order_impl<OutputAttr>(i.value, fn...),
                         });
                         result.location = l;
                         result.attribute = f(result.template get<yield_t<OutputAttr>>(), node);
@@ -243,7 +243,8 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<struct_t<OutputAttr>>();
 
                         for (const auto& e : i)
-                            o.emplace_back(e.first, walk_synth_impl<OutputAttr>(e.second, fn...));
+                            o.emplace_back(e.first,
+                                           walk_post_order_impl<OutputAttr>(e.second, fn...));
 
                         result.attribute = f(o, node);
 
@@ -252,7 +253,7 @@ namespace bt { namespace analysis {
                     [&](const def_type_t<InputAttr>& i) {
                         auto result = out_tree_t(def_type_t<OutputAttr>{
                             i.name,
-                            walk_synth_impl<OutputAttr>(i.type, fn...),
+                            walk_post_order_impl<OutputAttr>(i.type, fn...),
                         });
                         result.location = l;
                         result.attribute = f(result.template get<def_type_t<OutputAttr>>(), node);
@@ -262,7 +263,7 @@ namespace bt { namespace analysis {
                     [&](const let_type_t<InputAttr>& i) {
                         auto result = out_tree_t(let_type_t<OutputAttr>{
                             i.name,
-                            walk_synth_impl<OutputAttr>(i.type, fn...),
+                            walk_post_order_impl<OutputAttr>(i.type, fn...),
                         });
                         result.location = l;
                         result.attribute = f(result.template get<let_type_t<OutputAttr>>(), node);
@@ -277,11 +278,11 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<template_t<OutputAttr>>();
 
                         for (const auto& e : i.arguments)
-                            o.arguments.emplace_back(e.first,
-                                                     walk_synth_impl<OutputAttr>(e.second, fn...));
+                            o.arguments.emplace_back(
+                                e.first, walk_post_order_impl<OutputAttr>(e.second, fn...));
 
-                        o.body =
-                            attr_node_t<OutputAttr>(walk_synth_impl<OutputAttr>(i.body, fn...));
+                        o.body = attr_node_t<OutputAttr>(
+                            walk_post_order_impl<OutputAttr>(i.body, fn...));
 
                         result.attribute = f(o, node);
 
@@ -289,7 +290,7 @@ namespace bt { namespace analysis {
                     },
                     [&](const attr_node_t<InputAttr>& i) {
                         auto result = out_tree_t(
-                            attr_node_t<OutputAttr>(walk_synth_impl<OutputAttr>(i, fn...)));
+                            attr_node_t<OutputAttr>(walk_post_order_impl<OutputAttr>(i, fn...)));
                         result.location = l;
                         result.attribute = f(result.template get<attr_node_t<OutputAttr>>(), node);
                         return result;
@@ -304,9 +305,9 @@ namespace bt { namespace analysis {
         }
 
         template <typename OutputAttr, class... Fn, typename InputAttr>
-        inline auto walk_inherit_impl(const parser::syntax::attr_node_t<InputAttr>& node,
-                                      const InputAttr& parent_attrib,
-                                      Fn*... fn) -> parser::syntax::attr_tree_t<OutputAttr> {
+        inline auto walk_pre_order_impl(const parser::syntax::attr_node_t<InputAttr>& node,
+                                        const InputAttr& parent_attrib,
+                                        Fn*... fn) -> parser::syntax::attr_tree_t<OutputAttr> {
             using namespace parser::syntax;
             using namespace std;
             using namespace boost::hana;
@@ -366,7 +367,7 @@ namespace bt { namespace analysis {
 
                         for (const auto& stmt : block)
                             result.template get<block_t<OutputAttr>>().push_back(
-                                walk_inherit_impl<OutputAttr>(stmt, result.attribute, fn...));
+                                walk_pre_order_impl<OutputAttr>(stmt, result.attribute, fn...));
 
                         return result;
                     },
@@ -376,7 +377,7 @@ namespace bt { namespace analysis {
                         result.attribute = f(data, node, parent_attrib);
                         for (const auto& stmt : data)
                             result.template get<data_t<OutputAttr>>().push_back(
-                                walk_inherit_impl<OutputAttr>(stmt, result.attribute, fn...));
+                                walk_pre_order_impl<OutputAttr>(stmt, result.attribute, fn...));
 
                         return result;
                     },
@@ -387,7 +388,7 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<unary_op_t<OutputAttr>>();
                         o.op = op.op;
                         o.operand = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(op.operand, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(op.operand, result.attribute, fn...));
                         result.location = l;
 
                         return result;
@@ -400,9 +401,9 @@ namespace bt { namespace analysis {
 
                         o.op = op.op;
                         o.lhs = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(op.lhs, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(op.lhs, result.attribute, fn...));
                         o.rhs = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(op.rhs, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(op.rhs, result.attribute, fn...));
 
                         return result;
                     },
@@ -413,11 +414,11 @@ namespace bt { namespace analysis {
 
                         auto& o = result.template get<invoc_t<OutputAttr>>();
                         o.target = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.target, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.target, result.attribute, fn...));
 
                         for (const auto& arg : i.arguments)
                             o.arguments.push_back(
-                                walk_inherit_impl<OutputAttr>(arg, result.attribute, fn...));
+                                walk_pre_order_impl<OutputAttr>(arg, result.attribute, fn...));
 
                         return result;
                     },
@@ -429,15 +430,15 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<if_t<OutputAttr>>();
 
                         for (int j = 0; j < i.elif_tests.size(); j++) {
-                            o.elif_tests.push_back(walk_inherit_impl<OutputAttr>(
+                            o.elif_tests.push_back(walk_pre_order_impl<OutputAttr>(
                                 i.elif_tests[j], result.attribute, fn...));
 
-                            o.elif_branches.push_back(walk_inherit_impl<OutputAttr>(
+                            o.elif_branches.push_back(walk_pre_order_impl<OutputAttr>(
                                 i.elif_branches[j], result.attribute, fn...));
                         }
 
-                        o.else_branch = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.else_branch, result.attribute, fn...));
+                        o.else_branch = attr_node_t<OutputAttr>(walk_pre_order_impl<OutputAttr>(
+                            i.else_branch, result.attribute, fn...));
 
                         return result;
                     },
@@ -457,20 +458,20 @@ namespace bt { namespace analysis {
                         o.arg_names = i.arg_names;
 
                         for (int j = 0; j < i.arg_names.size(); j++)
-                            o.arg_types.push_back(walk_inherit_impl<OutputAttr>(
+                            o.arg_types.push_back(walk_pre_order_impl<OutputAttr>(
                                 i.arg_types[j], result.attribute, fn...));
 
-                        o.result_type = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.result_type, result.attribute, fn...));
+                        o.result_type = attr_node_t<OutputAttr>(walk_pre_order_impl<OutputAttr>(
+                            i.result_type, result.attribute, fn...));
                         o.body = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.body, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.body, result.attribute, fn...));
 
                         for (int j = 0; j < i.closure_params.size(); j++) {
                             const auto& p = i.closure_params[j];
                             o.closure_params.push_back(fn_closure_param_t<OutputAttr>{
                                 p.var, p.identifier,
-                                walk_inherit_impl<OutputAttr>(p.expression, result.attribute,
-                                                              fn...)});
+                                walk_pre_order_impl<OutputAttr>(p.expression, result.attribute,
+                                                                fn...)});
                         }
 
                         return result;
@@ -485,9 +486,9 @@ namespace bt { namespace analysis {
 
                         o.name = i.name;
                         o.type = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.type, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.type, result.attribute, fn...));
                         o.rhs = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.rhs, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.rhs, result.attribute, fn...));
 
                         return result;
                     },
@@ -501,9 +502,9 @@ namespace bt { namespace analysis {
 
                         o.var_lhs = i.var_lhs,
                         o.var_rhs = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.var_rhs, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.var_rhs, result.attribute, fn...));
                         o.body = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.body, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.body, result.attribute, fn...));
                         return result;
                     },
                     [&](const while_t<InputAttr>& i) {
@@ -514,9 +515,9 @@ namespace bt { namespace analysis {
                         result.attribute = f(i, node, parent_attrib);
 
                         o.test = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.test, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.test, result.attribute, fn...));
                         o.body = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.body, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.body, result.attribute, fn...));
                         return result;
                     },
                     [&](const break_t& i) {
@@ -539,7 +540,7 @@ namespace bt { namespace analysis {
                         result.attribute = f(i, node, parent_attrib);
 
                         o.value = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.value, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.value, result.attribute, fn...));
 
                         return result;
                     },
@@ -551,7 +552,7 @@ namespace bt { namespace analysis {
                         result.attribute = f(i, node, parent_attrib);
 
                         o.value = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.value, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.value, result.attribute, fn...));
 
                         return result;
                     },
@@ -563,7 +564,7 @@ namespace bt { namespace analysis {
                         result.attribute = f(i, node, parent_attrib);
 
                         for (const auto& e : i)
-                            o.emplace_back(e.first, walk_inherit_impl<OutputAttr>(
+                            o.emplace_back(e.first, walk_pre_order_impl<OutputAttr>(
                                                         e.second, result.attribute, fn...));
 
                         return result;
@@ -578,7 +579,7 @@ namespace bt { namespace analysis {
 
                         o.name = i.name;
                         o.type = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.type, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.type, result.attribute, fn...));
 
                         return result;
                     },
@@ -592,7 +593,7 @@ namespace bt { namespace analysis {
 
                         o.name = i.name;
                         o.type = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.type, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.type, result.attribute, fn...));
 
                         return result;
                     },
@@ -606,10 +607,10 @@ namespace bt { namespace analysis {
                         for (const auto& e : i.arguments)
                             o.arguments.emplace_back(
                                 e.first,
-                                walk_inherit_impl<OutputAttr>(e.second, result.attribute, fn...));
+                                walk_pre_order_impl<OutputAttr>(e.second, result.attribute, fn...));
 
                         o.body = attr_node_t<OutputAttr>(
-                            walk_inherit_impl<OutputAttr>(i.body, result.attribute, fn...));
+                            walk_pre_order_impl<OutputAttr>(i.body, result.attribute, fn...));
 
                         return result;
                     },
@@ -621,7 +622,7 @@ namespace bt { namespace analysis {
                         result.location = l;
                         result.attribute = f(i, node, parent_attrib);
 
-                        o = walk_inherit_impl<OutputAttr>(i, result.attribute, fn...);
+                        o = walk_pre_order_impl<OutputAttr>(i, result.attribute, fn...);
 
                         return result;
                     },
@@ -636,35 +637,18 @@ namespace bt { namespace analysis {
     }  // namespace details
 
     template <typename OutputAttr, class... Fn, typename InputAttr = parser::empty_attribute_t>
-    inline auto synthesize(const parser::syntax::attr_tree_t<InputAttr>& tree, Fn&&... fn)
+    inline auto walk_post_order(const parser::syntax::attr_tree_t<InputAttr>& tree, Fn&&... fn)
         -> parser::syntax::attr_tree_t<OutputAttr> {
-        using namespace parser::syntax;
-        using namespace std;
-        using in_tree_t = attr_tree_t<InputAttr>;
-        using out_tree_t = attr_tree_t<OutputAttr>;
-
-        namespace hana = boost::hana;
-        auto fns = std::tuple(std::move(fn)...);
-
         const auto node = parser::syntax::attr_node_t<InputAttr>(tree);
-        return details::walk_synth_impl<OutputAttr>(node, &fn...);
+        return details::walk_post_order_impl<OutputAttr>(node, &fn...);
     }
 
     template <typename OutputAttr, class... Fn, typename InputAttr = parser::empty_attribute_t>
-    inline auto inherit(const parser::syntax::attr_tree_t<InputAttr>& tree, Fn&&... fn)
+    inline auto walk_pre_order(const parser::syntax::attr_tree_t<InputAttr>& tree, Fn&&... fn)
         -> parser::syntax::attr_tree_t<OutputAttr> {
-        using namespace parser::syntax;
-        using namespace std;
-        using in_tree_t = attr_tree_t<InputAttr>;
-        using out_tree_t = attr_tree_t<OutputAttr>;
-
-        namespace hana = boost::hana;
-
-        auto fns = std::tuple(std::move(fn)...);
-
         const auto root_attribute = InputAttr{};
         const auto node = parser::syntax::attr_node_t<InputAttr>(tree);
-        return details::walk_inherit_impl<OutputAttr>(node, root_attribute, &fn...);
+        return details::walk_pre_order_impl<OutputAttr>(node, root_attribute, &fn...);
     }
 
     template <typename Attr>

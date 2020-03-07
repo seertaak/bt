@@ -62,7 +62,7 @@ int main(int argc, const char* argv[]) {
 
     {
         using st_node_t = symtab<node_t>;
-        const auto var_def_bottom_up_pass = synthesize<st_node_t>(
+        const auto var_def_bottom_up_pass = walk_post_order<st_node_t>(
             ast,
             [](const var_def_t<st_node_t>& vardef, const syntax::node_t& node) {
                 return st_node_t(vardef.name.name, node);
@@ -87,13 +87,13 @@ int main(int argc, const char* argv[]) {
             },
             [](auto, auto) -> st_node_t { return st_node_t(); });
 
-        const auto var_def_top_down_pass =
-            inherit<st_node_t>(var_def_bottom_up_pass,
-                               [](const auto& value, const auto& node, const auto& parent_scope) {
-                                   auto scope = node.get().attribute;
-                                   scope.insert(parent_scope);
-                                   return scope;
-                               });
+        const auto var_def_top_down_pass = walk_pre_order<st_node_t>(
+            var_def_bottom_up_pass,
+            [](const auto& value, const auto& node, const auto& parent_scope) {
+                auto scope = node.get().attribute;
+                scope.insert(parent_scope);
+                return scope;
+            });
 
         auto s = std::stringstream();
         parser::pretty_print(var_def_top_down_pass, s, 0);
