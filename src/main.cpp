@@ -249,10 +249,10 @@ int main(int argc, const char* argv[]) {
                                 }
                             } else if (e.type == 'u') {
                                 switch (e.width) {
-                                case 8: type = type_value(types::i8_t()); break;
-                                case 16: type = type_value(types::i16_t()); break;
-                                case 32: type = type_value(types::i32_t()); break;
-                                case 64: type = type_value(types::i64_t()); break;
+                                case 8: type = type_value(types::u8_t()); break;
+                                case 16: type = type_value(types::u16_t()); break;
+                                case 32: type = type_value(types::u32_t()); break;
+                                case 64: type = type_value(types::u64_t()); break;
                                 default: {
                                     auto err = raise<analysis::error>(node);
                                     err << "Illegal integer literal width " << e.width

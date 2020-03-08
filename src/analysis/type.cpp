@@ -224,8 +224,8 @@ namespace bt { namespace analysis {
         return visit(
             [](const auto& u) -> bool {
                 using U = remove_const_t<remove_reference_t<decltype(u)>>;
-                if constexpr (types::is_int_v<decltype(u)>) return U::is_signed;
-                if constexpr (types::is_float_v<decltype(u)>) return U::is_signed;
+                if constexpr (types::is_int_v<U>) return U::is_signed;
+                if constexpr (types::is_float_v<U>) return U::is_signed;
                 return false;
             },
             t.get());
@@ -234,10 +234,10 @@ namespace bt { namespace analysis {
         return visit(
             [](const auto& u) {
                 using U = remove_const_t<remove_reference_t<decltype(u)>>;
-                if constexpr (types::is_int_v<decltype(u)>) {
+                if constexpr (types::is_int_v<U>) {
                     return U::width;
                 }
-                if constexpr (types::is_float_v<decltype(u)>) {
+                if constexpr (types::is_float_v<U>) {
                     return U::width;
                 }
                 return 0;
@@ -257,7 +257,7 @@ namespace bt { namespace analysis {
             else if (is_signed(t) && !is_signed(u))
                 return width(t) > width(u) ? optional(t) : nullopt;
             else if (is_signed(u) && !is_signed(t))
-                return width(t) < width(u) ? optional(u) : nullopt;
+                return width(u) > width(t) ? optional(u) : nullopt;
             return nullopt;
         }
         return nullopt;
