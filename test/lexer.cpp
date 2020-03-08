@@ -164,7 +164,7 @@ TEST_CASE("Tokenize: random shit.", "[lexer/tokenize]") {
 
             verbatim
 
-        x = if
+        x = foo
         print(x + 
             x)
 
@@ -177,7 +177,7 @@ TEST_CASE("Tokenize: random shit.", "[lexer/tokenize]") {
         "[ident[foo], token[OPAREN], ident[print], token[OPAREN], ident[bar], "
         "token[CPAREN], token[LINE_END], ident[print], token[COLON], ident[bar], "
         "token[LINE_END], token[VERBATIM], token[CPAREN], token[LINE_END], "
-        "ident[x], token[ASSIGN], token[IF], token[LINE_END], ident[print], "
+        "ident[x], token[ASSIGN], ident[foo], token[LINE_END], ident[print], "
         "token[OPAREN], ident[x], token[PLUS], ident[x], token[CPAREN], "
         "token[LINE_END], token[META]]";
 
