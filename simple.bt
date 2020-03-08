@@ -1,2 +1,2 @@
-type blah = bing
-alias blooh = blahalaa
+while (var x = 10; x > 10):
+    print(x)

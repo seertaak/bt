@@ -162,7 +162,11 @@ int main(int argc, const char* argv[]) {
                 invoc = true;
                 return parent_scope;
             },
+            [&](const fn_expr_t<st_node_t>& e, const auto& node, const auto& parent_scope) {
+                return parent_scope;
+            },
             [&](const syntax::assign_t<st_node_t>& e, const auto& node, const auto& parent_scope) {
+                
                 return parent_scope;
             },
             [&](const identifier_t& id, const auto& node, const auto& parent_scope) {

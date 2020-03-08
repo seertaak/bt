@@ -86,12 +86,7 @@ namespace bt { namespace analysis { namespace type {
         auto operator<=>(const bool_t&) const = default;
     };
 
-    struct txtarr_t {};
-
-    "foobar"->
-
-        using primitive_types = hana::
-        tuple_t<i8_t, i16_t, i32_t, i64_t, u8_t, u16_t, u32_t, u64_t, f32_t, f64_t, bool_t, char_t>;
+    using primitive_types = hana::tuple_t<i8_t, i16_t, i32_t, i64_t, u8_t, u16_t, u32_t, u64_t, f32_t, f64_t, bool_t, char_t>;
 
     struct type;
     using any_type_t = bt::ref<type>;
@@ -152,7 +147,7 @@ namespace bt { namespace analysis { namespace type {
         auto operator<=>(const dynarr_t&) const = default;
     };
 
-    struct textlit_t {
+    struct strlit_t {
         int size;
         auto operator<=>(const textlit_t&) const = default;
     };
@@ -162,6 +157,11 @@ namespace bt { namespace analysis { namespace type {
         using base_t::base_t;
         auto operator<=>(const variant_t&) const = default;
     };
+    
+    struct string_t {
+        std::optional<function_t> allocator;
+        auto operator<=>(const string_t&) const = default;
+    };
 
     using compound_types = hana::tuple_t<function_t,
                                          struct_t,
@@ -170,8 +170,9 @@ namespace bt { namespace analysis { namespace type {
                                          array_t,
                                          dynarr_t,
                                          slice_t,
-                                         textlit_t,
-                                         variant_t>;
+                                         strlit_t,
+                                         variant_t,
+                                         string_t>;
 
     using builtin_types = hana::concat(primitive_types, compound_types);
 
