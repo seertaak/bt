@@ -160,6 +160,14 @@ namespace bt { namespace analysis {
 
                         return result;
                     },
+                    [&](const assign_t<InputAttr>& i) {
+                        auto result = out_tree_t(
+                            assign_t<OutputAttr>{walk_post_order_impl<OutputAttr>(i.lhs, fn...),
+                                                 walk_post_order_impl<OutputAttr>(i.rhs, fn...)});
+                        result.location = l;
+                        result.attribute = f(result.template get<assign_t<OutputAttr>>(), node);
+                        return result;
+                    },
                     [&](const var_def_t<InputAttr>& i) {
                         auto result = out_tree_t(var_def_t<OutputAttr>{
                             i.name, walk_post_order_impl<OutputAttr>(i.type, fn...),
@@ -446,6 +454,21 @@ namespace bt { namespace analysis {
                                 walk_pre_order_impl<OutputAttr>(p.expression, result.attribute,
                                                                 fn...)});
                         }
+
+                        return result;
+                    },
+                    [&](const assign_t<InputAttr>& i) {
+                        auto result = out_tree_t(assign_t<OutputAttr>{});
+
+                        result.location = l;
+                        result.attribute = f(i, node, parent_attrib);
+
+                        auto& o = result.template get<assign_t<OutputAttr>>();
+
+                        o.lhs = attr_node_t<OutputAttr>(
+                            walk_pre_order_impl<OutputAttr>(i.lhs, result.attribute, fn...));
+                        o.rhs = attr_node_t<OutputAttr>(
+                            walk_pre_order_impl<OutputAttr>(i.rhs, result.attribute, fn...));
 
                         return result;
                     },
