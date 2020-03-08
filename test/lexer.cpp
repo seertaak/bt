@@ -158,17 +158,17 @@ TEST_CASE("Tokenize: strings.", "[lexer/tokenize]") {
 
 TEST_CASE("Tokenize: random shit.", "[lexer/tokenize]") {
     const auto input = R"bt(
-        foo:
-            print(bar)
-            print:bar
+foo:
+    print(bar)
+    print:bar
 
-            verbatim
+    verbatim
 
-        x = foo
-        print(x + 
-            x)
+x = foo
+print(x + 
+    x)
 
-        meta
+meta
     )bt"sv;
     const auto ts = tok_list(input);
     auto u = std::stringstream();
