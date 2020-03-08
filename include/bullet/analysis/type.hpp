@@ -4,22 +4,24 @@
 #include <iostream>
 #include <optional>
 #include <string>
+#include <type_traits>
 #include <variant>
 #include <vector>
 
 #include <boost/hana/all.hpp>
+#include <boost/hana/experimental/type_name.hpp>
 
 #include <bullet/util.hpp>
 
 namespace bt { namespace analysis {
+    namespace hana = boost::hana;
+
     struct type_value;
     using type_t = bt::ref<type_value>;
 
     auto operator<<(std::ostream& os, const type_t&) -> std::ostream&;
 
     namespace types {
-        namespace hana = boost::hana;
-
         struct void_t {
             auto operator<=>(const void_t&) const = default;
         };
@@ -34,6 +36,19 @@ namespace bt { namespace analysis {
 
             auto operator<=>(const int_t&) const = default;
         };
+
+        template <typename T>
+        struct is_int {
+            constexpr static bool value = false;
+        };
+
+        template <bool S, int W>
+        struct is_int<int_t<S, W>> {
+            constexpr static bool value = true;
+        };
+
+        template <typename T>
+        constexpr auto is_int_v = is_int<std::remove_const_t<std::remove_reference_t<T>>>::value;
 
         template <bool S, int W>
         auto operator<<(std::ostream& os, const int_t<S, W>& t) -> std::ostream& {
@@ -60,6 +75,20 @@ namespace bt { namespace analysis {
 
             auto operator<=>(const float_t&) const = default;
         };
+
+        template <typename T>
+        struct is_float {
+            constexpr static bool value = false;
+        };
+
+        template <int W>
+        struct is_float<float_t<W>> {
+            constexpr static bool value = true;
+        };
+
+        template <typename T>
+        constexpr auto is_float_v =
+            is_float<std::remove_const_t<std::remove_reference_t<T>>>::value;
 
         template <int W>
         auto operator<<(std::ostream& os, const float_t<W>& t) -> std::ostream& {
@@ -236,4 +265,9 @@ namespace bt { namespace analysis {
 
     auto operator<<(std::ostream& os, const type_value&) -> std::ostream&;
 
+    auto is_integral(const type_t& t) -> bool;
+    auto is_floating_point(const type_t& t) -> bool;
+    auto is_signed(const type_t& t) -> bool;
+    auto width(const type_t& t) -> int;
+    auto promoted_type(const type_t& t, const type_t& u) -> std::optional<type_t>;
 }}  // namespace bt::analysis

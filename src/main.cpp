@@ -156,27 +156,61 @@ int main(int argc, const char* argv[]) {
 
         using st_type_t = symtab<analysis::type_t>;
 
+        static_assert(analysis::types::is_int_v<types::int_t<true, 32>>);
+        static_assert(not analysis::types::is_int_v<types::float_t<32>>);
+
         const auto calc_expression_types = walk_post_order<st_type_t>(
             ast,
             [](const block_t<st_type_t>& b, const auto& node) {
                 return !b.empty() ? b.back().get().attribute
                                   : st_type_t(analysis::type_t(type_value(types::void_t{})));
             },
+            [](const bin_op_t<st_type_t>& e, const auto& node) {
+                const auto& lhs_ty_ref = e.lhs.get().attribute.get();
+                const auto& lhs_ty = lhs_ty_ref.get();
+
+                const auto& rhs_ty_ref = e.rhs.get().attribute.get();
+                const auto& rhs_ty = rhs_ty_ref.get();
+
+                if (e.op == PLUS || e.op == MINUS || e.op == SLASH || e.op == STAR || e.op == PERCENTAGE) {
+                    if (auto promoted_ty = promoted_type(lhs_ty, rhs_ty))
+                        return st_type_t(*promoted_ty);
+                    else {
+                        auto err = raise<analysis::error>(node);
+                        err << "No implicit conversion exists for types \"" << lhs_ty << "\" and \"" << rhs_ty << "\"";
+                    }
+                } else if (e.op == AND || e.op == OR) {
+                    if (lhs_ty == BOOL_T && rhs_ty == BOOL_T)
+                        return st_type_t(BOOL_T);
+                    else {
+                        auto err = raise<analysis::error>(node);
+                        if (lhs_ty != BOOL_T && rhs_ty == BOOL_T)
+                            err << "Boolean binary operator applied to non-boolean type \"" << lhs_ty << "\"";
+                        else if (rhs_ty != BOOL_T && lhs_ty == BOOL_T)
+                            err << "Boolean binary operator applied to non-boolean type \"" << rhs_ty << "\"";
+                        else
+                            err << "Boolean binary operator applied to non-boolean types \"" << lhs_ty << "\" and \"" << rhs_ty << "\"";
+
+                    }
+                } else {
+                    auto err = raise<analysis::error>(node);
+                    err << "Unhandled binary operator " << e.op;
+                }
+                return st_type_t(VOID_T);
+            },
             [](const unary_op_t<st_type_t>& e, const auto& node) {
                 const auto& ty_ref = e.operand.get().attribute.get();
                 const auto& ty = ty_ref.get();
 
                 if (e.op == PLUS || e.op == MINUS) {
-                    if (ty != I8_T && ty != I16_T && ty != I32_T && ty != I64_T && ty != U8_T &&
-                        ty != U16_T && ty != U32_T && ty != U64_T && ty != F32_T && ty != F64_T) {
+                    if (!analysis::is_integral(ty) && !analysis::is_floating_point(ty)) {
                         auto err = raise<analysis::error>(node);
                         err << "Unary plus/minus must be applied to an integral or floating point "
                                "value, not to type "
                             << ty;
                     }
                 } else if (e.op == TILDE) {
-                    if (ty != I8_T && ty != I16_T && ty != I32_T && ty != I64_T && ty != U8_T &&
-                        ty != U16_T && ty != U32_T && ty != U64_T) {
+                    if (!analysis::is_integral(ty)) {
                         auto err = raise<analysis::error>(node);
                         err << "Bitwise complement \"~\" must be applied to an integral value, not "
                                "to type "

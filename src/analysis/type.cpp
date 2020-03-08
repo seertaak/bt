@@ -1,3 +1,4 @@
+#include <boost/hana/all.hpp>
 #include <range/v3/algorithm/all_of.hpp>
 #include <range/v3/core.hpp>
 #include <range/v3/view/zip.hpp>
@@ -209,5 +210,56 @@ namespace bt { namespace analysis {
     auto operator<<(std::ostream& os, const type_value& t) -> std::ostream& {
         visit([&](const auto& u) { os << u; }, t);
         return os;
+    }
+
+    auto is_integral(const type_t& t) -> bool {
+        return visit(
+            [](const auto& u) { return types::is_int_v<decltype(u)>; },
+            t.get());
+    }
+    auto is_floating_point(const type_t& t) -> bool {
+        return visit([](const auto& u) { return types::is_float_v<decltype(u)>; }, t.get());
+    }
+    auto is_signed(const type_t& t) -> bool {
+        return visit(
+            [](const auto& u) -> bool {
+                using U = remove_const_t<remove_reference_t<decltype(u)>>;
+                if constexpr (types::is_int_v<decltype(u)>) return U::is_signed;
+                if constexpr (types::is_float_v<decltype(u)>) return U::is_signed;
+                return false;
+            },
+            t.get());
+    }
+    auto width(const type_t& t) -> int {
+        return visit(
+            [](const auto& u) {
+                using U = remove_const_t<remove_reference_t<decltype(u)>>;
+                if constexpr (types::is_int_v<decltype(u)>) {
+                    return U::width;
+                }
+                if constexpr (types::is_float_v<decltype(u)>) {
+                    return U::width;
+                }
+                return 0;
+            },
+            t.get());
+    }
+    auto promoted_type(const type_t& t, const type_t& u) -> optional<type_t> {
+        if (is_floating_point(t) && is_floating_point(u))
+            return optional(width(t) >= width(u) ? t : u);
+        else if (is_floating_point(t) && is_integral(u))
+            return width(t) > width(u) ? optional(t) : nullopt;
+        else if (is_floating_point(u) && is_integral(t))
+            return width(u) > width(t) ? optional(u) : nullopt;
+        else if (is_integral(t) && is_integral(u)) {
+            if (is_signed(t) == is_signed(u))
+                return optional(width(t) >= width(u) ? t : u);
+            else if (is_signed(t) && !is_signed(u))
+                return width(t) > width(u) ? optional(t) : nullopt;
+            else if (is_signed(u) && !is_signed(t))
+                return width(t) < width(u) ? optional(u) : nullopt;
+            return nullopt;
+        }
+        return nullopt;
     }
 }}  // namespace bt::analysis
