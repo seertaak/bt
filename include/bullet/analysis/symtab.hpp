@@ -1,5 +1,4 @@
 #pragma once
-
 #include <iostream>
 #include <string>
 
@@ -22,10 +21,14 @@ namespace bt { namespace analysis {
         auto operator<=>(const symtab&) const = default;
 
         symtab(std::string s, T t) { insert(s, t); }
+        symtab(T t) { insert(t); }
 
         auto lookup(const std::string& s) const -> const T* { return scope.find(s); }
 
         auto insert(std::string s, T t) -> void { scope = scope.set(s, t); }
+        auto insert(T t) -> void { insert("", t); }
+
+        auto get() const -> const T& { return *lookup(""); }
 
         auto begin() const { return scope.begin(); }
 

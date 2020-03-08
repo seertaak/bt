@@ -192,7 +192,8 @@ namespace bt { namespace analysis {
         auto operator<<(std::ostream& os, const string_t&) -> std::ostream&;
     }  // namespace types
 
-    using type_base_t = std::variant<types::i8_t,
+    using type_base_t = std::variant<types::void_t,
+                                     types::i8_t,
                                      types::i16_t,
                                      types::i32_t,
                                      types::i64_t,
@@ -218,6 +219,20 @@ namespace bt { namespace analysis {
     struct type_value : type_base_t {
         using type_base_t::type_base_t;
     };
+
+    const type_value VOID_T = types::void_t{};
+    const type_value I8_T = types::i8_t{};
+    const type_value I16_T = types::i16_t{};
+    const type_value I32_T = types::i32_t{};
+    const type_value I64_T = types::i64_t{};
+    const type_value U8_T = types::u8_t{};
+    const type_value U16_T = types::u16_t{};
+    const type_value U32_T = types::u32_t{};
+    const type_value U64_T = types::u64_t{};
+    const type_value F32_T = types::f32_t{};
+    const type_value F64_T = types::f64_t{};
+    const type_value BOOL_T = types::bool_t{};
+    const type_value CHAR_T = types::char_t{};
 
     auto operator<<(std::ostream& os, const type_value&) -> std::ostream&;
 

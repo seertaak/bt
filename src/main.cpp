@@ -154,6 +154,122 @@ int main(int argc, const char* argv[]) {
                 return st_node_t();
             });
 
+        using st_type_t = symtab<analysis::type_t>;
+
+        const auto calc_expression_types = walk_post_order<st_type_t>(
+            ast,
+            [](const block_t<st_type_t>& b, const auto& node) {
+                return !b.empty() ? b.back().get().attribute
+                                  : st_type_t(analysis::type_t(type_value(types::void_t{})));
+            },
+            [](const unary_op_t<st_type_t>& e, const auto& node) {
+                const auto& ty_ref = e.operand.get().attribute.get();
+                const auto& ty = ty_ref.get();
+
+                if (e.op == PLUS || e.op == MINUS) {
+                    if (ty != I8_T && ty != I16_T && ty != I32_T && ty != I64_T && ty != U8_T &&
+                        ty != U16_T && ty != U32_T && ty != U64_T && ty != F32_T && ty != F64_T) {
+                        auto err = raise<analysis::error>(node);
+                        err << "Unary plus/minus must be applied to an integral or floating point "
+                               "value, not to type "
+                            << ty;
+                    }
+                } else if (e.op == TILDE) {
+                    if (ty != I8_T && ty != I16_T && ty != I32_T && ty != I64_T && ty != U8_T &&
+                        ty != U16_T && ty != U32_T && ty != U64_T) {
+                        auto err = raise<analysis::error>(node);
+                        err << "Bitwise complement \"~\" must be applied to an integral value, not "
+                               "to type "
+                            << ty;
+                    }
+                } else if (e.op == NOT) {
+                    if (ty != BOOL_T) {
+                        auto err = raise<analysis::error>(node);
+                        err << "Boolean operator \"not\" must be applied to a value of type "
+                               "\"bool\"";
+                    }
+                } else {
+                    auto err = raise<analysis::error>(node);
+                    err << "Unhandled unary operator " << e.op;
+                }
+                return st_type_t(ty);
+            },
+            [](const literal_t& literal, const auto& node) {
+                return std::visit(
+                    hana::overload(
+                        [&](const integral_literal_t& e) {
+                            auto result = st_type_t();
+
+                            type_value type;
+                            if (e.type == 'i') {
+                                switch (e.width) {
+                                case 8: type = type_value(types::i8_t()); break;
+                                case 16: type = type_value(types::i16_t()); break;
+                                case 32: type = type_value(types::i32_t()); break;
+                                case 64: type = type_value(types::i64_t()); break;
+                                default: {
+                                    auto err = raise<analysis::error>(node);
+                                    err << "Illegal integer literal width " << e.width
+                                        << ", should be 8, 16, 32, or 64 (or unspecified)";
+                                }
+                                }
+                            } else if (e.type == 'u') {
+                                switch (e.width) {
+                                case 8: type = type_value(types::i8_t()); break;
+                                case 16: type = type_value(types::i16_t()); break;
+                                case 32: type = type_value(types::i32_t()); break;
+                                case 64: type = type_value(types::i64_t()); break;
+                                default: {
+                                    auto err = raise<analysis::error>(node);
+                                    err << "Illegal integer literal width " << e.width
+                                        << ", should be 8, 16, 32, or 64 (or unspecified)";
+                                }
+                                }
+                            } else {
+                                auto err = raise<analysis::error>(node);
+                                err << "Integer literals should be either signed (i) or unsigned "
+                                       "(u)";
+                            }
+                            result.insert(analysis::type_t(type));
+                            return result;
+                        },
+                        [](const string_literal_t& s) {
+                            auto result = st_type_t();
+                            result.insert(analysis::type_t(
+                                types::strlit_t{static_cast<int>(s.value.length())}));
+                            return result;
+                        },
+                        [&](const floating_point_literal_t& e) {
+                            auto result = st_type_t();
+                            type_value type;
+                            switch (e.width) {
+                            case 32: type = type_value(types::f32_t()); break;
+                            case 64: type = type_value(types::f64_t()); break;
+                            default: {
+                                auto err = raise<analysis::error>(node);
+                                err << "Illegal floating point literal width " << e.width
+                                    << ", should be 32 or 64 (or unspecified)";
+                            }
+                            }
+                            result.insert(analysis::type_t(type));
+                            return result;
+                        },
+                        [](const lexer::token::true_t&) {
+                            return st_type_t(analysis::type_t(type_value(types::bool_t{})));
+                        },
+                        [](const lexer::token::false_t&) {
+                            return st_type_t(analysis::type_t(type_value(types::bool_t{})));
+                        }),
+                    literal);
+            },
+            [&](auto, auto) { return st_type_t(); });
+
+        {
+            auto s = std::stringstream();
+            parser::pretty_print(calc_expression_types, s, 0);
+            cout << "TYPES" << endl << s.str() << endl;
+        }
+
         invoc = type = false;
 
         const auto type_check_pass = walk_pre_order<st_node_t>(

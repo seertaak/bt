@@ -671,6 +671,7 @@ namespace bt { namespace parser {
                 if (const auto op = eat_if<plus_t, minus_t, tilde_t>()) {
                     tree_t result = unary_op_t<empty_attribute_t>{op->token, factor()};
                     result.location = location(l);
+                    return result;
                 }
                 return power();
             }
