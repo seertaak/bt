@@ -557,7 +557,7 @@ namespace bt { namespace lexer {
 
                 if (n_spaces == margin) {
                     if (colon_indent) throw runtime_error("Indent expected");
-                    if (!tokens.empty() && tokens.back().token != OPAREN)
+                    if (!tokens.empty() && tokens.back().token != OPAREN && margins.back().second)
                         tokens.emplace_back(LINE_END, line, column, column);
                 } else if (n_spaces > margin) {
                     if (colon_indent)
