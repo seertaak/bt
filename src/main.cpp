@@ -6,17 +6,18 @@
 
 #include <catch2/catch.hpp>
 #include <rang.hpp>
-#include <range/v3/algorithm/copy.hpp>
 #include <range/v3/core.hpp>
-#include <range/v3/view/tail.hpp>
-#include <range/v3/view/transform.hpp>
+#include <range/v3/view/zip.hpp>
 
 #include <bullet/analysis/symtab.hpp>
+#include <bullet/analysis/type.hpp>
 #include <bullet/analysis/walk.hpp>
 #include <bullet/lexer/lexer.hpp>
 #include <bullet/lexer/token.hpp>
 #include <bullet/parser/ast.hpp>
 #include <bullet/parser/parser.hpp>
+
+namespace views = ranges::views;
 
 using namespace std;
 using namespace bt;
@@ -123,6 +124,12 @@ int main(int argc, const char* argv[]) {
                 invoc = true;
                 return st_node_t();
             },
+            [&](const fn_expr_t<st_node_t>& e, const auto& node) {
+                auto scope = st_node_t();
+                for (auto&& [id, ty] : views::zip(e.arg_names, e.arg_types))
+                    scope.insert(id.name, node);
+                return scope;
+            },
             [&](const block_t<st_node_t>& block, const auto& node) {
                 auto scope = st_node_t();
                 for (auto& stmt : block) {
@@ -163,10 +170,11 @@ int main(int argc, const char* argv[]) {
                 return parent_scope;
             },
             [&](const fn_expr_t<st_node_t>& e, const auto& node, const auto& parent_scope) {
-                return parent_scope;
+                auto scope = parent_scope;
+                scope.insert(node.get().attribute);
+                return scope;
             },
             [&](const syntax::assign_t<st_node_t>& e, const auto& node, const auto& parent_scope) {
-                
                 return parent_scope;
             },
             [&](const identifier_t& id, const auto& node, const auto& parent_scope) {

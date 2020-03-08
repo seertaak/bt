@@ -1,2 +1,1 @@
-while (var x = 10; x > 10):
-    print(x)
+def foo(x: int): int = x + 10
