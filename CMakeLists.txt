@@ -20,6 +20,7 @@ set(sources
     src/lexer/location.cpp
     src/parser/parser.cpp
     src/parser/location.cpp
+    src/analysis/type.cpp
 )
 
 ###################################################################
