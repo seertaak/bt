@@ -12,13 +12,13 @@ namespace bt { namespace parser {
         error(const std::string& s, const lexer::source_token_t& t)
             : std::runtime_error([&] {
                   auto msg = std::stringstream();
-                  msg << s << " at " << t.location << ".";
+                  msg << s << ", at " << t.location << ".";
                   return msg.str();
               }()) {}
 
         error(std::stringstream& msg, const lexer::source_token_t& t)
             : std::runtime_error([&] {
-                  msg << " at " << t.location << ".";
+                  msg << ", at " << t.location << ".";
                   return msg.str();
               }()) {}
     };

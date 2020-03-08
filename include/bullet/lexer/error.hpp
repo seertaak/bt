@@ -12,13 +12,13 @@ namespace bt { namespace lexer {
         error(const std::string& s, uint32_t line, uint16_t col)
             : std::runtime_error([&] {
                   auto msg = std::stringstream();
-                  msg << " at " << line << ":" << col << ".";
+                  msg << ", at " << line << ":" << col << ".";
                   return msg.str();
               }()) {}
 
         error(std::stringstream& msg, uint32_t line, uint16_t col)
             : std::runtime_error([&] {
-                  msg << " at " << line << ":" << col << ".";
+                  msg << ", at " << line << ":" << col << ".";
                   return msg.str();
               }()) {}
     };
