@@ -28,7 +28,10 @@ namespace bt { namespace analysis {
         auto insert(std::string s, T t) -> void { scope = scope.set(s, t); }
         auto insert(T t) -> void { insert("", t); }
 
-        auto get() const -> const T& { return *lookup(""); }
+        auto value() const -> const T& { return *lookup(""); }
+        auto value() -> T& { return *lookup(""); }
+        auto single_binding() const -> decltype(auto) { return *begin(); }
+        auto single_binding() -> decltype(auto) { return *begin(); }
 
         auto begin() const { return scope.begin(); }
 

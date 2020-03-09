@@ -201,6 +201,12 @@ namespace bt { namespace lexer {
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
+        struct ubyte_t : token_tag {
+            static constexpr const std::string_view name{"UBYTE"};
+            static constexpr const std::string_view token{"ubyte"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
         struct ulong_t : token_tag {
             static constexpr const std::string_view name{"ULONG"};
             static constexpr const std::string_view token{"ulong"};
@@ -820,6 +826,7 @@ namespace bt { namespace lexer {
                                              slice_t,
                                              throw_t,
                                              tuple_t,
+                                             ubyte_t,
                                              ulong_t,
                                              until_t,
                                              where_t,
@@ -944,6 +951,7 @@ namespace bt { namespace lexer {
                             token::slice_t,
                             token::throw_t,
                             token::tuple_t,
+                            token::ubyte_t,
                             token::ulong_t,
                             token::until_t,
                             token::where_t,
@@ -1075,6 +1083,7 @@ namespace bt { namespace lexer {
     const token_t SLICE{token::slice_t{}};
     const token_t THROW{token::throw_t{}};
     const token_t TUPLE{token::tuple_t{}};
+    const token_t UBYTE{token::ubyte_t{}};
     const token_t ULONG{token::ulong_t{}};
     const token_t UNTIL{token::until_t{}};
     const token_t WHERE{token::where_t{}};

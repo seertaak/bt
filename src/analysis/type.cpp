@@ -213,9 +213,7 @@ namespace bt { namespace analysis {
     }
 
     auto is_integral(const type_t& t) -> bool {
-        return visit(
-            [](const auto& u) { return types::is_int_v<decltype(u)>; },
-            t.get());
+        return visit([](const auto& u) { return types::is_int_v<decltype(u)>; }, t.get());
     }
     auto is_floating_point(const type_t& t) -> bool {
         return visit([](const auto& u) { return types::is_float_v<decltype(u)>; }, t.get());

@@ -102,6 +102,7 @@ byte,byte
 short,short
 int,int
 long,long
+ubyte,ubyte
 ushort,ushort
 uint,uint
 ulong,ulong

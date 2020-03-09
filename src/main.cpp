@@ -136,7 +136,7 @@ int main(int argc, const char* argv[]) {
                     if (stmt.get().is<def_type_t<st_node_t>>() ||
                         stmt.get().is<let_type_t<st_node_t>>() ||
                         stmt.get().is<var_def_t<st_node_t>>()) {
-                        auto& [name, def] = *stmt.get().attribute.begin();
+                        auto& [name, def] = stmt.get().attribute.single_binding();
                         if (auto pdef = scope.lookup(name)) {
                             auto err = raise<analysis::error>(stmt);
                             err << "Duplicate ";
@@ -165,19 +165,61 @@ int main(int argc, const char* argv[]) {
                 return !b.empty() ? b.back().get().attribute
                                   : st_type_t(analysis::type_t(type_value(types::void_t{})));
             },
+            [](const syntax::break_t&, const auto& node) { return st_type_t(VOID_T); },
+            [](const syntax::continue_t&, const auto& node) { return st_type_t(VOID_T); },
+            [](const primitive_type_t& e, const auto& node) {
+                return visit(hana::overload(
+                                 [](const lexer::token::char_t& t) { return st_type_t(CHAR_T); },
+                                 [](const lexer::token::byte_t& t) { return st_type_t(I8_T); },
+                                 [](const lexer::token::short_t& t) { return st_type_t(I16_T); },
+                                 [](const lexer::token::int_t& t) { return st_type_t(I32_T); },
+                                 [](const lexer::token::long_t& t) { return st_type_t(I64_T); },
+                                 [](const lexer::token::ubyte_t& t) { return st_type_t(U8_T); },
+                                 [](const lexer::token::ushort_t& t) { return st_type_t(U16_T); },
+                                 [](const lexer::token::uint_t& t) { return st_type_t(U32_T); },
+                                 [](const lexer::token::ulong_t& t) { return st_type_t(U64_T); },
+                                 [](const lexer::token::float_t& t) { return st_type_t(F32_T); },
+                                 [](const lexer::token::double_t& t) { return st_type_t(F64_T); },
+                                 [](const lexer::token::i8_t& t) { return st_type_t(I8_T); },
+                                 [](const lexer::token::i16_t& t) { return st_type_t(I16_T); },
+                                 [](const lexer::token::i32_t& t) { return st_type_t(I32_T); },
+                                 [](const lexer::token::i64_t& t) { return st_type_t(I64_T); },
+                                 [](const lexer::token::u8_t& t) { return st_type_t(U8_T); },
+                                 [](const lexer::token::u16_t& t) { return st_type_t(U16_T); },
+                                 [](const lexer::token::u32_t& t) { return st_type_t(U32_T); },
+                                 [](const lexer::token::u64_t& t) { return st_type_t(U64_T); },
+                                 [](const lexer::token::ptr_t& t) {
+                                     return st_type_t(type_value(types::ptr_t{VOID_T}));
+                                 },
+                                 [](const lexer::token::array_t& t) {
+                                     return st_type_t(type_value(types::array_t{VOID_T, {}}));
+                                 },
+                                 [](const lexer::token::slice_t& t) {
+                                     return st_type_t(type_value(types::slice_t{VOID_T, 0, 0, 0}));
+                                 },
+                                 [](const lexer::token::variant_t& t) {
+                                     return st_type_t(type_value(types::variant_t{}));
+                                 },
+                                 [](const lexer::token::tuple_t& t) {
+                                     return st_type_t(type_value(types::tuple_t{}));
+                                 }),
+                             e);
+            },
             [](const bin_op_t<st_type_t>& e, const auto& node) {
-                const auto& lhs_ty_ref = e.lhs.get().attribute.get();
+                const auto& lhs_ty_ref = e.lhs.get().attribute.value();
                 const auto& lhs_ty = lhs_ty_ref.get();
 
-                const auto& rhs_ty_ref = e.rhs.get().attribute.get();
+                const auto& rhs_ty_ref = e.rhs.get().attribute.value();
                 const auto& rhs_ty = rhs_ty_ref.get();
 
-                if (e.op == PLUS || e.op == MINUS || e.op == SLASH || e.op == STAR || e.op == PERCENTAGE) {
+                if (e.op == PLUS || e.op == MINUS || e.op == SLASH || e.op == STAR ||
+                    e.op == PERCENTAGE) {
                     if (auto promoted_ty = promoted_type(lhs_ty, rhs_ty))
                         return st_type_t(*promoted_ty);
                     else {
                         auto err = raise<analysis::error>(node);
-                        err << "No implicit conversion exists for types \"" << lhs_ty << "\" and \"" << rhs_ty << "\"";
+                        err << "No implicit conversion exists for types \"" << lhs_ty << "\" and \""
+                            << rhs_ty << "\"";
                     }
                 } else if (e.op == AND || e.op == OR) {
                     if (lhs_ty == BOOL_T && rhs_ty == BOOL_T)
@@ -185,12 +227,14 @@ int main(int argc, const char* argv[]) {
                     else {
                         auto err = raise<analysis::error>(node);
                         if (lhs_ty != BOOL_T && rhs_ty == BOOL_T)
-                            err << "Boolean binary operator applied to non-boolean type \"" << lhs_ty << "\"";
+                            err << "Boolean binary operator applied to non-boolean type \""
+                                << lhs_ty << "\"";
                         else if (rhs_ty != BOOL_T && lhs_ty == BOOL_T)
-                            err << "Boolean binary operator applied to non-boolean type \"" << rhs_ty << "\"";
+                            err << "Boolean binary operator applied to non-boolean type \""
+                                << rhs_ty << "\"";
                         else
-                            err << "Boolean binary operator applied to non-boolean types \"" << lhs_ty << "\" and \"" << rhs_ty << "\"";
-
+                            err << "Boolean binary operator applied to non-boolean types \""
+                                << lhs_ty << "\" and \"" << rhs_ty << "\"";
                     }
                 } else {
                     auto err = raise<analysis::error>(node);
@@ -199,7 +243,7 @@ int main(int argc, const char* argv[]) {
                 return st_type_t(VOID_T);
             },
             [](const unary_op_t<st_type_t>& e, const auto& node) {
-                const auto& ty_ref = e.operand.get().attribute.get();
+                const auto& ty_ref = e.operand.get().attribute.value();
                 const auto& ty = ty_ref.get();
 
                 if (e.op == PLUS || e.op == MINUS) {

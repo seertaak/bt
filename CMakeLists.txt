@@ -36,7 +36,7 @@ target_compile_features(bt PUBLIC cxx_std_20)
 target_compile_options(bt PUBLIC 
     -Wno-logical-op-parentheses 
     -Wno-ambiguous-reversed-operator
-#"-Wno-#warnings"
+    "-Wno-#warnings"   # remove this when Boost 1.72 comes out (Hana doesn't like Clang 11!).
 )
 target_compile_definitions(bt PUBLIC BOOST_HANA_CONFIG_ENABLE_STRING_UDL)
 target_include_directories(bt PUBLIC include third_party)
