@@ -45,6 +45,12 @@ namespace bt { namespace analysis {
             for (auto i = s.scope.begin(); !(i == s.scope.end()); ++i) insert(i->first, i->second);
         }
 
+        auto with_inherited_bindings(const symtab& parent_scope) const -> symtab {
+            auto copy = parent_scope;
+            copy.insert(*this);
+            return copy;
+        }
+
         auto print(std::ostream& os) const -> void {
             auto first = true;
 
