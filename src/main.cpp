@@ -11,7 +11,9 @@
 
 #include <bullet/analysis/symtab.hpp>
 #include <bullet/analysis/type.hpp>
+#include <bullet/analysis/type_checking.hpp>
 #include <bullet/analysis/walk.hpp>
+#include <bullet/analysis/error.hpp>
 #include <bullet/lexer/lexer.hpp>
 #include <bullet/lexer/token.hpp>
 #include <bullet/parser/ast.hpp>
@@ -34,24 +36,6 @@ constexpr auto title = R"(
    / /_/ / /_/ / / /  __/ /_    
   /_.___/\__,_/_/_/\___/\__/
 )"sv;
-
-auto errors = vector<unique_ptr<runtime_error>>();
-
-template <typename T>
-struct raise {
-    stringstream msg;
-    parser::location_t loc;
-
-    template <typename Node>
-    raise(const Node& node) : loc(node.get().location) {}
-    ~raise() { errors.emplace_back(unique_ptr<runtime_error>(new T(msg, loc))); }
-};
-
-template <typename T, typename V>
-auto operator<<(raise<T>& r, const V& v) -> raise<T>& {
-    r.msg << v;
-    return r;
-}
 
 template <typename T>
 auto print_kind(raise<T>& err, auto invoc, auto type) -> raise<T>& {
@@ -89,9 +73,66 @@ int main(int argc, const char* argv[]) {
     const syntax::tree_t ast = parser::details::parse(lex_output);
 
     auto s = std::stringstream();
+    cout << fg::cyan << "AST:" << style::reset << endl;
     parser::pretty_print<empty_attribute_t>(ast, s, 0);
     cout << s.str() << endl;
 
+    attr_node_t<analysis::type_t> typed_ast = walk_post_order<analysis::type_t>(ast, [](auto, auto) { return analysis::type_t(); });
+
+    auto builtins = environment_t();
+    builtins.context = context_t::fn;
+    builtins.types.insert("i8", analysis::type_t(type_value(I8_T)));
+    builtins.types.insert("i16", analysis::type_t(type_value(I16_T)));
+    builtins.types.insert("i32", analysis::type_t(type_value(I32_T)));
+    builtins.types.insert("i64", analysis::type_t(type_value(I64_T)));
+    builtins.types.insert("u8", analysis::type_t(type_value(U8_T)));
+    builtins.types.insert("u16", analysis::type_t(type_value(U16_T)));
+    builtins.types.insert("u32", analysis::type_t(type_value(U32_T)));
+    builtins.types.insert("u64", analysis::type_t(type_value(U64_T)));
+    builtins.types.insert("f32", analysis::type_t(type_value(F32_T)));
+    builtins.types.insert("f64", analysis::type_t(type_value(F64_T)));
+
+    builtins.types.insert("byte", analysis::type_t(type_value(I8_T)));
+    builtins.types.insert("short", analysis::type_t(type_value(I16_T)));
+    builtins.types.insert("int", analysis::type_t(type_value(I32_T)));
+    builtins.types.insert("long", analysis::type_t(type_value(I64_T)));
+
+    builtins.types.insert("ubyte", analysis::type_t(type_value(U8_T)));
+    builtins.types.insert("ushort", analysis::type_t(type_value(U16_T)));
+    builtins.types.insert("uint", analysis::type_t(type_value(U32_T)));
+    builtins.types.insert("ulong", analysis::type_t(type_value(U64_T)));
+
+    builtins.types.insert("ptr", analysis::type_t(type_value(PTR_T)));
+    builtins.types.insert("array", analysis::type_t(type_value(ARRAY_T)));
+    builtins.types.insert("dynarr", analysis::type_t(type_value(types::dynarr_t{})));
+    builtins.types.insert("bool", analysis::type_t(type_value(BOOL_T)));
+    builtins.types.insert("char", analysis::type_t(type_value(CHAR_T)));
+    builtins.types.insert("slice", analysis::type_t(type_value(SLICE_T)));
+    builtins.types.insert("variant", analysis::type_t(type_value(VARIANT_T)));
+    builtins.types.insert("fn", analysis::type_t(type_value(FUNCTION_T)));
+    builtins.types.insert("tuple", analysis::type_t(type_value(TUPLE_T)));
+    builtins.types.insert("strlit", analysis::type_t(type_value(types::strlit_t{})));
+    builtins.types.insert("UNKNOWN", analysis::type_t(type_value(analysis::UNKOWN)));
+    builtins.types.insert("void", analysis::type_t(type_value(VOID_T)));
+
+    builtins.fns.insert("print", analysis::type_t(type_value(types::function_t{analysis::type_t(type_value(types::void_t{})), {}})));
+    builtins.vars.insert("print", analysis::type_t(type_value(types::function_t{analysis::type_t(type_value(types::void_t{})), {}})));
+
+    type_check(typed_ast, builtins);
+
+    if (analysis::error::errors.empty()) {
+        auto s = std::stringstream();
+        cout << fg::cyan << "AST:" << style::reset << endl;
+        parser::pretty_print(typed_ast.get(), s, 0);
+        cout << s.str() << endl;
+    } else {
+        cout << fg::red;
+        for (auto&& e : analysis::error::errors) cout << e->what() << endl;
+        cout << style::reset << endl;
+    }
+
+
+    /*
     using noattr = const empty_attribute_t&;
 
     {
@@ -401,6 +442,7 @@ int main(int argc, const char* argv[]) {
             cout << style::reset << endl;
         }
     }
+    */
 
     return 0;
 }

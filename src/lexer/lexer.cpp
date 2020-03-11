@@ -102,6 +102,7 @@ namespace bt { namespace lexer {
 
             auto eat_spaces(uint32_t& pos) -> void {
                 auto comment = false;
+
                 auto p = pos;
                 for (; p < input_length; ++p) {
                     const auto c = input[p];

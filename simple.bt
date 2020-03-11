@@ -1,2 +1,4 @@
-var x:int = 24
+var xs:int.array(2) = 
+    1
+    2
 

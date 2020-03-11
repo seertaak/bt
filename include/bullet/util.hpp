@@ -79,6 +79,36 @@ struct ref {
 
     operator T&() { return *value; }
     operator const T&() const { return *value; }
+
+    template <typename U>
+    inline auto is() const -> bool {
+        return std::holds_alternative<U>(*value);
+    }
+
+    template <typename U>
+    inline auto is() -> bool {
+        return std::holds_alternative<U>(*value);
+    }
+
+    template <typename U>
+    inline auto as() const -> const U& {
+        return std::get<U>(*value);
+    }
+
+    template <typename U>
+    inline auto as() -> U& {
+        return std::get<U>(*value);
+    }
+
+    template <typename U>
+    inline auto get_if() const -> const U* {
+        return std::get_if<U>(&*value);
+    }
+
+    template <typename U>
+    inline auto get_if() -> U* {
+        return std::get_if<U>(&*value);
+    }
 };
 
 template <typename T>

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <compare>
 #include <iostream>
 #include <optional>
@@ -15,6 +16,11 @@
 
 namespace bt { namespace analysis {
     namespace hana = boost::hana;
+
+    inline auto operator<<(std::ostream& os, const std::monostate&) -> std::ostream& {
+        os << "monostate(UNKNOWN)";
+        return os;
+    }
 
     struct type_value;
     using type_t = bt::ref<type_value>;
@@ -110,8 +116,14 @@ namespace bt { namespace analysis {
 
         struct nominal_type_t {
             int id;
-            std::string name;
+            std::string fqn;
             type_t type;
+
+            explicit nominal_type_t(std::string name, type_t type);
+            nominal_type_t(const nominal_type_t&) = default;
+            nominal_type_t& operator=(const nominal_type_t&) = default;
+            
+            static std::atomic<int> next_id;
         };
 
         using i8_t = int_t<true, 8>;
@@ -198,7 +210,7 @@ namespace bt { namespace analysis {
         auto operator==(const strlit_t&, const strlit_t&) -> bool;
         auto operator==(const variant_t&, const variant_t&) -> bool;
         auto operator==(const string_t&, const string_t&) -> bool;
-        auto operator==(const string_t&, const nominal_type_t&) -> bool;
+        auto operator==(const nominal_type_t&, const nominal_type_t&) -> bool;
 
         auto operator!=(const name_and_type_t& lhs, const name_and_type_t& rhs) -> bool;
         auto operator!=(const name_and_type_vector_t& lhs, const name_and_type_vector_t& rhs)
@@ -213,10 +225,11 @@ namespace bt { namespace analysis {
         auto operator!=(const strlit_t&, const strlit_t&) -> bool;
         auto operator!=(const variant_t&, const variant_t&) -> bool;
         auto operator!=(const string_t&, const string_t&) -> bool;
-        auto operator!=(const string_t&, const nominal_type_t&) -> bool;
+        auto operator!=(const nominal_type_t&, const nominal_type_t&) -> bool;
     }  // namespace types
 
-    using type_base_t = std::variant<types::void_t,
+    using type_base_t = std::variant<std::monostate,
+                                     types::void_t,
                                      types::i8_t,
                                      types::i16_t,
                                      types::i32_t,
@@ -238,12 +251,51 @@ namespace bt { namespace analysis {
                                      types::slice_t,
                                      types::strlit_t,
                                      types::variant_t,
-                                     types::string_t>;
+                                     types::string_t,
+                                     types::nominal_type_t>;
 
     struct type_value : type_base_t {
         using type_base_t::type_base_t;
 
+            inline operator bool() const { return !is<std::monostate>(); }
 
+            auto empty() const -> bool { return is<std::monostate>(); }
+            auto valid() const -> bool { return !empty(); }
+
+            template <typename U>
+            inline auto is() const -> bool {
+                return std::holds_alternative<U>(*this);
+            }
+
+            template <typename U>
+            inline auto get() const -> const U& {
+                return std::get<U>(*this);
+            }
+
+            template <typename U>
+            inline auto get() -> U& {
+                return std::get<U>(*this);
+            }
+
+            template <typename U>
+            inline auto as() const -> const U& {
+                return std::get<U>(*this);
+            }
+
+            template <typename U>
+            inline auto as() -> U& {
+                return std::get<U>(*this);
+            }
+
+            template <typename U>
+            inline auto get_if() const -> const U* {
+                return std::get_if<U>(this);
+            }
+
+            template <typename U>
+            inline auto get_if() -> U* {
+                return std::get_if<U>(this);
+            }
     };
 
     auto operator<<(std::ostream& os, const type_value&) -> std::ostream&;
@@ -266,7 +318,11 @@ namespace bt { namespace analysis {
     const type_value SLICE_T = types::slice_t{};
     const type_value STRUCT_T = types::struct_t{};
     const type_value ARRAY_T = types::array_t{};
-    const type_value VARIANT_T = types::array_t{};
+    const type_value VARIANT_T = types::variant_t{};
+    const type_value FUNCTION_T = types::array_t{};
+    const type_value TUPLE_T = types::tuple_t{};
+    const type_value UNKOWN = std::monostate{};
+    const type_value STRING = types::string_t{};
 
     auto is_integral(const type_t& t) -> bool;
     auto is_floating_point(const type_t& t) -> bool;

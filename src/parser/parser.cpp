@@ -297,14 +297,15 @@ namespace bt { namespace parser {
                                 result_type =
                                     p_node_t(type_expr_t<empty_attribute_t>{p_node_t(atom_expr())});
 
-                            expect<token::assign_t>();
+                            auto rhs = tree_t();
+                            if (eat_if<token::assign_t>()) {
+                                const auto old_code = code;
+                                code = false;
+                                rhs = assignment_stmt();
+                                code = old_code;
+                            }
 
-                            const auto old_code = code;
-                            code = false;
-                            const auto e = assignment_stmt();
-                            code = old_code;
-
-                            return var_def_t<empty_attribute_t>{lhs, result_type, e};
+                            return var_def_t<empty_attribute_t>{lhs, result_type, rhs};
                         },
                         [this](token::def_t) -> tree_t {
                             const auto fn_name = expect<lexer::identifier_t>();
@@ -742,6 +743,7 @@ namespace bt { namespace parser {
 
             auto atom_expr() -> tree_t {
                 const auto l = loc_first();
+
                 p_node_t result = simple_atom_expr();
                 while (eat_if<token::dot_t>()) {
                     p_node_t rhs = simple_atom_expr();

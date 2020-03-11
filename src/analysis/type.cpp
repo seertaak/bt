@@ -12,6 +12,16 @@ namespace views = rng::views;
 
 namespace bt { namespace analysis {
     namespace types {
+        atomic<int> nominal_type_t::next_id{0};
+
+        nominal_type_t::nominal_type_t(string fqn, type_t type): id(++nominal_type_t::next_id),
+            fqn(fqn), type(type) {}
+
+        auto operator<<(ostream& os, const nominal_type_t& n) -> ostream& {
+            os << n.fqn;
+            return os;
+        }
+
         auto operator<<(ostream& os, const void_t&) -> ostream& {
             os << "void";
             return os;
@@ -200,6 +210,12 @@ namespace bt { namespace analysis {
             return os;
         }
 
+        auto operator==(const nominal_type_t& lhs, const nominal_type_t& rhs) -> bool { 
+            return lhs.id == rhs.id;
+        }
+
+        auto operator!=(const nominal_type_t& lhs, const nominal_type_t& rhs) -> bool { return !(lhs == rhs); }
+
     }  // namespace types
 
     auto operator<<(ostream& os, const type_t& t) -> ostream& {
@@ -242,7 +258,15 @@ namespace bt { namespace analysis {
             },
             t.get());
     }
-    auto promoted_type(const type_t& t, const type_t& u) -> optional<type_t> {
+    auto promoted_type(const type_t& t_input, const type_t& u_input) -> optional<type_t> {
+        auto t = t_input;
+        while (auto pt = t.template get_if<types::ptr_t>())
+            t = pt->value_type;
+        
+        auto u = u_input;
+        while (auto pu = u.template get_if<types::ptr_t>())
+            u = pu->value_type;
+
         if (is_floating_point(t) && is_floating_point(u))
             return optional(width(t) >= width(u) ? t : u);
         else if (is_floating_point(t) && is_integral(u))
@@ -257,7 +281,18 @@ namespace bt { namespace analysis {
             else if (is_signed(u) && !is_signed(t))
                 return width(u) > width(t) ? optional(u) : nullopt;
             return nullopt;
-        }
+        } 
         return nullopt;
+    }
+    auto is_assignable_to(const type_t& src, const type_t& dst) -> bool {
+        auto t_src = src;
+        auto t_dst = dst;
+        if (!dst.is<types::ptr_t>()) return false;
+
+        auto dst_value_ty = t_dst.as<types::ptr_t>().value_type;
+
+        if (dst_value_ty == t_src) return true;
+
+        return !!promoted_type(t_src, dst_value_ty);
     }
 }}  // namespace bt::analysis
