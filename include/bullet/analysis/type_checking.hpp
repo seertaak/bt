@@ -350,6 +350,9 @@ namespace bt { namespace analysis {
                     auto scope = parent_scope;
                     cout << "INVOCATION in context " << scope.context << endl;
 
+                    if (scope.context != context_t::type)
+                        scope.context = context_t::fn;
+
                     switch (int(scope.context)) {
                     case int(context_t::fn): {
                         scope.context = context_t::fn;
@@ -359,6 +362,8 @@ namespace bt { namespace analysis {
                             auto err = raise<error>(ast);
                             auto& tgt_ty = i.target.get().attribute.get();
                             err << "Expected function type, got " << tgt_ty;
+                        } else {
+                            cout << "TARGET IS A FUNCTION" << endl;
                         }
 
                         scope.context = context_t::var;
@@ -480,6 +485,8 @@ namespace bt { namespace analysis {
 
                         return result_ty;
                     }
+                    default:
+                        cout << "BAD CONTEXT" << endl;
                     }
 
                     return UNKOWN;
