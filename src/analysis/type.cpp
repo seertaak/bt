@@ -1,3 +1,5 @@
+#include <list>
+
 #include <boost/hana/all.hpp>
 #include <range/v3/algorithm/all_of.hpp>
 #include <range/v3/core.hpp>
@@ -259,6 +261,7 @@ namespace bt { namespace analysis {
             t.get());
     }
     auto promoted_type(const type_t& t_input, const type_t& u_input) -> optional<type_t> {
+        /*
         auto t = t_input;
         while (auto pt = t.template get_if<types::ptr_t>())
             t = pt->value_type;
@@ -283,16 +286,130 @@ namespace bt { namespace analysis {
             return nullopt;
         } 
         return nullopt;
+        */
+
+        auto d_u = implicit_conversion_distance(t_input, u_input);
+        auto d_t = implicit_conversion_distance(u_input, t_input);
+
+        if (d_u < 0 && d_t < 0) return nullopt;
+        if (d_u >= 0) return u_input;
+        if (d_t >= 0) return t_input;
+
+        return d_u < d_t ? u_input : t_input;
     }
+
     auto is_assignable_to(const type_t& src, const type_t& dst) -> bool {
-        auto t_src = src;
-        auto t_dst = dst;
-        if (!dst.is<types::ptr_t>()) return false;
+        return implicit_conversion_distance(src, dst) >= 0;
+    }
 
-        auto dst_value_ty = t_dst.as<types::ptr_t>().value_type;
+    auto implicit_conversion_distance(const type_t& src, const type_t& dst) -> int {
+        cout << "implicit_conversion_distance: src = " << src << "; dst = " << dst << endl;
+        auto& d = dst.get();
 
-        if (dst_value_ty == t_src) return true;
+        auto candidates = std::list<type_t>();
+        candidates.push_back(src);
 
-        return !!promoted_type(t_src, dst_value_ty);
+        int length = 0;
+        
+        while (!candidates.empty()) {
+            const auto& candidate_ref = candidates.front();
+            const auto& candidate = candidate_ref.get();
+
+            cout << "CANDIDATE: " << candidate << endl;
+
+            if (candidate == d) return length;
+
+            cout << "WTF1" << endl;
+
+            if (auto pnom = d.get_if<types::nominal_type_t>(); !!pnom && (candidate == pnom->type))
+                return length;
+
+            cout << "WTF2" << endl;
+
+            using namespace types;
+
+            visit(hana::overload(
+                [&](const types::i8_t&) { candidates.push_back(type_value(i16_t{})); },
+                [&](const types::i16_t&) { candidates.push_back(type_value(i32_t{})); },
+                [&](const types::i32_t&) { 
+                    candidates.push_back(type_value(i64_t{})); 
+                    candidates.push_back(type_value(f32_t{}));
+                },
+                [&](const types::i64_t&) { 
+                    candidates.push_back(type_value(f64_t{})); 
+                },
+                [&](const types::u8_t&) { 
+                    candidates.push_back(type_value(i16_t{}));
+                    candidates.push_back(type_value(u16_t{})); 
+                },
+                [&](const types::u16_t&) { 
+                    candidates.push_back(type_value(i32_t{}));
+                    candidates.push_back(type_value(u32_t{})); 
+                },
+                [&](const types::u32_t&) { 
+                    candidates.push_back(type_value(u64_t{})); 
+                },
+                [&](const types::u64_t&) { 
+                    candidates.push_back(type_value(i64_t{}));
+                },
+                [&](const types::ptr_t& p) { 
+                    cout << "FOUND POINTER" << endl;
+                    candidates.push_back(p.value_type);
+                },
+                [&](const types::function_t& f) { 
+                    if (f.formal_parameters.empty())
+                        candidates.push_back(f.result_type);
+                },
+                [&](const types::tuple_t& t) { 
+                    auto tys = std::vector<type_t>();
+                    if (t.size() >= 1) {
+                        bool all_same = true;
+                        const auto& first_ty = t.front(); 
+                        for (const auto& ty: t) {
+                            if (ty != first_ty) {
+                                all_same = false;
+                                break;
+                            }
+                        }
+
+                        if (all_same)
+                            candidates.push_back(type_t(type_value(types::array_t{first_ty, {t.size()}})));
+                    }
+
+                },
+                [&](const types::array_t& t) { 
+                    candidates.push_back(type_value(types::dynarr_t{t.value_type}));
+                    if (t.size.front() == 1) {
+                        auto nsz = t.size;
+                        nsz.erase(nsz.begin());
+                        if (nsz.empty())
+                            candidates.push_back(t.value_type);
+                        else
+                            candidates.push_back(type_value(types::array_t{t.value_type, nsz}));
+                    } else if (t.size.back() == 1) {
+                        auto nsz = t.size;
+                        nsz.pop_back();
+                        if (nsz.empty())
+                            candidates.push_back(t.value_type);
+                        else
+                            candidates.push_back(type_value(types::array_t{t.value_type, nsz}));
+                    }
+                    // TODO: slice!
+                },
+                [&](const types::strlit_t& t) { 
+                    candidates.push_back(type_value(types::string_t{}));
+                },
+                [&](const auto& t) {
+                    //candidates.push_back(type_value(types::tuple_t{candidate}));
+                }
+                ), candidate);
+
+            cout << "GOT HERE" << endl;
+            candidates.pop_front();
+            cout << "----" << endl;
+            length++;
+        }
+
+        return numeric_limits<int>::min();
     }
 }}  // namespace bt::analysis

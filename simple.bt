@@ -1,4 +1,7 @@
-var xs:int.array(2) = 
-    1
-    2
+var x = 5
+var y = x + 20
+var px:long.ptr = x
+var s = "hello"
+var w:string = s
+var uuu:void = print
 

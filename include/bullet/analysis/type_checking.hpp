@@ -461,28 +461,31 @@ namespace bt { namespace analysis {
                            scope.context = context_t::var;
                            type_check(f.rhs, scope);
 
-                           auto& decl_value_ty = f.type.get().attribute;
-
-                           auto decl_ty_ref = analysis::type_t(type_value(types::ptr_t{decl_value_ty}));
-                           auto& decl_ty = decl_ty_ref.get();
-
+                           auto decl_ty = f.type.get().attribute.get();
                            auto& deduced_ty = f.rhs.get().attribute.get();
 
-                           if (decl_value_ty.get().empty())
-                               decl_value_ty = deduced_ty;
+                           if (decl_ty.empty()) {
+                               decl_ty = deduced_ty;
+                               if (decl_ty.is<types::ptr_t>())
+                                   decl_ty = decl_ty.get<types::ptr_t>().value_type;
+                           }
 
                            cout << "Decl: " << decl_ty << " vs " << deduced_ty << " : deduced" << endl;
 
-                           if (decl_ty.empty() && !deduced_ty.empty()) {
-                               return deduced_ty;
-                           } else if (!decl_ty.empty() && deduced_ty.empty()) {
-                               return decl_ty;
-                           } else if (!decl_ty.empty() && !deduced_ty.empty())  {
-                                if (is_assignable_to(f.rhs.get().attribute, decl_ty))
-                                    return decl_ty;
+                           const auto mkptr = [&](auto&& t) -> type_t {
+                               return type_value(types::ptr_t{t});
+                           };
+
+                           if (!decl_ty.empty() && !deduced_ty.empty())  {
+                                if (is_assignable_to(deduced_ty, decl_ty))
+                                    return mkptr(decl_ty);
 
                                 auto err = raise<analysis::error>(ast);
-                                err << "Can't assign value of type \"" << f.rhs.get().attribute << "\" to value of type \"" << decl_value_ty << "\"";
+                                err << "Can't assign value of type \"" << deduced_ty << "\" to value of type \"" <<  decl_ty << "\"";
+                           } else if (decl_ty.empty() && !deduced_ty.empty()) {
+                               return mkptr(deduced_ty);
+                           } else if (!decl_ty.empty() && deduced_ty.empty()) {
+                               return mkptr(decl_ty);
                            }
                            return UNKOWN;
                        },

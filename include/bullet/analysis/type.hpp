@@ -329,5 +329,6 @@ namespace bt { namespace analysis {
     auto is_signed(const type_t& t) -> bool;
     auto width(const type_t& t) -> int;
     auto promoted_type(const type_t& t, const type_t& u) -> std::optional<type_t>;
+    auto implicit_conversion_distance(const type_t& src, const type_t& dst) -> int;
     auto is_assignable_to(const type_t& value, const type_t& target) -> bool;
 }}  // namespace bt::analysis

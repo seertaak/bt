@@ -114,6 +114,7 @@ int main(int argc, const char* argv[]) {
     builtins.types.insert("strlit", analysis::type_t(type_value(types::strlit_t{})));
     builtins.types.insert("UNKNOWN", analysis::type_t(type_value(analysis::UNKOWN)));
     builtins.types.insert("void", analysis::type_t(type_value(VOID_T)));
+    builtins.types.insert("string", analysis::type_t(type_value(types::string_t{})));
 
     builtins.fns.insert("print", analysis::type_t(type_value(types::function_t{analysis::type_t(type_value(types::void_t{})), {}})));
     builtins.vars.insert("print", analysis::type_t(type_value(types::function_t{analysis::type_t(type_value(types::void_t{})), {}})));
@@ -122,7 +123,7 @@ int main(int argc, const char* argv[]) {
 
     if (analysis::error::errors.empty()) {
         auto s = std::stringstream();
-        cout << fg::cyan << "AST:" << style::reset << endl;
+        cout << fg::cyan << "Typed AST:" << style::reset << endl;
         parser::pretty_print(typed_ast.get(), s, 0);
         cout << s.str() << endl;
     } else {
