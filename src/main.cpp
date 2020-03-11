@@ -9,11 +9,11 @@
 #include <range/v3/core.hpp>
 #include <range/v3/view/zip.hpp>
 
+#include <bullet/analysis/error.hpp>
 #include <bullet/analysis/symtab.hpp>
 #include <bullet/analysis/type.hpp>
 #include <bullet/analysis/type_checking.hpp>
 #include <bullet/analysis/walk.hpp>
-#include <bullet/analysis/error.hpp>
 #include <bullet/lexer/lexer.hpp>
 #include <bullet/lexer/token.hpp>
 #include <bullet/parser/ast.hpp>
@@ -77,7 +77,8 @@ int main(int argc, const char* argv[]) {
     parser::pretty_print<empty_attribute_t>(ast, s, 0);
     cout << s.str() << endl;
 
-    attr_node_t<analysis::type_t> typed_ast = walk_post_order<analysis::type_t>(ast, [](auto, auto) { return analysis::type_t(); });
+    attr_node_t<analysis::type_t> typed_ast =
+        walk_post_order<analysis::type_t>(ast, [](auto, auto) { return analysis::type_t(); });
 
     auto builtins = environment_t();
     builtins.context = context_t::fn;
@@ -116,8 +117,10 @@ int main(int argc, const char* argv[]) {
     builtins.types.insert("void", analysis::type_t(type_value(VOID_T)));
     builtins.types.insert("string", analysis::type_t(type_value(types::string_t{})));
 
-    builtins.fns.insert("print", analysis::type_t(type_value(types::function_t{analysis::type_t(type_value(types::void_t{})), {}})));
-    builtins.vars.insert("print", analysis::type_t(type_value(types::function_t{analysis::type_t(type_value(types::void_t{})), {}})));
+    builtins.fns.insert("print", analysis::type_t(type_value(types::function_t{
+                                     analysis::type_t(type_value(types::void_t{})), {}})));
+    builtins.vars.insert("print", analysis::type_t(type_value(types::function_t{
+                                      analysis::type_t(type_value(types::void_t{})), {}})));
 
     type_check(typed_ast, builtins);
 
@@ -131,7 +134,6 @@ int main(int argc, const char* argv[]) {
         for (auto&& e : analysis::error::errors) cout << e->what() << endl;
         cout << style::reset << endl;
     }
-
 
     /*
     using noattr = const empty_attribute_t&;

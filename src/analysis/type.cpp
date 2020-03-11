@@ -16,8 +16,8 @@ namespace bt { namespace analysis {
     namespace types {
         atomic<int> nominal_type_t::next_id{0};
 
-        nominal_type_t::nominal_type_t(string fqn, type_t type): id(++nominal_type_t::next_id),
-            fqn(fqn), type(type) {}
+        nominal_type_t::nominal_type_t(string fqn, type_t type)
+            : id(++nominal_type_t::next_id), fqn(fqn), type(type) {}
 
         auto operator<<(ostream& os, const nominal_type_t& n) -> ostream& {
             os << n.fqn;
@@ -212,11 +212,13 @@ namespace bt { namespace analysis {
             return os;
         }
 
-        auto operator==(const nominal_type_t& lhs, const nominal_type_t& rhs) -> bool { 
+        auto operator==(const nominal_type_t& lhs, const nominal_type_t& rhs) -> bool {
             return lhs.id == rhs.id;
         }
 
-        auto operator!=(const nominal_type_t& lhs, const nominal_type_t& rhs) -> bool { return !(lhs == rhs); }
+        auto operator!=(const nominal_type_t& lhs, const nominal_type_t& rhs) -> bool {
+            return !(lhs == rhs);
+        }
 
     }  // namespace types
 
@@ -265,7 +267,7 @@ namespace bt { namespace analysis {
         auto t = t_input;
         while (auto pt = t.template get_if<types::ptr_t>())
             t = pt->value_type;
-        
+
         auto u = u_input;
         while (auto pu = u.template get_if<types::ptr_t>())
             u = pu->value_type;
@@ -284,7 +286,7 @@ namespace bt { namespace analysis {
             else if (is_signed(u) && !is_signed(t))
                 return width(u) > width(t) ? optional(u) : nullopt;
             return nullopt;
-        } 
+        }
         return nullopt;
         */
 
@@ -303,110 +305,92 @@ namespace bt { namespace analysis {
     }
 
     auto implicit_conversion_distance(const type_t& src, const type_t& dst) -> int {
-        cout << "implicit_conversion_distance: src = " << src << "; dst = " << dst << endl;
         auto& d = dst.get();
 
         auto candidates = std::list<type_t>();
         candidates.push_back(src);
 
         int length = 0;
-        
+
         while (!candidates.empty()) {
             const auto& candidate_ref = candidates.front();
             const auto& candidate = candidate_ref.get();
 
-            cout << "CANDIDATE: " << candidate << endl;
-
             if (candidate == d) return length;
-
-            cout << "WTF1" << endl;
 
             if (auto pnom = d.get_if<types::nominal_type_t>(); !!pnom && (candidate == pnom->type))
                 return length;
 
-            cout << "WTF2" << endl;
-
             using namespace types;
 
-            visit(hana::overload(
-                [&](const types::i8_t&) { candidates.push_back(type_value(i16_t{})); },
-                [&](const types::i16_t&) { candidates.push_back(type_value(i32_t{})); },
-                [&](const types::i32_t&) { 
-                    candidates.push_back(type_value(i64_t{})); 
-                    candidates.push_back(type_value(f32_t{}));
-                },
-                [&](const types::i64_t&) { 
-                    candidates.push_back(type_value(f64_t{})); 
-                },
-                [&](const types::u8_t&) { 
-                    candidates.push_back(type_value(i16_t{}));
-                    candidates.push_back(type_value(u16_t{})); 
-                },
-                [&](const types::u16_t&) { 
-                    candidates.push_back(type_value(i32_t{}));
-                    candidates.push_back(type_value(u32_t{})); 
-                },
-                [&](const types::u32_t&) { 
-                    candidates.push_back(type_value(u64_t{})); 
-                },
-                [&](const types::u64_t&) { 
-                    candidates.push_back(type_value(i64_t{}));
-                },
-                [&](const types::ptr_t& p) { 
-                    cout << "FOUND POINTER" << endl;
-                    candidates.push_back(p.value_type);
-                },
-                [&](const types::function_t& f) { 
-                    if (f.formal_parameters.empty())
-                        candidates.push_back(f.result_type);
-                },
-                [&](const types::tuple_t& t) { 
-                    auto tys = std::vector<type_t>();
-                    if (t.size() >= 1) {
-                        bool all_same = true;
-                        const auto& first_ty = t.front(); 
-                        for (const auto& ty: t) {
-                            if (ty != first_ty) {
-                                all_same = false;
-                                break;
+            visit(
+                hana::overload(
+                    [&](const types::i8_t&) { candidates.push_back(type_value(i16_t{})); },
+                    [&](const types::i16_t&) { candidates.push_back(type_value(i32_t{})); },
+                    [&](const types::i32_t&) {
+                        candidates.push_back(type_value(i64_t{}));
+                        candidates.push_back(type_value(f32_t{}));
+                    },
+                    [&](const types::i64_t&) { candidates.push_back(type_value(f64_t{})); },
+                    [&](const types::u8_t&) {
+                        candidates.push_back(type_value(i16_t{}));
+                        candidates.push_back(type_value(u16_t{}));
+                    },
+                    [&](const types::u16_t&) {
+                        candidates.push_back(type_value(i32_t{}));
+                        candidates.push_back(type_value(u32_t{}));
+                    },
+                    [&](const types::u32_t&) { candidates.push_back(type_value(u64_t{})); },
+                    [&](const types::u64_t&) { candidates.push_back(type_value(i64_t{})); },
+                    [&](const types::ptr_t& p) { candidates.push_back(p.value_type); },
+                    [&](const types::function_t& f) {
+                        if (f.formal_parameters.empty()) candidates.push_back(f.result_type);
+                    },
+                    [&](const types::tuple_t& t) {
+                        auto tys = std::vector<type_t>();
+                        if (t.size() >= 1) {
+                            bool all_same = true;
+                            const auto& first_ty = t.front();
+                            for (const auto& ty : t) {
+                                if (ty != first_ty) {
+                                    all_same = false;
+                                    break;
+                                }
                             }
+
+                            if (all_same)
+                                candidates.push_back(
+                                    type_t(type_value(types::array_t{first_ty, {t.size()}})));
                         }
+                    },
+                    [&](const types::array_t& t) {
+                        candidates.push_back(type_value(types::dynarr_t{t.value_type}));
+                        if (t.size.front() == 1) {
+                            auto nsz = t.size;
+                            nsz.erase(nsz.begin());
+                            if (nsz.empty())
+                                candidates.push_back(t.value_type);
+                            else
+                                candidates.push_back(type_value(types::array_t{t.value_type, nsz}));
+                        } else if (t.size.back() == 1) {
+                            auto nsz = t.size;
+                            nsz.pop_back();
+                            if (nsz.empty())
+                                candidates.push_back(t.value_type);
+                            else
+                                candidates.push_back(type_value(types::array_t{t.value_type, nsz}));
+                        }
+                        // TODO: slice!
+                    },
+                    [&](const types::strlit_t& t) {
+                        candidates.push_back(type_value(types::string_t{}));
+                    },
+                    [&](const auto& t) {
+                        // candidates.push_back(type_value(types::tuple_t{candidate}));
+                    }),
+                candidate);
 
-                        if (all_same)
-                            candidates.push_back(type_t(type_value(types::array_t{first_ty, {t.size()}})));
-                    }
-
-                },
-                [&](const types::array_t& t) { 
-                    candidates.push_back(type_value(types::dynarr_t{t.value_type}));
-                    if (t.size.front() == 1) {
-                        auto nsz = t.size;
-                        nsz.erase(nsz.begin());
-                        if (nsz.empty())
-                            candidates.push_back(t.value_type);
-                        else
-                            candidates.push_back(type_value(types::array_t{t.value_type, nsz}));
-                    } else if (t.size.back() == 1) {
-                        auto nsz = t.size;
-                        nsz.pop_back();
-                        if (nsz.empty())
-                            candidates.push_back(t.value_type);
-                        else
-                            candidates.push_back(type_value(types::array_t{t.value_type, nsz}));
-                    }
-                    // TODO: slice!
-                },
-                [&](const types::strlit_t& t) { 
-                    candidates.push_back(type_value(types::string_t{}));
-                },
-                [&](const auto& t) {
-                    //candidates.push_back(type_value(types::tuple_t{candidate}));
-                }
-                ), candidate);
-
-            cout << "GOT HERE" << endl;
             candidates.pop_front();
-            cout << "----" << endl;
             length++;
         }
 

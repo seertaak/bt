@@ -1,7 +1,4 @@
-var x = 5
-var y = x + 20
-var px:long.ptr = x
-var s = "hello"
-var w:string = s
-var uuu:void = print
+def foo(x: long):long = x + 5i32
+
+foo(32)
 

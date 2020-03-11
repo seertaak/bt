@@ -122,7 +122,7 @@ namespace bt { namespace analysis {
             explicit nominal_type_t(std::string name, type_t type);
             nominal_type_t(const nominal_type_t&) = default;
             nominal_type_t& operator=(const nominal_type_t&) = default;
-            
+
             static std::atomic<int> next_id;
         };
 
@@ -257,45 +257,45 @@ namespace bt { namespace analysis {
     struct type_value : type_base_t {
         using type_base_t::type_base_t;
 
-            inline operator bool() const { return !is<std::monostate>(); }
+        inline operator bool() const { return !is<std::monostate>(); }
 
-            auto empty() const -> bool { return is<std::monostate>(); }
-            auto valid() const -> bool { return !empty(); }
+        auto empty() const -> bool { return is<std::monostate>(); }
+        auto valid() const -> bool { return !empty(); }
 
-            template <typename U>
-            inline auto is() const -> bool {
-                return std::holds_alternative<U>(*this);
-            }
+        template <typename U>
+        inline auto is() const -> bool {
+            return std::holds_alternative<U>(*this);
+        }
 
-            template <typename U>
-            inline auto get() const -> const U& {
-                return std::get<U>(*this);
-            }
+        template <typename U>
+        inline auto get() const -> const U& {
+            return std::get<U>(*this);
+        }
 
-            template <typename U>
-            inline auto get() -> U& {
-                return std::get<U>(*this);
-            }
+        template <typename U>
+        inline auto get() -> U& {
+            return std::get<U>(*this);
+        }
 
-            template <typename U>
-            inline auto as() const -> const U& {
-                return std::get<U>(*this);
-            }
+        template <typename U>
+        inline auto as() const -> const U& {
+            return std::get<U>(*this);
+        }
 
-            template <typename U>
-            inline auto as() -> U& {
-                return std::get<U>(*this);
-            }
+        template <typename U>
+        inline auto as() -> U& {
+            return std::get<U>(*this);
+        }
 
-            template <typename U>
-            inline auto get_if() const -> const U* {
-                return std::get_if<U>(this);
-            }
+        template <typename U>
+        inline auto get_if() const -> const U* {
+            return std::get_if<U>(this);
+        }
 
-            template <typename U>
-            inline auto get_if() -> U* {
-                return std::get_if<U>(this);
-            }
+        template <typename U>
+        inline auto get_if() -> U* {
+            return std::get_if<U>(this);
+        }
     };
 
     auto operator<<(std::ostream& os, const type_value&) -> std::ostream&;
