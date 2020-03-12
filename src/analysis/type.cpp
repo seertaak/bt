@@ -3,6 +3,8 @@
 #include <boost/hana/all.hpp>
 #include <range/v3/algorithm/all_of.hpp>
 #include <range/v3/core.hpp>
+#include <range/v3/numeric/accumulate.hpp>
+#include <range/v3/view/tail.hpp>
 #include <range/v3/view/zip.hpp>
 
 #include <bullet/analysis/type.hpp>
@@ -304,6 +306,14 @@ namespace bt { namespace analysis {
         return implicit_conversion_distance(src, dst) >= 0;
     }
 
+    auto is_convertible_to(const type_t& src, const type_t& dst) -> bool {
+        return implicit_conversion_distance(src, dst) >= 0;
+    }
+
+    auto deref(const type_t& t) -> type_t {
+        return t->is<types::ptr_t>() ? deref(t->as<types::ptr_t>().value_type) : t;
+    }
+
     auto implicit_conversion_distance(const type_t& src, const type_t& dst) -> int {
         auto& d = dst.get();
 
@@ -316,10 +326,16 @@ namespace bt { namespace analysis {
             const auto& candidate_ref = candidates.front();
             const auto& candidate = candidate_ref.get();
 
-            if (candidate == d) return length;
-
-            if (auto pnom = d.get_if<types::nominal_type_t>(); !!pnom && (candidate == pnom->type))
+            if (candidate == d) {
+                cout << "Implicit conversion chain found from " << src << " to " << dst
+                     << " of length " << length << endl;
                 return length;
+            }
+
+            if (auto pnom = d.get_if<types::nominal_type_t>();
+                !!pnom && (candidate == pnom->type)) {
+                return length;
+            }
 
             using namespace types;
 
@@ -333,18 +349,35 @@ namespace bt { namespace analysis {
                     },
                     [&](const types::i64_t&) { candidates.push_back(type_value(f64_t{})); },
                     [&](const types::u8_t&) {
-                        candidates.push_back(type_value(i16_t{}));
                         candidates.push_back(type_value(u16_t{}));
+                        candidates.push_back(type_value(i16_t{}));
                     },
                     [&](const types::u16_t&) {
-                        candidates.push_back(type_value(i32_t{}));
                         candidates.push_back(type_value(u32_t{}));
+                        candidates.push_back(type_value(i32_t{}));
                     },
-                    [&](const types::u32_t&) { candidates.push_back(type_value(u64_t{})); },
-                    [&](const types::u64_t&) { candidates.push_back(type_value(i64_t{})); },
+                    [&](const types::u32_t&) {
+                        candidates.push_back(type_value(u64_t{}));
+                        candidates.push_back(type_value(i64_t{}));
+                    },
+                    [&](const types::u64_t&) { candidates.push_back(type_value(f64_t{})); },
                     [&](const types::ptr_t& p) { candidates.push_back(p.value_type); },
+                    [&](const types::f32_t& p) { candidates.push_back(F64_T); },
                     [&](const types::function_t& f) {
                         if (f.formal_parameters.empty()) candidates.push_back(f.result_type);
+                    },
+                    [&](const types::variant_t& t) {
+                        if (t.empty()) return;
+                        if (t.size() == 1) candidates.push_back(t.front());
+
+                        auto u = rng::accumulate(t | views::tail, t.front(),
+                                                 [](auto uni_t, auto t) -> type_t {
+                                                     if (auto p = promoted_type(uni_t, t))
+                                                         return *p;
+                                                     return UNKOWN;
+                                                 });
+
+                        if (u != UNKOWN) candidates.push_back(u);
                     },
                     [&](const types::tuple_t& t) {
                         auto tys = std::vector<type_t>();

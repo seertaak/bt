@@ -80,6 +80,10 @@ struct ref {
     operator T&() { return *value; }
     operator const T&() const { return *value; }
 
+    auto operator->() -> T* { return &get(); }
+
+    auto operator->() const -> const T* { return &get(); }
+
     template <typename U>
     inline auto is() const -> bool {
         return std::holds_alternative<U>(*value);

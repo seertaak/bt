@@ -124,13 +124,13 @@ int main(int argc, const char* argv[]) {
 
     type_check(typed_ast, builtins);
 
-    if (analysis::error::errors.empty()) {
+    {
         auto s = std::stringstream();
         cout << fg::cyan << "Typed AST:" << style::reset << endl;
         parser::pretty_print(typed_ast.get(), s, 0);
-        cout << s.str() << endl;
-    } else {
-        cout << fg::red;
+        cout << s.str() << endl << endl;
+
+        cout << fg::red << "ERRORS:";
         for (auto&& e : analysis::error::errors) cout << e->what() << endl;
         cout << style::reset << endl;
     }

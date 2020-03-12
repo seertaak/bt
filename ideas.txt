@@ -1,0 +1,8 @@
+
+- create a POSTFIX unary operator '*'. 
+    - matrix: transpose
+    - ...
+ 
+- create a ? operator
+    - a? evaluates to: if (a) a
+    - a?b evaluates to: if (a) a.b

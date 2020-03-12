@@ -8,6 +8,7 @@
 
 #include <range/v3/algorithm/all_of.hpp>
 #include <range/v3/algorithm/any_of.hpp>
+#include <range/v3/algorithm/contains.hpp>
 #include <range/v3/core.hpp>
 #include <range/v3/view/zip.hpp>
 
@@ -45,6 +46,139 @@ namespace bt { namespace analysis {
         int next_type_id = 0;
         st_type_t vars{}, fns{}, types{};
     };
+
+    auto type_check(parser::syntax::attr_node_t<type_t>& ast, const environment_t& parent_scope)
+        -> void;
+
+    auto type_check_block(block_t<type_t>& block, environment_t& scope) -> type_t {
+        auto scope_locs = symtab<lexer::location_t>();
+
+        type_t last_type = UNKOWN;
+
+        // need to do an initial pass collecting the types of any functions since
+        // any two functions may exhibit single or mutual recursion.
+        for (auto& stmt : block) {
+            if (auto pe = stmt.get().get_if<var_def_t<type_t>>()) {
+                if (auto pfn_ast = pe->rhs.get().get_if<parser::syntax::fn_expr_t<type_t>>()) {
+                    const auto& name = pe->name.name;
+                    const auto s = "F:"s + name;
+
+                    if (auto ploc = scope_locs.lookup(s)) {
+                        auto err = raise<error>(stmt);
+                        err << "Duplicate function \"" << name << "\" (with duplicate at " << *ploc
+                            << ")";
+                    }
+
+                    auto& fn_ast = *pfn_ast;
+
+                    type_t fn_type = type_value(types::function_t{});
+                    auto& o = fn_type.get().get<types::function_t>();
+
+                    scope.context = context_t::type;
+                    type_check(fn_ast.result_type, scope);
+                    o.result_type = fn_ast.result_type.get().attribute;
+
+                    auto names = unordered_map<string, int>();
+                    for (auto&& arg_id : fn_ast.arg_names) names[arg_id.name]++;
+
+                    for (auto&& [name, count] : names) {
+                        if (count > 1) {
+                            auto err = raise<analysis::error>(stmt);
+                            err << "Formal parameter \"" << name << "\" is duplicated (occurring "
+                                << count << " times) in function expression.";
+                        }
+                    }
+
+                    for (auto j = 0; j < fn_ast.arg_names.size(); j++) {
+                        auto& arg_nm = fn_ast.arg_names[j].name;
+                        auto& arg_ty = fn_ast.arg_types[j];
+                        type_check(arg_ty, scope);
+                        o.formal_parameters.push_back(
+                            types::name_and_type_t{arg_nm, arg_ty.get().attribute});
+                    }
+
+                    if (pe->type.get().attribute.get().empty()) pe->type.get().attribute = fn_type;
+
+                    cout << pe->name << " :: " << fn_type << endl;
+                    pe->rhs.get().attribute = fn_type;
+
+                    scope.fns.insert(name, fn_type);
+                    scope_locs.insert(s, pe->name.location);
+
+                    scope.context = context_t::var;
+                }
+            }
+        }
+
+        for (auto& stmt : block) {
+            if (auto pe = stmt.get().get_if<let_type_t<type_t>>()) {
+                scope.context = context_t::type;
+                const auto& name = pe->name.name;
+
+                const auto s = "T:"s + name;
+
+                if (auto ploc = scope_locs.lookup(s)) {
+                    auto err = raise<error>(stmt);
+                    err << "Duplicate type name \"" << name << "\" (with duplicate at " << *ploc
+                        << ") in type alias";
+                }
+
+                type_check(pe->type, scope);
+
+                stmt.get().attribute = pe->type.get().attribute;
+
+                scope.types.insert(name, pe->type.get().attribute);
+                scope_locs.insert(s, pe->name.location);
+            } else if (auto pe = stmt.get().get_if<def_type_t<type_t>>()) {
+                scope.context = context_t::type;
+
+                const auto& name = pe->name.name;
+
+                const auto s = "T:"s + name;
+
+                if (auto ploc = scope_locs.lookup(s)) {
+                    auto err = raise<error>(stmt);
+                    err << "Duplicate type name \"" << name << "\" (with duplicate at " << *ploc
+                        << ") in type definition";
+                }
+
+                type_check(pe->type, scope);
+
+                auto td_ty = pe->type.get().attribute;
+                td_ty = type_t(type_value(types::nominal_type_t(name, td_ty)));
+
+                stmt.get().attribute = td_ty;
+
+                scope.types.insert(name, td_ty);
+                scope_locs.insert(s, pe->name.location);
+            } else if (auto pe = stmt.get().get_if<var_def_t<type_t>>()) {
+                scope.context = context_t::var;
+                type_check(stmt, scope);
+
+                if (!pe->rhs.get().attribute.is<types::function_t>()) {
+                    const auto& name = pe->name.name;
+                    const auto s = "V:"s + name;
+
+                    if (auto ploc = scope_locs.lookup(s)) {
+                        auto err = raise<error>(stmt);
+                        err << "Duplicate variable declaration of \"" << name
+                            << "\", with duplicate at " << *ploc;
+                    }
+
+                    scope.vars.insert(name, stmt.get().attribute);
+                    scope_locs.insert(s, pe->name.location);
+                } else {
+                    auto& fn_ty = pe->rhs.get().attribute;
+                    if (pe->type.get().attribute.get().empty()) pe->type.get().attribute = fn_ty;
+                }
+            } else {
+                type_check(stmt, scope);
+            }
+            if (stmt.get().attribute.get()) last_type = stmt.get().attribute;
+        }
+
+        return last_type;
+    }
 
     auto type_check(parser::syntax::attr_node_t<type_t>& ast, const environment_t& parent_scope)
         -> void {
@@ -152,7 +286,8 @@ namespace bt { namespace analysis {
                         i);
                 },
                 [&](lexer::identifier_t& id) -> type_t {
-                    cout << "IDENTIFIER: " << id << " in context " << parent_scope.context << endl;;
+                    cout << "IDENTIFIER: " << id << " in context " << parent_scope.context << endl;
+                    ;
                     switch (int(parent_scope.context)) {
                     case int(context_t::fn): {
                         if (auto pt = parent_scope.fns.lookup(id.name)) return *pt;
@@ -182,137 +317,7 @@ namespace bt { namespace analysis {
                 },
                 [&](block_t<type_t>& block) -> type_t {
                     auto scope = parent_scope;
-                    auto scope_locs = symtab<lexer::location_t>();
-
-                    type_t last_type = UNKOWN;
-
-                    // need to do an initial pass collecting the types of any functions since
-                    // any two functions may exhibit single or mutual recursion.
-                    for (auto& stmt : block) {
-                        if (auto pe = stmt.get().get_if<var_def_t<type_t>>()) {
-                            if (auto pfn_ast = pe->rhs.get().get_if<parser::syntax::fn_expr_t<type_t>>()) {
-                                const auto& name = pe->name.name;
-                                const auto s = "F:"s + name;
-
-                                if (auto ploc = scope_locs.lookup(s)) {
-                                    auto err = raise<error>(stmt);
-                                    err << "Duplicate function \"" << name << "\" (with duplicate at "
-                                        << *ploc << ")";
-                                }
-
-                                auto& fn_ast = *pfn_ast;
-
-                                type_t fn_type = type_value(types::function_t{});
-                                auto& o = fn_type.get().get<types::function_t>();
-
-                                scope.context = context_t::type;
-                                type_check(fn_ast.result_type, scope);
-                                o.result_type = fn_ast.result_type.get().attribute;
-
-                                auto names = unordered_map<string, int>();
-                                for (auto&& arg_id : fn_ast.arg_names) names[arg_id.name]++;
-
-                                for (auto&& [name, count] : names) {
-                                    if (count > 1) {
-                                        auto err = raise<analysis::error>(stmt);
-                                        err << "Formal parameter \"" << name << "\" is duplicated (occurring " << count
-                                            << " times) in function expression.";
-                                    }
-                                }
-
-                                for (auto j = 0; j < fn_ast.arg_names.size(); j++) {
-                                    auto& arg_nm = fn_ast.arg_names[j].name;
-                                    auto& arg_ty = fn_ast.arg_types[j];
-                                    type_check(arg_ty, scope);
-                                    o.formal_parameters.push_back(
-                                        types::name_and_type_t{arg_nm, arg_ty.get().attribute});
-                                }
-
-                                if (pe->type.get().attribute.get().empty())
-                                    pe->type.get().attribute = fn_type;
-
-                                cout << pe->name << " :: " << fn_type << endl;
-                                pe->rhs.get().attribute = fn_type;
-
-                                scope.fns.insert(name, fn_type);
-                                scope_locs.insert(s, pe->name.location);
-
-                                scope.context = context_t::var;
-                            }
-                        }
-                    }
-
-                    for (auto& stmt : block) {
-                        if (auto pe = stmt.get().get_if<let_type_t<type_t>>()) {
-                            scope.context = context_t::type;
-                            const auto& name = pe->name.name;
-
-                            const auto s = "T:"s + name;
-
-                            if (auto ploc = scope_locs.lookup(s)) {
-                                auto err = raise<error>(stmt);
-                                err << "Duplicate type name \"" << name << "\" (with duplicate at "
-                                    << *ploc << ") in type alias";
-                            }
-
-                            type_check(pe->type, scope);
-
-                            stmt.get().attribute = pe->type.get().attribute;
-
-                            scope.types.insert(name, pe->type.get().attribute);
-                            scope_locs.insert(s, pe->name.location);
-                        } else if (auto pe = stmt.get().get_if<def_type_t<type_t>>()) {
-                            scope.context = context_t::type;
-
-                            const auto& name = pe->name.name;
-
-                            const auto s = "T:"s + name;
-
-                            if (auto ploc = scope_locs.lookup(s)) {
-                                auto err = raise<error>(stmt);
-                                err << "Duplicate type name \"" << name << "\" (with duplicate at "
-                                    << *ploc << ") in type definition";
-                            }
-
-                            type_check(pe->type, scope);
-
-                            auto td_ty = pe->type.get().attribute;
-                            td_ty = type_t(type_value(types::nominal_type_t(name, td_ty)));
-
-                            stmt.get().attribute = td_ty;
-
-                            scope.types.insert(name, td_ty);
-                            scope_locs.insert(s, pe->name.location);
-                        } else if (auto pe = stmt.get().get_if<var_def_t<type_t>>()) {
-                            scope.context = context_t::var;
-                            type_check(stmt, scope);
-
-                            if (!pe->rhs.get().attribute.is<types::function_t>()) {
-                                const auto& name = pe->name.name;
-                                const auto s = "V:"s + name;
-
-                                if (auto ploc = scope_locs.lookup(s)) {
-                                    auto err = raise<error>(stmt);
-                                    err << "Duplicate variable declaration of \"" << name
-                                        << "\", with duplicate at " << *ploc;
-                                }
-
-                                scope.vars.insert(name, stmt.get().attribute);
-                                scope_locs.insert(s, pe->name.location);
-                            } else {
-                                auto& fn_ty = pe->rhs.get().attribute;
-                                if (pe->type.get().attribute.get().empty())
-                                    pe->type.get().attribute = fn_ty;
-                            }
-                        } else {
-                            type_check(stmt, scope);
-                        }
-                        if (stmt.get().attribute.get()) last_type = stmt.get().attribute;
-                    }
-
-                    cout << "RETURNING WITH: " << last_type << endl;
-
-                    return last_type;
+                    return type_check_block(block, scope);
                 },
                 [&](data_t<type_t>& data) -> type_t {
                     if (data.empty()) return VOID_T;
@@ -332,25 +337,149 @@ namespace bt { namespace analysis {
                     return type_value(t);
                 },
                 [&](unary_op_t<type_t>& op) -> type_t {
+                    const auto opt = op.op;
+                    const auto opstr = lexer::token_symbol(opt);
+
                     type_check(op.operand, parent_scope);
-                    return op.operand.get().attribute;
+
+                    const auto& t = op.operand->attribute;
+
+                    const auto error = [&](auto&& op_type) {
+                        auto err = raise<analysis::error>(ast);
+                        err << "Invalid operand to unary operator \"" << opstr << "\": \"" << t
+                            << "\"";
+                    };
+
+                    using namespace lexer;
+
+                    if (opt == TILDE) {
+                        if (is_assignable_to(t, U8_T)) return U8_T;
+                        if (is_assignable_to(t, U16_T)) return U16_T;
+                        if (is_assignable_to(t, U32_T)) return U32_T;
+                        if (is_assignable_to(t, U64_T)) return U64_T;
+                        if (is_assignable_to(t, I8_T)) return I8_T;
+                        if (is_assignable_to(t, I16_T)) return I16_T;
+                        if (is_assignable_to(t, I32_T)) return I32_T;
+                        if (is_assignable_to(t, I64_T)) return I64_T;
+
+                        error("bitwise ");
+                    } else if (opt == MINUS || opt == PLUS) {
+                        if (is_assignable_to(t, U8_T)) return U8_T;
+                        if (is_assignable_to(t, U16_T)) return U16_T;
+                        if (is_assignable_to(t, U32_T)) return U32_T;
+                        if (is_assignable_to(t, U64_T)) return U64_T;
+                        if (is_assignable_to(t, I8_T)) return I8_T;
+                        if (is_assignable_to(t, I16_T)) return I16_T;
+                        if (is_assignable_to(t, I32_T)) return I32_T;
+                        if (is_assignable_to(t, I64_T)) return I64_T;
+                        if (is_assignable_to(t, F32_T)) return F32_T;
+                        if (is_assignable_to(t, F64_T)) return F64_T;
+
+                        error("arithmetic ");
+                    } else if (opt == NOT) {
+                        if (is_assignable_to(t, BOOL_T)) return BOOL_T;
+                        error("boolean ");
+                    }
+                    return VOID_T;
                 },
                 [&](bin_op_t<type_t>& op) -> type_t {
+                    const auto opt = op.op;
+                    const auto opstr = lexer::token_symbol(opt);
+
                     type_check(op.lhs, parent_scope);
                     type_check(op.rhs, parent_scope);
 
                     auto& lhs_a = op.lhs.get().attribute;
-                    auto& rhs_a = op.lhs.get().attribute;
+                    auto& rhs_a = op.rhs.get().attribute;
 
-                    if (auto pt = promoted_type(lhs_a, rhs_a)) return *pt;
+                    using namespace lexer;
 
-                    return type_value(types::variant_t{lhs_a, rhs_a});
+                    auto pt = promoted_type(lhs_a, rhs_a);
+
+                    const auto error = [&](auto&& op_type) {
+                        auto err = raise<analysis::error>(ast);
+                        err << "Invalid arguments to " << op_type << "operator \"" << opstr
+                            << "\": left-hand side has type \"" << lhs_a
+                            << "\", right-hand side has type \"" << rhs_a << "\"";
+                    };
+
+                    using namespace lexer;
+
+                    if (opt == EQUAL || opt == NOT_EQUAL || opt == LT || opt == GT || opt == GEQ ||
+                        opt == LEQ || opt == IS || opt == IN) {
+                        if (!pt) {
+                            error("comparison ");
+                            return VOID_T;
+                        }
+                        return BOOL_T;
+                    } else if (opt == AND || opt == OR) {
+                        if (!pt) {
+                            error("boolean ");
+                            return VOID_T;
+                        }
+                        const auto& t = *pt;
+                        cout << "Bin op type checking: promoted type in bin op " << opstr << " is "
+                             << *pt << endl;
+
+                        if (is_assignable_to(t, BOOL_T)) return BOOL_T;
+
+                        error("boolean ");
+
+                        return VOID_T;
+                    } else if (opt == BAR || opt == AMPERSAND || opt == HAT) {
+                        if (!pt) {
+                            error("bitwise ");
+                            return VOID_T;
+                        }
+                        const auto& t = *pt;
+                        cout << "Bin op type checking: promoted type in bin op " << opstr << " is "
+                             << *pt << endl;
+
+                        if (is_assignable_to(t, U8_T)) return U8_T;
+                        if (is_assignable_to(t, U16_T)) return U16_T;
+                        if (is_assignable_to(t, U32_T)) return U32_T;
+                        if (is_assignable_to(t, U64_T)) return U64_T;
+                        if (is_assignable_to(t, I8_T)) return I8_T;
+                        if (is_assignable_to(t, I16_T)) return I16_T;
+                        if (is_assignable_to(t, I32_T)) return I32_T;
+                        if (is_assignable_to(t, I64_T)) return I64_T;
+
+                        error("bitwise ");
+
+                        return VOID_T;
+                    } else if (opt == PLUS || opt == MINUS || opt == STAR || opt == SLASH ||
+                               opt == PERCENTAGE || opt == STAR_STAR) {
+                        if (!pt) {
+                            error("arithmetic ");
+                            return VOID_T;
+                        }
+                        cout << "Bin op type checking: promoted type in bin op " << opstr << " is "
+                             << *pt << endl;
+
+                        const auto& t = *pt;
+
+                        if (is_assignable_to(t, U8_T)) return U8_T;
+                        if (is_assignable_to(t, U16_T)) return U16_T;
+                        if (is_assignable_to(t, U32_T)) return U32_T;
+                        if (is_assignable_to(t, U64_T)) return U64_T;
+                        if (is_assignable_to(t, I8_T)) return I8_T;
+                        if (is_assignable_to(t, I16_T)) return I16_T;
+                        if (is_assignable_to(t, I32_T)) return I32_T;
+                        if (is_assignable_to(t, I64_T)) return I64_T;
+                        if (is_assignable_to(t, F32_T)) return F32_T;
+                        if (is_assignable_to(t, F64_T)) return F64_T;
+
+                        error("arithmetic ");
+
+                        return VOID_T;
+                    }
+
+                    return VOID_T;
                 },
                 [&](invoc_t<type_t>& i) -> type_t {
                     auto scope = parent_scope;
 
-                    if (scope.context != context_t::type)
-                        scope.context = context_t::fn;
+                    if (scope.context != context_t::type) scope.context = context_t::fn;
 
                     switch (int(scope.context)) {
                     case int(context_t::fn): {
@@ -484,29 +613,77 @@ namespace bt { namespace analysis {
 
                         return result_ty;
                     }
-                    default:
-                        cout << "BAD CONTEXT" << endl;
+                    default: cout << "BAD CONTEXT" << endl;
                     }
 
                     return UNKOWN;
                 },
-                [&](if_t<type_t>& i) -> type_t {
-                    for (auto& [test, branch]: views::zip(i.elif_tests, i.elif_branches)) {
-                        auto scope = parent_scope;
+                [&](while_t<type_t>& v) -> type_t {
+                    auto branch_return_tys = vector<type_t>();
+                    auto scope = parent_scope;
+
+                    type_t test_ty = VOID_T;
+
+                    auto& test = v.test;
+
+                    if (auto pblock = test->get_if<block_t<type_t>>()) {
+                        test.get().attribute = test_ty = type_check_block(*pblock, scope);
+                    } else {
+                        scope.context = context_t::var;
                         type_check(test, scope);
-
-                        // 1. is test's type bool?
-                        // 2. Is test a block? If so, are there any var declarations?
-                        //    If yes, then stuff them into scope.
+                        test_ty = test.get().attribute;
                     }
 
-                    /*
-                    for (auto j = 0; j < i.elif_branches.size(); j++) {
-                        type_check(i.elif_branches[j], scope);
+                    if (!is_convertible_to(test_ty, BOOL_T)) {
+                        auto err = raise<error>(ast);
+                        err << "While test condition must have type \"bool\", found: \"" << test_ty
+                            << "\"";
                     }
-                    */
 
-                    return UNKOWN;
+                    scope.context = context_t::var;
+                    type_check(v.body, scope);
+                    return v.body->attribute;
+                },
+                [&](if_t<type_t>& i) -> type_t {
+                    auto branch_return_tys = vector<type_t>();
+
+                    for (auto&& [test, branch] : views::zip(i.elif_tests, i.elif_branches)) {
+                        auto scope = parent_scope;
+
+                        type_t test_ty = UNKOWN;
+
+                        if (auto pblock = test.get().get_if<block_t<type_t>>()) {
+                            test.get().attribute = test_ty = type_check_block(*pblock, scope);
+                        } else {
+                            scope.context = context_t::var;
+                            type_check(test, scope);
+                            test_ty = test.get().attribute;
+                        }
+
+                        if (!is_convertible_to(test_ty, BOOL_T)) {
+                            auto err = raise<error>(ast);
+                            err << "If condition must have type \"bool\", found: \"" << test_ty
+                                << "\"";
+                        }
+
+                        scope.context = context_t::var;
+                        type_check(branch, scope);
+                        branch_return_tys.push_back(branch.get().attribute);
+                    }
+                    auto scope = parent_scope;
+                    scope.context = context_t::var;
+
+                    type_check(i.else_branch, scope);
+                    branch_return_tys.push_back(i.else_branch.get().attribute);
+
+                    auto result = types::variant_t();
+
+                    for (auto&& ty : branch_return_tys)
+                        if (!rng::contains(result, ty)) result.push_back(ty);
+
+                    if (result.size() == 1) return result.front();
+
+                    return type_value(result);
                 },
                 [&](elif_t<type_t>& i) -> type_t { return UNKOWN; },
                 [&](else_t<type_t>& i) -> type_t { return UNKOWN; },
@@ -546,12 +723,12 @@ namespace bt { namespace analysis {
 
                     type_check(f.body, scope);
 
-                    if (o.result_type.get().empty())
-                        o.result_type = f.body.get().attribute;
+                    if (o.result_type.get().empty()) o.result_type = f.body.get().attribute;
 
                     if (implicit_conversion_distance(f.body.get().attribute, o.result_type) < 0) {
                         auto err = raise<analysis::error>(ast);
-                        err << "Type mismatch: function purports to return a \"" << o.result_type << "\", but actually "
+                        err << "Type mismatch: function purports to return a \"" << o.result_type
+                            << "\", but actually "
                             << "returns a value of type \"" << f.body.get().attribute << "\"";
                     }
 
@@ -569,6 +746,7 @@ namespace bt { namespace analysis {
 
                     if (decl_ty.empty()) {
                         decl_ty = deduced_ty;
+                        f.type->attribute = deduced_ty;
                         if (decl_ty.is<types::ptr_t>())
                             decl_ty = decl_ty.get<types::ptr_t>().value_type;
                     }
@@ -582,7 +760,7 @@ namespace bt { namespace analysis {
 
                         auto err = raise<analysis::error>(ast);
                         err << "Can't assign value of type \"" << deduced_ty
-                            << "\" to value of type \"" << decl_ty << "\"";
+                            << "\" to value of type \"" << decl_ty << "\" to variable " << f.name;
                     } else if (decl_ty.empty() && !deduced_ty.empty()) {
                         return mkptr(deduced_ty);
                     } else if (!decl_ty.empty() && deduced_ty.empty()) {
@@ -590,8 +768,43 @@ namespace bt { namespace analysis {
                     }
                     return UNKOWN;
                 },
-                [&](for_t<type_t>& v) -> type_t { return UNKOWN; },
-                [&](while_t<type_t>& v) -> type_t { return UNKOWN; },
+                [&](for_t<type_t>& v) -> type_t {
+                    auto scope = parent_scope;
+                    scope.context = context_t::var;
+
+                    scope.context = context_t::var;
+                    type_check(v.var_rhs, scope);
+
+                    auto& seq_ty = v.var_rhs->attribute;
+
+                    const auto seq_is_ptr = seq_ty->is<types::ptr_t>();
+                    v.var_rhs->attribute = deref(seq_ty);
+
+                    const auto err = [](auto&& t) { return raise<analysis::error>(t); };
+
+                    if (seq_ty->empty()) {
+                        auto e = err(v.var_rhs);
+                        e << "Unable to determine type of iteration target for iteration variable "
+                             "\""
+                          << v.var_lhs << "\"";
+                    } else if (auto parray = seq_ty->get_if<types::array_t>()) {
+                        scope.vars.insert(v.var_lhs.name, parray->value_type);
+                    } else if (auto pdynarr = seq_ty->get_if<types::dynarr_t>()) {
+                        scope.vars.insert(v.var_lhs.name, pdynarr->value_type);
+                    } else if (auto pdynarr = seq_ty->get_if<types::string_t>()) {
+                        scope.vars.insert(v.var_lhs.name, CHAR_T);
+                    } else if (auto pdynarr = seq_ty->get_if<types::strlit_t>()) {
+                        scope.vars.insert(v.var_lhs.name, CHAR_T);
+                    } else {
+                        auto e = err(v.var_rhs);
+                        e << "Invalid iteration target for iteration variable \"" << v.var_lhs
+                          << "\" has type \"" << v.var_rhs->attribute << "\"";
+                    }
+
+                    scope.context = context_t::var;
+                    type_check(v.body, scope);
+                    return v.body->attribute;
+                },
                 [&](break_t& v) -> type_t { return VOID_T; },
                 [&](continue_t& v) -> type_t { return VOID_T; },
                 [&](type_expr_t<type_t>& v) -> type_t {

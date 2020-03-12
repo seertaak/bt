@@ -170,12 +170,12 @@ namespace bt { namespace parser {
             void parse_block_line(p_block_t& block) {
                 do {
                     const auto s = statement();
-                    if (s.is<else_t<empty_attribute_t>>()) {
+                    if (auto pelse = s.get_if<else_t<empty_attribute_t>>()) {
                         if (block.empty() || !block.back().get().is<if_t<empty_attribute_t>>())
                             throw_error(
                                 "Dangling \"else\" block (prior statement is not \"if\" or "
                                 "\"elif\"");
-                        block.back().get().as<if_t<empty_attribute_t>>().else_branch = p_node_t(s);
+                        block.back().get().as<if_t<empty_attribute_t>>().else_branch = pelse->body;
                     } else if (s.is<elif_t<empty_attribute_t>>()) {
                         if (block.empty() || !block.back().get().is<if_t<empty_attribute_t>>())
                             throw_error(
@@ -377,8 +377,7 @@ namespace bt { namespace parser {
                             expect<token::oparen_t>();
                             ast.var_lhs = expect<identifier_t>();
                             expect<token::colon_t>();
-                            ast.var_rhs =
-                                p_node_t(type_expr_t<empty_attribute_t>{p_node_t(expression())});
+                            ast.var_rhs = p_node_t(expression());
                             expect<token::cparen_t>();
                             ast.body = p_node_t(expression());
 

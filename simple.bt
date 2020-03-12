@@ -1,4 +1,11 @@
-def foo(x: long):long = x + 5i32
+var xs =
+    1
+    2
+    3
+    4
 
-foo(32)
+for (x: xs):
+    x + 2
 
+type point:
+    x, y: int
