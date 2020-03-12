@@ -348,7 +348,6 @@ namespace bt { namespace analysis {
                 },
                 [&](invoc_t<type_t>& i) -> type_t {
                     auto scope = parent_scope;
-                    cout << "INVOCATION in context " << scope.context << endl;
 
                     if (scope.context != context_t::type)
                         scope.context = context_t::fn;
@@ -362,8 +361,6 @@ namespace bt { namespace analysis {
                             auto err = raise<error>(ast);
                             auto& tgt_ty = i.target.get().attribute.get();
                             err << "Expected function type, got " << tgt_ty;
-                        } else {
-                            cout << "TARGET IS A FUNCTION" << endl;
                         }
 
                         scope.context = context_t::var;
@@ -411,10 +408,12 @@ namespace bt { namespace analysis {
                                     << "\nActual parameters: " << act_params;
                             }
 
-                            // is_assignable_to(form_params.front().get<().type,
-                            // type_value(types::ptr_t{p->value_type}));
-                        } else {
-                            cout << "ARGUMENT WAT???" << endl;
+                            if (!is_assignable_to(p->value_type, form_params.front().type)) {
+                                auto err = raise<analysis::error>(ast);
+                                err << "Mismatch between actual and formal parameters. "
+                                    << "\nFormal parameters: " << form_params
+                                    << "\nActual parameters: " << act_params;
+                            }
                         }
 
                         return fn_ty.result_type;
@@ -492,7 +491,14 @@ namespace bt { namespace analysis {
                     return UNKOWN;
                 },
                 [&](if_t<type_t>& i) -> type_t {
-                    auto scope = parent_scope;
+                    for (auto& [test, branch]: views::zip(i.elif_tests, i.elif_branches)) {
+                        auto scope = parent_scope;
+                        type_check(test, scope);
+
+                        // 1. is test's type bool?
+                        // 2. Is test a block? If so, are there any var declarations?
+                        //    If yes, then stuff them into scope.
+                    }
 
                     /*
                     for (auto j = 0; j < i.elif_branches.size(); j++) {
@@ -540,10 +546,13 @@ namespace bt { namespace analysis {
 
                     type_check(f.body, scope);
 
+                    if (o.result_type.get().empty())
+                        o.result_type = f.body.get().attribute;
+
                     if (implicit_conversion_distance(f.body.get().attribute, o.result_type) < 0) {
                         auto err = raise<analysis::error>(ast);
                         err << "Type mismatch: function purports to return a \"" << o.result_type << "\", but actually "
-                            << "returns a value of type \"" << f.body.get().attribute;
+                            << "returns a value of type \"" << f.body.get().attribute << "\"";
                     }
 
                     return result;

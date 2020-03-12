@@ -18,7 +18,7 @@ namespace bt { namespace analysis {
     namespace hana = boost::hana;
 
     inline auto operator<<(std::ostream& os, const std::monostate&) -> std::ostream& {
-        os << "monostate(UNKNOWN)";
+        os << "<unknown>";
         return os;
     }
 
