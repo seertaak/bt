@@ -226,7 +226,7 @@ namespace bt { namespace lexer {
                 char c;
 
                 long double fpval = intval;
-                int width = 64;
+                int width = 0;
                 int exponent = 0;
                 uint32_t q;
                 int n_digits = 0;
@@ -329,8 +329,8 @@ namespace bt { namespace lexer {
                     }
 
                     if (!signedness) {
-                        signedness = 'i';
-                        width = 64;
+                        signedness = '?';
+                        width = 0;
                     } else {
                         if (p >= input_length) throw_error("Bad integral literal", pos);
 

@@ -70,7 +70,7 @@ struct ref {
     ref(const ref&) = default;
     ref& operator=(const ref&) = default;
     ref& operator=(const T& t) {
-        *value = t;
+        value = std::make_shared<T>(t);
         return *this;
     }
 

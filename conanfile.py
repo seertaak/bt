@@ -19,7 +19,8 @@ class ALKConan(ConanFile):
     )
 
     def build(self):
-        cmake = CMake(self, generator='Ninja')
+        cmake = CMake(self) # , generator='Ninja')
+        cmake.parallel = False
         cmake.configure()
         cmake.build()
         cmake.test()

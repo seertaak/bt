@@ -82,45 +82,42 @@ int main(int argc, const char* argv[]) {
 
     auto builtins = environment_t();
     builtins.context = context_t::fn;
-    builtins.types.insert("i8", analysis::type_t(type_value(I8_T)));
-    builtins.types.insert("i16", analysis::type_t(type_value(I16_T)));
-    builtins.types.insert("i32", analysis::type_t(type_value(I32_T)));
-    builtins.types.insert("i64", analysis::type_t(type_value(I64_T)));
-    builtins.types.insert("u8", analysis::type_t(type_value(U8_T)));
-    builtins.types.insert("u16", analysis::type_t(type_value(U16_T)));
-    builtins.types.insert("u32", analysis::type_t(type_value(U32_T)));
-    builtins.types.insert("u64", analysis::type_t(type_value(U64_T)));
-    builtins.types.insert("f32", analysis::type_t(type_value(F32_T)));
-    builtins.types.insert("f64", analysis::type_t(type_value(F64_T)));
+    builtins.types.insert("i8", analysis::I8);
+    builtins.types.insert("i16", analysis::I16);
+    builtins.types.insert("i32", analysis::I32);
+    builtins.types.insert("i64", analysis::I64);
+    builtins.types.insert("u8", analysis::U8);
+    builtins.types.insert("u16", analysis::U16);
+    builtins.types.insert("u32", analysis::U32);
+    builtins.types.insert("u64", analysis::U64);
+    builtins.types.insert("f32", analysis::F32);
+    builtins.types.insert("f64", analysis::F64);
 
-    builtins.types.insert("byte", analysis::type_t(type_value(I8_T)));
-    builtins.types.insert("short", analysis::type_t(type_value(I16_T)));
-    builtins.types.insert("int", analysis::type_t(type_value(I32_T)));
-    builtins.types.insert("long", analysis::type_t(type_value(I64_T)));
+    builtins.types.insert("byte", analysis::I8);
+    builtins.types.insert("short", analysis::I16);
+    builtins.types.insert("int", analysis::I32);
+    builtins.types.insert("long", analysis::I64);
 
-    builtins.types.insert("ubyte", analysis::type_t(type_value(U8_T)));
-    builtins.types.insert("ushort", analysis::type_t(type_value(U16_T)));
-    builtins.types.insert("uint", analysis::type_t(type_value(U32_T)));
-    builtins.types.insert("ulong", analysis::type_t(type_value(U64_T)));
+    builtins.types.insert("ubyte", analysis::U8);
+    builtins.types.insert("ushort", analysis::U16);
+    builtins.types.insert("uint", analysis::U32);
+    builtins.types.insert("ulong", analysis::U64);
 
-    builtins.types.insert("ptr", analysis::type_t(type_value(PTR_T)));
-    builtins.types.insert("array", analysis::type_t(type_value(ARRAY_T)));
-    builtins.types.insert("dynarr", analysis::type_t(type_value(types::dynarr_t{})));
-    builtins.types.insert("bool", analysis::type_t(type_value(BOOL_T)));
-    builtins.types.insert("char", analysis::type_t(type_value(CHAR_T)));
-    builtins.types.insert("slice", analysis::type_t(type_value(SLICE_T)));
-    builtins.types.insert("variant", analysis::type_t(type_value(VARIANT_T)));
-    builtins.types.insert("fn", analysis::type_t(type_value(FUNCTION_T)));
-    builtins.types.insert("tuple", analysis::type_t(type_value(TUPLE_T)));
-    builtins.types.insert("strlit", analysis::type_t(type_value(types::strlit_t{})));
-    builtins.types.insert("UNKNOWN", analysis::type_t(type_value(analysis::UNKOWN)));
-    builtins.types.insert("void", analysis::type_t(type_value(VOID_T)));
-    builtins.types.insert("string", analysis::type_t(type_value(types::string_t{})));
+    builtins.types.insert("ptr", analysis::PTR);
+    builtins.types.insert("array", analysis::ARRAY);
+    builtins.types.insert("dynarr", analysis::DYNARR);
+    builtins.types.insert("bool", analysis::BOOL);
+    builtins.types.insert("char", analysis::CHAR);
+    builtins.types.insert("slice", analysis::SLICE);
+    builtins.types.insert("variant", analysis::VARIANT);
+    builtins.types.insert("fn", analysis::FUNCTION);
+    builtins.types.insert("tuple", analysis::TUPLE);
+    builtins.types.insert("strlit", analysis::STRLIT);
+    builtins.types.insert("UNKNOWN", analysis::UNKOWN);
+    builtins.types.insert("void", analysis::VOID);
+    builtins.types.insert("string", analysis::STRING);
 
-    builtins.fns.insert("print", analysis::type_t(type_value(types::function_t{
-                                     analysis::type_t(type_value(types::void_t{})), {}})));
-    builtins.vars.insert("print", analysis::type_t(type_value(types::function_t{
-                                      analysis::type_t(type_value(types::void_t{})), {}})));
+    builtins.fns.insert("print", analysis::FUNCTION);
 
     type_check(typed_ast, builtins);
 
@@ -209,37 +206,37 @@ int main(int argc, const char* argv[]) {
                 return !b.empty() ? b.back().get().attribute
                                   : st_type_t(analysis::type_t(type_value(types::void_t{})));
             },
-            [](const syntax::break_t&, const auto& node) { return st_type_t(VOID_T); },
-            [](const syntax::continue_t&, const auto& node) { return st_type_t(VOID_T); },
+            [](const syntax::break_t&, const auto& node) { return st_type_t(VOID); },
+            [](const syntax::continue_t&, const auto& node) { return st_type_t(VOID); },
             [](const primitive_type_t& e, const auto& node) {
                 return visit(hana::overload(
-                                 [](const lexer::token::char_t& t) { return st_type_t(CHAR_T); },
-                                 [](const lexer::token::byte_t& t) { return st_type_t(I8_T); },
-                                 [](const lexer::token::short_t& t) { return st_type_t(I16_T); },
-                                 [](const lexer::token::int_t& t) { return st_type_t(I32_T); },
-                                 [](const lexer::token::long_t& t) { return st_type_t(I64_T); },
-                                 [](const lexer::token::ubyte_t& t) { return st_type_t(U8_T); },
-                                 [](const lexer::token::ushort_t& t) { return st_type_t(U16_T); },
-                                 [](const lexer::token::uint_t& t) { return st_type_t(U32_T); },
-                                 [](const lexer::token::ulong_t& t) { return st_type_t(U64_T); },
-                                 [](const lexer::token::float_t& t) { return st_type_t(F32_T); },
-                                 [](const lexer::token::double_t& t) { return st_type_t(F64_T); },
-                                 [](const lexer::token::i8_t& t) { return st_type_t(I8_T); },
-                                 [](const lexer::token::i16_t& t) { return st_type_t(I16_T); },
-                                 [](const lexer::token::i32_t& t) { return st_type_t(I32_T); },
-                                 [](const lexer::token::i64_t& t) { return st_type_t(I64_T); },
-                                 [](const lexer::token::u8_t& t) { return st_type_t(U8_T); },
-                                 [](const lexer::token::u16_t& t) { return st_type_t(U16_T); },
-                                 [](const lexer::token::u32_t& t) { return st_type_t(U32_T); },
-                                 [](const lexer::token::u64_t& t) { return st_type_t(U64_T); },
+                                 [](const lexer::token::char_t& t) { return st_type_t(CHAR); },
+                                 [](const lexer::token::byte_t& t) { return st_type_t(I8); },
+                                 [](const lexer::token::short_t& t) { return st_type_t(I16); },
+                                 [](const lexer::token::int_t& t) { return st_type_t(I32); },
+                                 [](const lexer::token::long_t& t) { return st_type_t(I64); },
+                                 [](const lexer::token::ubyte_t& t) { return st_type_t(U8); },
+                                 [](const lexer::token::ushort_t& t) { return st_type_t(U16); },
+                                 [](const lexer::token::uint_t& t) { return st_type_t(U32); },
+                                 [](const lexer::token::ulong_t& t) { return st_type_t(U64); },
+                                 [](const lexer::token::float_t& t) { return st_type_t(F32); },
+                                 [](const lexer::token::double_t& t) { return st_type_t(F64); },
+                                 [](const lexer::token::i8_t& t) { return st_type_t(I8); },
+                                 [](const lexer::token::i16_t& t) { return st_type_t(I16); },
+                                 [](const lexer::token::i32_t& t) { return st_type_t(I32); },
+                                 [](const lexer::token::i64_t& t) { return st_type_t(I64); },
+                                 [](const lexer::token::u8_t& t) { return st_type_t(U8); },
+                                 [](const lexer::token::u16_t& t) { return st_type_t(U16); },
+                                 [](const lexer::token::u32_t& t) { return st_type_t(U32); },
+                                 [](const lexer::token::u64_t& t) { return st_type_t(U64); },
                                  [](const lexer::token::ptr_t& t) {
-                                     return st_type_t(type_value(types::ptr_t{VOID_T}));
+                                     return st_type_t(type_value(types::ptr_t{VOID}));
                                  },
                                  [](const lexer::token::array_t& t) {
-                                     return st_type_t(type_value(types::array_t{VOID_T, {}}));
+                                     return st_type_t(type_value(types::array_t{VOID, {}}));
                                  },
                                  [](const lexer::token::slice_t& t) {
-                                     return st_type_t(type_value(types::slice_t{VOID_T, 0, 0, 0}));
+                                     return st_type_t(type_value(types::slice_t{VOID, 0, 0, 0}));
                                  },
                                  [](const lexer::token::variant_t& t) {
                                      return st_type_t(type_value(types::variant_t{}));
@@ -266,14 +263,14 @@ int main(int argc, const char* argv[]) {
                             << rhs_ty << "\"";
                     }
                 } else if (e.op == AND || e.op == OR) {
-                    if (lhs_ty == BOOL_T && rhs_ty == BOOL_T)
-                        return st_type_t(BOOL_T);
+                    if (lhs_ty == BOOL && rhs_ty == BOOL)
+                        return st_type_t(BOOL);
                     else {
                         auto err = raise<analysis::error>(node);
-                        if (lhs_ty != BOOL_T && rhs_ty == BOOL_T)
+                        if (lhs_ty != BOOL && rhs_ty == BOOL)
                             err << "Boolean binary operator applied to non-boolean type \""
                                 << lhs_ty << "\"";
-                        else if (rhs_ty != BOOL_T && lhs_ty == BOOL_T)
+                        else if (rhs_ty != BOOL && lhs_ty == BOOL)
                             err << "Boolean binary operator applied to non-boolean type \""
                                 << rhs_ty << "\"";
                         else
@@ -284,7 +281,7 @@ int main(int argc, const char* argv[]) {
                     auto err = raise<analysis::error>(node);
                     err << "Unhandled binary operator " << e.op;
                 }
-                return st_type_t(VOID_T);
+                return st_type_t(VOID);
             },
             [](const unary_op_t<st_type_t>& e, const auto& node) {
                 const auto& ty_ref = e.operand.get().attribute.value();
@@ -305,7 +302,7 @@ int main(int argc, const char* argv[]) {
                             << ty;
                     }
                 } else if (e.op == NOT) {
-                    if (ty != BOOL_T) {
+                    if (ty != BOOL) {
                         auto err = raise<analysis::error>(node);
                         err << "Boolean operator \"not\" must be applied to a value of type "
                                "\"bool\"";

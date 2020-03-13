@@ -26,6 +26,11 @@ namespace bt { namespace analysis {
             return os;
         }
 
+        auto operator<<(ostream& os, const placeholder_t&) -> ostream& {
+            os << "<placeholder>";
+            return os;
+        }
+
         auto operator<<(ostream& os, const void_t&) -> ostream& {
             os << "void";
             return os;
@@ -206,11 +211,21 @@ namespace bt { namespace analysis {
             os << ")";
             return os;
         }
-
+        
         auto operator==(const string_t& lhs, const string_t& rhs) -> bool { return true; }
         auto operator!=(const string_t& lhs, const string_t& rhs) -> bool { return !(lhs == rhs); }
         auto operator<<(ostream& os, const string_t& s) -> ostream& {
             os << "string";
+            return os;
+        }
+
+        auto operator<<(ostream& os, const floatlit_t& v) -> ostream& {
+            os << "floatlit";
+            return os;
+        }
+
+        auto operator<<(ostream& os, const intlit_t& v) -> ostream& {
+            os << "intlit";
             return os;
         }
 
@@ -220,6 +235,26 @@ namespace bt { namespace analysis {
 
         auto operator!=(const nominal_type_t& lhs, const nominal_type_t& rhs) -> bool {
             return !(lhs == rhs);
+        }
+
+        auto operator==(const placeholder_t&, const placeholder_t&) -> bool {
+            return true;
+        }
+        auto operator!=(const placeholder_t&, const placeholder_t&) -> bool {
+            return true;
+        }
+
+        auto operator==(const intlit_t&, const intlit_t&) -> bool {
+            return true;
+        }
+        auto operator==(const floatlit_t&, const floatlit_t&) -> bool {
+            return true;
+        }
+        auto operator!=(const intlit_t&, const intlit_t&) -> bool {
+            return false;
+        }
+        auto operator!=(const floatlit_t&, const floatlit_t&) -> bool {
+            return false;
         }
 
     }  // namespace types
@@ -302,16 +337,60 @@ namespace bt { namespace analysis {
         return d_u < d_t ? u_input : t_input;
     }
 
-    auto is_assignable_to(const type_t& src, const type_t& dst) -> bool {
-        return implicit_conversion_distance(src, dst) >= 0;
+    auto ptr_depth(type_t t) -> int {
+        auto depth = 0;
+
+        while (auto p = t->get_if<types::ptr_t>()) {
+            t = p->value_type;
+            depth++;
+        }
+
+        return depth;
     }
 
     auto is_convertible_to(const type_t& src, const type_t& dst) -> bool {
         return implicit_conversion_distance(src, dst) >= 0;
     }
 
+    auto is_assignable_to(const type_t& src, const type_t& dst) -> bool {
+        const auto d_src = ptr_depth(src);
+        const auto d_dst = ptr_depth(dst);
+        if (d_dst - 1 > d_src) return false;
+        return is_convertible_to(src, dst->as<types::ptr_t>().value_type);
+    }
+
     auto deref(const type_t& t) -> type_t {
         return t->is<types::ptr_t>() ? deref(t->as<types::ptr_t>().value_type) : t;
+    }
+
+    auto decay_ptr(type_t p) -> type_t {
+        return decay_ptr(p, ptr_depth(p));
+    }
+
+    auto decay_ptr(type_t p, int n_levels) -> type_t {
+        for (auto i = 0; i < n_levels; i++)
+            p = p->get<types::ptr_t>().value_type;
+        return p;
+    }
+
+    auto is_immutable(const type_t& t) -> bool {
+        return visit(
+                hana::overload(
+                    [&](const types::ptr_t& p) { return false; },
+                    [&](const types::variant_t& t) {
+                        return rng::all_of(t, [] (auto&& u) { return is_immutable(u); });
+                    },
+                    [&](const types::tuple_t& t) {
+                        return rng::all_of(t, [] (auto&& u) { return is_immutable(u); });
+                    },
+                    [&](const types::array_t& t) {
+                        return is_immutable(t.value_type);
+                    },
+                    [&](const types::dynarr_t& t) {
+                        return is_immutable(t.value_type);
+                    },
+                    [&](const auto& t) { return true; }),
+                t.get());
     }
 
     auto implicit_conversion_distance(const type_t& src, const type_t& dst) -> int {
@@ -341,28 +420,38 @@ namespace bt { namespace analysis {
 
             visit(
                 hana::overload(
-                    [&](const types::i8_t&) { candidates.push_back(type_value(i16_t{})); },
-                    [&](const types::i16_t&) { candidates.push_back(type_value(i32_t{})); },
-                    [&](const types::i32_t&) {
-                        candidates.push_back(type_value(i64_t{}));
-                        candidates.push_back(type_value(f32_t{}));
+                    [&](const types::placeholder_t&) {
+                        candidates.push_back(dst);
                     },
-                    [&](const types::i64_t&) { candidates.push_back(type_value(f64_t{})); },
+                    [&](const types::intlit_t&) { 
+                        candidates.push_back(U8);
+                        candidates.push_back(I8);
+                    },
+                    [&](const types::floatlit_t&) { 
+                        candidates.push_back(F32);
+                    },
+                    [&](const types::i8_t&) { candidates.push_back(I16); },
+                    [&](const types::i16_t&) { candidates.push_back(I32); },
+                    [&](const types::i32_t&) {
+                        candidates.push_back(I64);
+                        candidates.push_back(F32);
+                    },
+                    [&](const types::i64_t&) { candidates.push_back(F64); },
                     [&](const types::u8_t&) {
-                        candidates.push_back(type_value(u16_t{}));
-                        candidates.push_back(type_value(i16_t{}));
+                        candidates.push_back(U16);
+                        candidates.push_back(I16);
                     },
                     [&](const types::u16_t&) {
-                        candidates.push_back(type_value(u32_t{}));
-                        candidates.push_back(type_value(i32_t{}));
+                        candidates.push_back(U32);
+                        candidates.push_back(I32);
                     },
                     [&](const types::u32_t&) {
-                        candidates.push_back(type_value(u64_t{}));
-                        candidates.push_back(type_value(i64_t{}));
+                        candidates.push_back(U64);
+                        candidates.push_back(I64);
                     },
-                    [&](const types::u64_t&) { candidates.push_back(type_value(f64_t{})); },
+                    [&](const types::u64_t&) { candidates.push_back(F64); },
                     [&](const types::ptr_t& p) { candidates.push_back(p.value_type); },
-                    [&](const types::f32_t& p) { candidates.push_back(F64_T); },
+                    [&](const types::f32_t& p) { candidates.push_back(F64); },
                     [&](const types::function_t& f) {
                         if (f.formal_parameters.empty()) candidates.push_back(f.result_type);
                     },

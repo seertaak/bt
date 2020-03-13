@@ -107,6 +107,10 @@ namespace bt { namespace analysis {
             int size;
         };
 
+        struct intlit_t {};
+
+        struct floatlit_t {};
+
         struct variant_t : std::vector<type_t> {
             using base_t = std::vector<type_t>;
             using base_t::base_t;
@@ -125,6 +129,8 @@ namespace bt { namespace analysis {
 
             static std::atomic<int> next_id;
         };
+
+        struct placeholder_t {};
 
         using i8_t = int_t<true, 8>;
         using i16_t = int_t<true, 16>;
@@ -196,6 +202,9 @@ namespace bt { namespace analysis {
         auto operator<<(std::ostream& os, const variant_t&) -> std::ostream&;
         auto operator<<(std::ostream& os, const string_t&) -> std::ostream&;
         auto operator<<(std::ostream& os, const nominal_type_t&) -> std::ostream&;
+        auto operator<<(std::ostream& os, const intlit_t&) -> std::ostream&;
+        auto operator<<(std::ostream& os, const floatlit_t&) -> std::ostream&;
+        auto operator<<(std::ostream& os, const placeholder_t&) -> std::ostream&;
 
         auto operator==(const name_and_type_t& lhs, const name_and_type_t& rhs) -> bool;
         auto operator==(const name_and_type_vector_t& lhs, const name_and_type_vector_t& rhs)
@@ -211,6 +220,9 @@ namespace bt { namespace analysis {
         auto operator==(const variant_t&, const variant_t&) -> bool;
         auto operator==(const string_t&, const string_t&) -> bool;
         auto operator==(const nominal_type_t&, const nominal_type_t&) -> bool;
+        auto operator==(const intlit_t&, const intlit_t&) -> bool;
+        auto operator==(const floatlit_t&, const floatlit_t&) -> bool;
+        auto operator==(const placeholder_t&, const placeholder_t&) -> bool;
 
         auto operator!=(const name_and_type_t& lhs, const name_and_type_t& rhs) -> bool;
         auto operator!=(const name_and_type_vector_t& lhs, const name_and_type_vector_t& rhs)
@@ -226,6 +238,9 @@ namespace bt { namespace analysis {
         auto operator!=(const variant_t&, const variant_t&) -> bool;
         auto operator!=(const string_t&, const string_t&) -> bool;
         auto operator!=(const nominal_type_t&, const nominal_type_t&) -> bool;
+        auto operator!=(const intlit_t&, const intlit_t&) -> bool;
+        auto operator!=(const floatlit_t&, const floatlit_t&) -> bool;
+        auto operator!=(const placeholder_t&, const placeholder_t&) -> bool;
     }  // namespace types
 
     using type_base_t = std::variant<std::monostate,
@@ -240,6 +255,8 @@ namespace bt { namespace analysis {
                                      types::u64_t,
                                      types::f32_t,
                                      types::f64_t,
+                                     types::intlit_t,
+                                     types::floatlit_t,
                                      types::bool_t,
                                      types::char_t,
                                      types::function_t,
@@ -301,28 +318,32 @@ namespace bt { namespace analysis {
     auto operator<<(std::ostream& os, const type_value&) -> std::ostream&;
     auto operator<<(std::ostream& os, const type_t&) -> std::ostream&;
 
-    const type_value VOID_T = types::void_t{};
-    const type_value I8_T = types::i8_t{};
-    const type_value I16_T = types::i16_t{};
-    const type_value I32_T = types::i32_t{};
-    const type_value I64_T = types::i64_t{};
-    const type_value U8_T = types::u8_t{};
-    const type_value U16_T = types::u16_t{};
-    const type_value U32_T = types::u32_t{};
-    const type_value U64_T = types::u64_t{};
-    const type_value F32_T = types::f32_t{};
-    const type_value F64_T = types::f64_t{};
-    const type_value BOOL_T = types::bool_t{};
-    const type_value CHAR_T = types::char_t{};
-    const type_value PTR_T = types::ptr_t{};
-    const type_value SLICE_T = types::slice_t{};
-    const type_value STRUCT_T = types::struct_t{};
-    const type_value ARRAY_T = types::array_t{};
-    const type_value VARIANT_T = types::variant_t{};
-    const type_value FUNCTION_T = types::array_t{};
-    const type_value TUPLE_T = types::tuple_t{};
-    const type_value UNKOWN = std::monostate{};
-    const type_value STRING = types::string_t{};
+    const type_t VOID = type_value(types::void_t{});
+    const type_t I8 = type_value(types::i8_t{});
+    const type_t I16 = type_value(types::i16_t{});
+    const type_t I32 = type_value(types::i32_t{});
+    const type_t I64 = type_value(types::i64_t{});
+    const type_t U8 = type_value(types::u8_t{});
+    const type_t U16 = type_value(types::u16_t{});
+    const type_t U32 = type_value(types::u32_t{});
+    const type_t U64 = type_value(types::u64_t{});
+    const type_t F32 = type_value(types::f32_t{});
+    const type_t F64 = type_value(types::f64_t{});
+    const type_t INTLIT = type_value(types::intlit_t{});
+    const type_t FLOATLIT = type_value(types::floatlit_t{});
+    const type_t BOOL = type_value(types::bool_t{});
+    const type_t CHAR = type_value(types::char_t{});
+    const type_t PTR = type_value(types::ptr_t{});
+    const type_t SLICE = type_value(types::slice_t{});
+    const type_t STRUCT = type_value(types::struct_t{});
+    const type_t ARRAY = type_value(types::array_t{});
+    const type_t DYNARR = type_value(types::dynarr_t{});
+    const type_t VARIANT = type_value(types::variant_t{});
+    const type_t FUNCTION = type_value(types::function_t{});
+    const type_t TUPLE = type_value(types::tuple_t{});
+    const type_t UNKOWN = type_value(std::monostate{});
+    const type_t STRLIT = type_value(types::strlit_t{});
+    const type_t STRING = type_value(types::string_t{});
 
     auto is_integral(const type_t& t) -> bool;
     auto is_floating_point(const type_t& t) -> bool;
@@ -333,4 +354,8 @@ namespace bt { namespace analysis {
     auto implicit_conversion_distance(const type_t& src, const type_t& dst) -> int;
     auto is_assignable_to(const type_t& value, const type_t& target) -> bool;
     auto deref(const type_t& t) -> type_t;
+    auto ptr_depth(type_t t) -> int;
+    auto decay_ptr(type_t p) -> type_t;
+    auto decay_ptr(type_t p, int n_levels) -> type_t;
+    auto is_immutable(const type_t& t) -> bool;
 }}  // namespace bt::analysis

@@ -59,6 +59,7 @@ namespace bt { namespace analysis {
         // any two functions may exhibit single or mutual recursion.
         for (auto& stmt : block) {
             if (auto pe = stmt.get().get_if<var_def_t<type_t>>()) {
+                cout << "TYPE CHECK BLOCK STATEMENT: VAR DEF FN PASS." << endl;
                 if (auto pfn_ast = pe->rhs.get().get_if<parser::syntax::fn_expr_t<type_t>>()) {
                     const auto& name = pe->name.name;
                     const auto s = "F:"s + name;
@@ -151,9 +152,33 @@ namespace bt { namespace analysis {
 
                 scope.types.insert(name, td_ty);
                 scope_locs.insert(s, pe->name.location);
-            } else if (auto pe = stmt.get().get_if<var_def_t<type_t>>()) {
+            } else if (auto pe = stmt.get().get_if<let_var_t<type_t>>()) {
+                cout << "TYPE CHECK BLOCK STATEMENT: LET VAR." << endl;
                 scope.context = context_t::var;
                 type_check(stmt, scope);
+
+                if (!pe->rhs.get().attribute.is<types::function_t>()) {
+                    const auto& name = pe->name.name;
+                    const auto s = "V:"s + name;
+
+                    if (auto ploc = scope_locs.lookup(s)) {
+                        auto err = raise<error>(stmt);
+                        err << "Duplicate (let) variable declaration of \"" << name
+                            << "\", with duplicate at " << *ploc;
+                    }
+
+                    scope.vars.insert(name, stmt.get().attribute);
+                    scope_locs.insert(s, pe->name.location);
+                } else {
+                    auto& fn_ty = pe->rhs.get().attribute;
+                    if (pe->type.get().attribute.get().empty()) pe->type.get().attribute = fn_ty;
+                }
+            } else if (auto pe = stmt.get().get_if<var_def_t<type_t>>()) {
+                cout << "TYPE CHECK BLOCK STATEMENT: DEF VAR." << endl;
+                scope.context = context_t::var;
+                type_check(stmt, scope);
+
+                cout << "TYPE CHECK BLOCK STATEMENT: DEF VAR first part DONE" << endl;
 
                 if (!pe->rhs.get().attribute.is<types::function_t>()) {
                     const auto& name = pe->name.name;
@@ -186,33 +211,33 @@ namespace bt { namespace analysis {
             hana::overload(
                 [&](primitive_type_t& i) -> type_t {
                     return visit(
-                        hana::overload([](lexer::token::char_t& t) -> type_t { return CHAR_T; },
-                                       [](lexer::token::byte_t& t) -> type_t { return I8_T; },
-                                       [](lexer::token::short_t& t) -> type_t { return I16_T; },
-                                       [](lexer::token::int_t& t) -> type_t { return I32_T; },
-                                       [](lexer::token::long_t& t) -> type_t { return I64_T; },
-                                       [](lexer::token::ubyte_t& t) -> type_t { return U8_T; },
-                                       [](lexer::token::ushort_t& t) -> type_t { return U16_T; },
-                                       [](lexer::token::uint_t& t) -> type_t { return U32_T; },
-                                       [](lexer::token::ulong_t& t) -> type_t { return U64_T; },
-                                       [](lexer::token::float_t& t) -> type_t { return F32_T; },
-                                       [](lexer::token::double_t& t) -> type_t { return F64_T; },
-                                       [](lexer::token::i8_t& t) -> type_t { return I8_T; },
-                                       [](lexer::token::i16_t& t) -> type_t { return I16_T; },
-                                       [](lexer::token::i32_t& t) -> type_t { return I32_T; },
-                                       [](lexer::token::i64_t& t) -> type_t { return I64_T; },
-                                       [](lexer::token::u8_t& t) -> type_t { return U8_T; },
-                                       [](lexer::token::u16_t& t) -> type_t { return U16_T; },
-                                       [](lexer::token::u32_t& t) -> type_t { return U32_T; },
-                                       [](lexer::token::u64_t& t) -> type_t { return U64_T; },
+                        hana::overload([](lexer::token::char_t& t) -> type_t { return CHAR; },
+                                       [](lexer::token::byte_t& t) -> type_t { return I8; },
+                                       [](lexer::token::short_t& t) -> type_t { return I16; },
+                                       [](lexer::token::int_t& t) -> type_t { return I32; },
+                                       [](lexer::token::long_t& t) -> type_t { return I64; },
+                                       [](lexer::token::ubyte_t& t) -> type_t { return U8; },
+                                       [](lexer::token::ushort_t& t) -> type_t { return U16; },
+                                       [](lexer::token::uint_t& t) -> type_t { return U32; },
+                                       [](lexer::token::ulong_t& t) -> type_t { return U64; },
+                                       [](lexer::token::float_t& t) -> type_t { return F32; },
+                                       [](lexer::token::double_t& t) -> type_t { return F64; },
+                                       [](lexer::token::i8_t& t) -> type_t { return I8; },
+                                       [](lexer::token::i16_t& t) -> type_t { return I16; },
+                                       [](lexer::token::i32_t& t) -> type_t { return I32; },
+                                       [](lexer::token::i64_t& t) -> type_t { return I64; },
+                                       [](lexer::token::u8_t& t) -> type_t { return U8; },
+                                       [](lexer::token::u16_t& t) -> type_t { return U16; },
+                                       [](lexer::token::u32_t& t) -> type_t { return U32; },
+                                       [](lexer::token::u64_t& t) -> type_t { return U64; },
                                        [](lexer::token::ptr_t& t) -> type_t {
-                                           return type_value(types::ptr_t{VOID_T});
+                                           return type_value(types::ptr_t{VOID});
                                        },
                                        [](lexer::token::array_t& t) -> type_t {
-                                           return type_value(types::array_t{VOID_T, {}});
+                                           return type_value(types::array_t{VOID, {}});
                                        },
                                        [](lexer::token::slice_t& t) -> type_t {
-                                           return type_value(types::slice_t{VOID_T, 0, 0, 0});
+                                           return type_value(types::slice_t{VOID, 0, 0, 0});
                                        },
                                        [](lexer::token::variant_t& t) -> type_t {
                                            return type_value(types::variant_t{});
@@ -229,6 +254,7 @@ namespace bt { namespace analysis {
                                 type_value type;
                                 if (e.type == 'i') {
                                     switch (e.width) {
+                                    case 0: type = type_value(types::intlit_t()); break;
                                     case 8: type = type_value(types::i8_t()); break;
                                     case 16: type = type_value(types::i16_t()); break;
                                     case 32: type = type_value(types::i32_t()); break;
@@ -251,6 +277,8 @@ namespace bt { namespace analysis {
                                             << ", should be 8, 16, 32, or 64 (or unspecified)";
                                     }
                                     }
+                                } else if (e.type == '?') {
+                                    type = type_value(types::intlit_t());
                                 } else {
                                     auto err = raise<analysis::error>(ast);
                                     err << "Integer literals should be either signed (i) or "
@@ -266,6 +294,7 @@ namespace bt { namespace analysis {
                             [&](floating_point_literal_t& e) -> type_t {
                                 type_value type;
                                 switch (e.width) {
+                                case 0: type = type_value(types::floatlit_t()); break;
                                 case 32: type = type_value(types::f32_t()); break;
                                 case 64: type = type_value(types::f64_t()); break;
                                 default: {
@@ -320,7 +349,7 @@ namespace bt { namespace analysis {
                     return type_check_block(block, scope);
                 },
                 [&](data_t<type_t>& data) -> type_t {
-                    if (data.empty()) return VOID_T;
+                    if (data.empty()) return VOID;
 
                     auto t = types::tuple_t();
 
@@ -353,34 +382,34 @@ namespace bt { namespace analysis {
                     using namespace lexer;
 
                     if (opt == TILDE) {
-                        if (is_assignable_to(t, U8_T)) return U8_T;
-                        if (is_assignable_to(t, U16_T)) return U16_T;
-                        if (is_assignable_to(t, U32_T)) return U32_T;
-                        if (is_assignable_to(t, U64_T)) return U64_T;
-                        if (is_assignable_to(t, I8_T)) return I8_T;
-                        if (is_assignable_to(t, I16_T)) return I16_T;
-                        if (is_assignable_to(t, I32_T)) return I32_T;
-                        if (is_assignable_to(t, I64_T)) return I64_T;
+                        if (is_convertible_to(t, U8)) return U8;
+                        if (is_convertible_to(t, U16)) return U16;
+                        if (is_convertible_to(t, U32)) return U32;
+                        if (is_convertible_to(t, U64)) return U64;
+                        if (is_convertible_to(t, I8)) return I8;
+                        if (is_convertible_to(t, I16)) return I16;
+                        if (is_convertible_to(t, I32)) return I32;
+                        if (is_convertible_to(t, I64)) return I64;
 
                         error("bitwise ");
                     } else if (opt == MINUS || opt == PLUS) {
-                        if (is_assignable_to(t, U8_T)) return U8_T;
-                        if (is_assignable_to(t, U16_T)) return U16_T;
-                        if (is_assignable_to(t, U32_T)) return U32_T;
-                        if (is_assignable_to(t, U64_T)) return U64_T;
-                        if (is_assignable_to(t, I8_T)) return I8_T;
-                        if (is_assignable_to(t, I16_T)) return I16_T;
-                        if (is_assignable_to(t, I32_T)) return I32_T;
-                        if (is_assignable_to(t, I64_T)) return I64_T;
-                        if (is_assignable_to(t, F32_T)) return F32_T;
-                        if (is_assignable_to(t, F64_T)) return F64_T;
+                        if (is_convertible_to(t, U8)) return U8;
+                        if (is_convertible_to(t, U16)) return U16;
+                        if (is_convertible_to(t, U32)) return U32;
+                        if (is_convertible_to(t, U64)) return U64;
+                        if (is_convertible_to(t, I8)) return I8;
+                        if (is_convertible_to(t, I16)) return I16;
+                        if (is_convertible_to(t, I32)) return I32;
+                        if (is_convertible_to(t, I64)) return I64;
+                        if (is_convertible_to(t, F32)) return F32;
+                        if (is_convertible_to(t, F64)) return F64;
 
                         error("arithmetic ");
                     } else if (opt == NOT) {
-                        if (is_assignable_to(t, BOOL_T)) return BOOL_T;
+                        if (is_convertible_to(t, BOOL)) return BOOL;
                         error("boolean ");
                     }
-                    return VOID_T;
+                    return VOID;
                 },
                 [&](bin_op_t<type_t>& op) -> type_t {
                     const auto opt = op.op;
@@ -409,72 +438,72 @@ namespace bt { namespace analysis {
                         opt == LEQ || opt == IS || opt == IN) {
                         if (!pt) {
                             error("comparison ");
-                            return VOID_T;
+                            return VOID;
                         }
-                        return BOOL_T;
+                        return BOOL;
                     } else if (opt == AND || opt == OR) {
                         if (!pt) {
                             error("boolean ");
-                            return VOID_T;
+                            return VOID;
                         }
                         const auto& t = *pt;
                         cout << "Bin op type checking: promoted type in bin op " << opstr << " is "
                              << *pt << endl;
 
-                        if (is_assignable_to(t, BOOL_T)) return BOOL_T;
+                        if (is_convertible_to(t, BOOL)) return BOOL;
 
                         error("boolean ");
 
-                        return VOID_T;
+                        return VOID;
                     } else if (opt == BAR || opt == AMPERSAND || opt == HAT) {
                         if (!pt) {
                             error("bitwise ");
-                            return VOID_T;
+                            return VOID;
                         }
                         const auto& t = *pt;
                         cout << "Bin op type checking: promoted type in bin op " << opstr << " is "
                              << *pt << endl;
 
-                        if (is_assignable_to(t, U8_T)) return U8_T;
-                        if (is_assignable_to(t, U16_T)) return U16_T;
-                        if (is_assignable_to(t, U32_T)) return U32_T;
-                        if (is_assignable_to(t, U64_T)) return U64_T;
-                        if (is_assignable_to(t, I8_T)) return I8_T;
-                        if (is_assignable_to(t, I16_T)) return I16_T;
-                        if (is_assignable_to(t, I32_T)) return I32_T;
-                        if (is_assignable_to(t, I64_T)) return I64_T;
+                        if (is_convertible_to(t, U8)) return U8;
+                        if (is_convertible_to(t, U16)) return U16;
+                        if (is_convertible_to(t, U32)) return U32;
+                        if (is_convertible_to(t, U64)) return U64;
+                        if (is_convertible_to(t, I8)) return I8;
+                        if (is_convertible_to(t, I16)) return I16;
+                        if (is_convertible_to(t, I32)) return I32;
+                        if (is_convertible_to(t, I64)) return I64;
 
                         error("bitwise ");
 
-                        return VOID_T;
+                        return VOID;
                     } else if (opt == PLUS || opt == MINUS || opt == STAR || opt == SLASH ||
                                opt == PERCENTAGE || opt == STAR_STAR) {
                         if (!pt) {
                             error("arithmetic ");
-                            return VOID_T;
+                            return VOID;
                         }
                         cout << "Bin op type checking: promoted type in bin op " << opstr << " is "
                              << *pt << endl;
 
                         const auto& t = *pt;
 
-                        if (is_assignable_to(t, U8_T)) return U8_T;
-                        if (is_assignable_to(t, U16_T)) return U16_T;
-                        if (is_assignable_to(t, U32_T)) return U32_T;
-                        if (is_assignable_to(t, U64_T)) return U64_T;
-                        if (is_assignable_to(t, I8_T)) return I8_T;
-                        if (is_assignable_to(t, I16_T)) return I16_T;
-                        if (is_assignable_to(t, I32_T)) return I32_T;
-                        if (is_assignable_to(t, I64_T)) return I64_T;
-                        if (is_assignable_to(t, F32_T)) return F32_T;
-                        if (is_assignable_to(t, F64_T)) return F64_T;
+                        if (is_convertible_to(t, U8)) return U8;
+                        if (is_convertible_to(t, U16)) return U16;
+                        if (is_convertible_to(t, U32)) return U32;
+                        if (is_convertible_to(t, U64)) return U64;
+                        if (is_convertible_to(t, I8)) return I8;
+                        if (is_convertible_to(t, I16)) return I16;
+                        if (is_convertible_to(t, I32)) return I32;
+                        if (is_convertible_to(t, I64)) return I64;
+                        if (is_convertible_to(t, F32)) return F32;
+                        if (is_convertible_to(t, F64)) return F64;
 
                         error("arithmetic ");
 
-                        return VOID_T;
+                        return VOID;
                     }
 
-                    return VOID_T;
+                    return VOID;
                 },
                 [&](invoc_t<type_t>& i) -> type_t {
                     auto scope = parent_scope;
@@ -506,7 +535,7 @@ namespace bt { namespace analysis {
                                 act_params.is<types::array_t>())) {
                             auto err = raise<analysis::error>(ast);
                             err << "Expected actual argument pack (data), got: " << act_params;
-                            act_params = TUPLE_T;
+                            act_params = TUPLE;
                         }
 
                         if (auto pap = act_params.get_if<types::tuple_t>()) {
@@ -515,7 +544,7 @@ namespace bt { namespace analysis {
 
                             if (!problem) {
                                 for (auto j = 0; j < form_params.size(); j++) {
-                                    if (is_assignable_to((*pap)[j], form_params[j].type)) {
+                                    if (is_convertible_to((*pap)[j], form_params[j].type)) {
                                         problem = true;
                                         break;
                                     }
@@ -537,7 +566,7 @@ namespace bt { namespace analysis {
                                     << "\nActual parameters: " << act_params;
                             }
 
-                            if (!is_assignable_to(p->value_type, form_params.front().type)) {
+                            if (!is_convertible_to(p->value_type, form_params.front().type)) {
                                 auto err = raise<analysis::error>(ast);
                                 err << "Mismatch between actual and formal parameters. "
                                     << "\nFormal parameters: " << form_params
@@ -622,7 +651,7 @@ namespace bt { namespace analysis {
                     auto branch_return_tys = vector<type_t>();
                     auto scope = parent_scope;
 
-                    type_t test_ty = VOID_T;
+                    type_t test_ty = VOID;
 
                     auto& test = v.test;
 
@@ -634,7 +663,7 @@ namespace bt { namespace analysis {
                         test_ty = test.get().attribute;
                     }
 
-                    if (!is_convertible_to(test_ty, BOOL_T)) {
+                    if (!is_convertible_to(test_ty, BOOL)) {
                         auto err = raise<error>(ast);
                         err << "While test condition must have type \"bool\", found: \"" << test_ty
                             << "\"";
@@ -660,7 +689,7 @@ namespace bt { namespace analysis {
                             test_ty = test.get().attribute;
                         }
 
-                        if (!is_convertible_to(test_ty, BOOL_T)) {
+                        if (!is_convertible_to(test_ty, BOOL)) {
                             auto err = raise<error>(ast);
                             err << "If condition must have type \"bool\", found: \"" << test_ty
                                 << "\"";
@@ -687,7 +716,20 @@ namespace bt { namespace analysis {
                 },
                 [&](elif_t<type_t>& i) -> type_t { return UNKOWN; },
                 [&](else_t<type_t>& i) -> type_t { return UNKOWN; },
-                [&](assign_t<type_t>& i) -> type_t { return UNKOWN; },
+                [&](assign_t<type_t>& i) -> type_t { 
+                    auto scope = parent_scope;
+                    scope.context = context_t::var;
+                    type_check(i.lhs, scope);
+                    scope.context = context_t::var;
+                    type_check(i.rhs, scope);
+
+                    if (is_assignable_to(i.rhs->attribute, i.lhs->attribute))
+                        return i.lhs->attribute;
+
+                    auto err = raise<analysis::error>(ast);
+
+                    return UNKOWN;
+                },
                 [&](fn_expr_t<type_t>& f) -> type_t {
                     cout << "TYPE CHECKING FN EXPR: " << f << endl;
                     type_t result = type_value(types::function_t{});
@@ -734,6 +776,51 @@ namespace bt { namespace analysis {
 
                     return result;
                 },
+                [&](let_var_t<type_t>& f) -> type_t {
+                    auto scope = parent_scope;
+                    scope.context = context_t::type;
+                    type_check(f.type, scope);
+                    scope.context = context_t::var;
+                    type_check(f.rhs, scope);
+
+                    auto deduced_ty = f.rhs->attribute;
+                    auto decl_ty = f.type->attribute;
+
+                    if (deduced_ty->empty() && decl_ty->empty())
+                        return UNKOWN;
+
+                    if (decl_ty->empty()) {
+                        deduced_ty = decay_ptr(deduced_ty);
+                    } else if (!is_immutable(decl_ty)) {
+                        auto err = raise<analysis::error>(ast);
+                        err << "Let variable statement must have an immutable type, but the "
+                            << "declared type \"" << decl_ty << "\" has at least \"ptr\" nested "
+                            << "in it (pointers imply mutation!)";
+                        return UNKOWN;
+                    }
+
+                    if (deduced_ty == INTLIT) 
+                        deduced_ty = I32;
+                    else if (deduced_ty == FLOATLIT) 
+                        deduced_ty = F64;
+
+                    if (decl_ty->empty()) decl_ty = deduced_ty;
+
+                    if (!deduced_ty->empty()) {
+                        if (is_convertible_to(deduced_ty, decl_ty)) {
+                            cout << "SUCCESS! in let var; returning: " << decl_ty << endl;
+                            return decl_ty;
+                        }
+
+                        auto err = raise<analysis::error>(ast);
+                        err << "Can't assign value of type \"" << deduced_ty
+                            << "\" to variable \"" << f.name.name << "\" of type \"" << decl_ty << "\"";
+
+                        return UNKOWN;
+                    }
+
+                    return decl_ty;
+                },
                 [&](var_def_t<type_t>& f) -> type_t {
                     auto scope = parent_scope;
                     scope.context = context_t::type;
@@ -741,32 +828,55 @@ namespace bt { namespace analysis {
                     scope.context = context_t::var;
                     type_check(f.rhs, scope);
 
-                    auto decl_ty = f.type.get().attribute.get();
-                    auto& deduced_ty = f.rhs.get().attribute.get();
+                    auto deduced_ty = f.rhs->attribute;
+                    auto& decl_ty = f.type->attribute;
 
-                    if (decl_ty.empty()) {
-                        decl_ty = deduced_ty;
-                        f.type->attribute = deduced_ty;
-                        if (decl_ty.is<types::ptr_t>())
-                            decl_ty = decl_ty.get<types::ptr_t>().value_type;
+                    if (deduced_ty->empty() && decl_ty->empty())
+                        return UNKOWN;
+
+                    if (decl_ty->empty()) {
+                        // note: behaviour in type deduction is as follows. 'var' statements
+                        // are deduced, by default, as *values*. In order to allow pointers
+                        // to declared in a concise syntax, we modify and extend C++'s 
+                        // 'auto&' notation: 'var*' will re-introduce a pointer into the 
+                        // deduced type, 'var**' re-introduces two pointer indirections, and
+                        // so on.
+
+                        const auto d = ptr_depth(deduced_ty);
+
+                        const auto z = d - f.n_indirections;
+                        if (z > 0) 
+                            deduced_ty = decay_ptr(deduced_ty, z);
+                        else if (z < 0) {
+                            auto err = raise<analysis::error>(ast);
+                            err << "In variable declaration, the left-hand side has " 
+                                << f.n_indirections << " '*' (pointer) symbols suggesting the "
+                                << "right-hand side has at least " << f.n_indirections << ", "
+                                << "but it actually has " << d << " < " << f.n_indirections 
+                                << " pointer indirections";
+                        } 
                     }
 
-                    const auto mkptr = [&](auto&& t) -> type_t {
-                        return type_value(types::ptr_t{t});
-                    };
+                    if (deduced_ty == INTLIT) 
+                        deduced_ty = I32;
+                    else if (deduced_ty == FLOATLIT) 
+                        deduced_ty = F64;
 
-                    if (!decl_ty.empty() && !deduced_ty.empty()) {
-                        if (is_assignable_to(deduced_ty, decl_ty)) return mkptr(decl_ty);
+                    if (decl_ty->empty()) decl_ty = deduced_ty;
+
+                    const auto var_ty = type_t(type_value(types::ptr_t{decl_ty}));
+
+                    if (!deduced_ty->empty()) {
+                        if (is_assignable_to(deduced_ty, var_ty)) return var_ty;
 
                         auto err = raise<analysis::error>(ast);
                         err << "Can't assign value of type \"" << deduced_ty
-                            << "\" to value of type \"" << decl_ty << "\" to variable " << f.name;
-                    } else if (decl_ty.empty() && !deduced_ty.empty()) {
-                        return mkptr(deduced_ty);
-                    } else if (!decl_ty.empty() && deduced_ty.empty()) {
-                        return mkptr(decl_ty);
+                            << "\" to variable \"" << f.name.name << "\" of type \"" << decl_ty << "\"";
+
+                        return UNKOWN;
                     }
-                    return UNKOWN;
+
+                    return var_ty;
                 },
                 [&](for_t<type_t>& v) -> type_t {
                     auto scope = parent_scope;
@@ -792,9 +902,9 @@ namespace bt { namespace analysis {
                     } else if (auto pdynarr = seq_ty->get_if<types::dynarr_t>()) {
                         scope.vars.insert(v.var_lhs.name, pdynarr->value_type);
                     } else if (auto pdynarr = seq_ty->get_if<types::string_t>()) {
-                        scope.vars.insert(v.var_lhs.name, CHAR_T);
+                        scope.vars.insert(v.var_lhs.name, CHAR);
                     } else if (auto pdynarr = seq_ty->get_if<types::strlit_t>()) {
-                        scope.vars.insert(v.var_lhs.name, CHAR_T);
+                        scope.vars.insert(v.var_lhs.name, CHAR);
                     } else {
                         auto e = err(v.var_rhs);
                         e << "Invalid iteration target for iteration variable \"" << v.var_lhs
@@ -805,8 +915,8 @@ namespace bt { namespace analysis {
                     type_check(v.body, scope);
                     return v.body->attribute;
                 },
-                [&](break_t& v) -> type_t { return VOID_T; },
-                [&](continue_t& v) -> type_t { return VOID_T; },
+                [&](break_t& v) -> type_t { return VOID; },
+                [&](continue_t& v) -> type_t { return VOID; },
                 [&](type_expr_t<type_t>& v) -> type_t {
                     auto scope = parent_scope;
                     scope.context = context_t::type;

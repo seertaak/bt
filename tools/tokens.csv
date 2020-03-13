@@ -20,11 +20,12 @@ or,or
 is,is
 xor,xor
 var,var
+let,let
 data,data
 object,object
 const,const
-alias,alias
 type,type
+implicit,implicit
 fn,fn
 def,def
 in,in

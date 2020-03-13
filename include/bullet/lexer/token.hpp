@@ -393,6 +393,12 @@ namespace bt { namespace lexer {
             static constexpr const uint32_t categories = reserved_word;
             static constexpr const bool is_reserved_word = true;
         };
+        struct let_t : token_tag {
+            static constexpr const std::string_view name{"LET"};
+            static constexpr const std::string_view token{"let"};
+            static constexpr const uint32_t categories = reserved_word;
+            static constexpr const bool is_reserved_word = true;
+        };
         struct not_t : token_tag {
             static constexpr const std::string_view name{"NOT"};
             static constexpr const std::string_view token{"not"};
@@ -858,6 +864,7 @@ namespace bt { namespace lexer {
                                              i32_t,
                                              i64_t,
                                              int_t,
+                                             let_t,
                                              not_t,
                                              pre_t,
                                              ptr_t,
@@ -983,6 +990,7 @@ namespace bt { namespace lexer {
                             token::i32_t,
                             token::i64_t,
                             token::int_t,
+                            token::let_t,
                             token::not_t,
                             token::pre_t,
                             token::ptr_t,
@@ -1115,6 +1123,7 @@ namespace bt { namespace lexer {
     const token_t I32{token::i32_t{}};
     const token_t I64{token::i64_t{}};
     const token_t INT{token::int_t{}};
+    const token_t LET{token::let_t{}};
     const token_t NOT{token::not_t{}};
     const token_t PRE{token::pre_t{}};
     const token_t PTR{token::ptr_t{}};

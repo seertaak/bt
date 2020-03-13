@@ -30,6 +30,7 @@
 #include <bullet/parser/ast/type_expr.hpp>
 #include <bullet/parser/ast/unary_op.hpp>
 #include <bullet/parser/ast/var_def.hpp>
+#include <bullet/parser/ast/let_var.hpp>
 #include <bullet/parser/ast/while.hpp>
 #include <bullet/parser/ast/yield.hpp>
 #include <bullet/parser/ast_fwd.hpp>
@@ -106,6 +107,7 @@ namespace bt { namespace parser {
                                          elif_t<Attr>,
                                          else_t<Attr>,
                                          var_def_t<Attr>,
+                                         let_var_t<Attr>,
                                          fn_expr_t<Attr>,
                                          type_expr_t<Attr>,
                                          block_t<Attr>,
@@ -346,11 +348,27 @@ namespace bt { namespace parser {
 
                            dedent();
                        },
+                       [&](const let_var_t<Attr>& f) {
+                           out << margin() << "let_var:" << endl;
+
+                           indent();
+                           out << margin() << "name:" << f.name << endl;
+                           out << margin() << "type:" << endl;
+                           indent();
+                           pretty_print<Attr>(f.type, out, indent_level);
+                           dedent();
+                           out << margin() << "rhs:" << endl;
+                           indent();
+                           pretty_print<Attr>(f.rhs.get(), out, indent_level);
+                           dedent();
+                           dedent();
+                       },
                        [&](const var_def_t<Attr>& f) {
                            out << margin() << "var_def:" << endl;
 
                            indent();
                            out << margin() << "name:" << f.name << endl;
+                           out << margin() << "n_indirections:" << f.n_indirections << endl;
                            out << margin() << "type:" << endl;
                            indent();
                            pretty_print<Attr>(f.type, out, indent_level);

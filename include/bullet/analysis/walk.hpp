@@ -168,9 +168,18 @@ namespace bt { namespace analysis {
                         result.attribute = f(result.template get<assign_t<OutputAttr>>(), node);
                         return result;
                     },
+                    [&](const let_var_t<InputAttr>& i) {
+                        auto result = out_tree_t(let_var_t<OutputAttr>{
+                            i.name, walk_post_order_impl<OutputAttr>(i.type, fn...),
+                            walk_post_order_impl<OutputAttr>(i.rhs, fn...)});
+                        result.location = l;
+                        result.attribute = f(result.template get<let_var_t<OutputAttr>>(), node);
+
+                        return result;
+                    },
                     [&](const var_def_t<InputAttr>& i) {
                         auto result = out_tree_t(var_def_t<OutputAttr>{
-                            i.name, walk_post_order_impl<OutputAttr>(i.type, fn...),
+                            i.name, i.n_indirections, walk_post_order_impl<OutputAttr>(i.type, fn...),
                             walk_post_order_impl<OutputAttr>(i.rhs, fn...)});
                         result.location = l;
                         result.attribute = f(result.template get<var_def_t<OutputAttr>>(), node);
@@ -472,6 +481,22 @@ namespace bt { namespace analysis {
 
                         return result;
                     },
+                    [&](const let_var_t<InputAttr>& i) {
+                        auto result = out_tree_t(let_var_t<OutputAttr>{});
+
+                        result.location = l;
+                        result.attribute = f(i, node, parent_attrib);
+
+                        auto& o = result.template get<let_var_t<OutputAttr>>();
+
+                        o.name = i.name;
+                        o.type = attr_node_t<OutputAttr>(
+                            walk_pre_order_impl<OutputAttr>(i.type, result.attribute, fn...));
+                        o.rhs = attr_node_t<OutputAttr>(
+                            walk_pre_order_impl<OutputAttr>(i.rhs, result.attribute, fn...));
+
+                        return result;
+                    },
                     [&](const var_def_t<InputAttr>& i) {
                         auto result = out_tree_t(var_def_t<OutputAttr>{});
 
@@ -481,6 +506,7 @@ namespace bt { namespace analysis {
                         auto& o = result.template get<var_def_t<OutputAttr>>();
 
                         o.name = i.name;
+                        o.n_indirections = i.n_indirections;
                         o.type = attr_node_t<OutputAttr>(
                             walk_pre_order_impl<OutputAttr>(i.type, result.attribute, fn...));
                         o.rhs = attr_node_t<OutputAttr>(

@@ -1,4 +1,3 @@
-
 - create a POSTFIX unary operator '*'. 
     - matrix: transpose
     - ...
@@ -6,3 +5,31 @@
 - create a ? operator
     - a? evaluates to: if (a) a
     - a?b evaluates to: if (a) a.b
+
+- add syntax:
+    implicit var <x>:<T> = <E>
+
+    - semantics: any functions which accept a type to which <T> converts 
+        are rewritten to functions without that argument. Where a function
+        accepts more than one <T> argument, the function is rewritten to 
+        multiple functions as long as these do not introduce ambiguity, and were 
+        ambiguity is introduced, the left-most <T> rewrite wins.
+
+- dot operator
+    - currently dot operator is desugared to invoke(). (invoc_t)
+    - current rule:
+        - a.b => b(a)
+        - a.b(c...)  => b(a, c...)
+    - This is too restrictive because it ignores what's in the symbol table.
+    - instead, just make it a binary operator, with semantics:
+        - a.b  => b(a)
+        - a.b(c...) =>
+            if b(a, c...) ompiles, that, else if (a.b)(c...) c compiles, that, else error.
+
+            RATIONALE: 
+
+- make overloading of functions THE WAY to do things:
+    - binary operator are rewritten to function calls
+        - '*' => product, '+': -> sum, '.' => apply, '(' ... ')' => invoke, etc.
+            
+
