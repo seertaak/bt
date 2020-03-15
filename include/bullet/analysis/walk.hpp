@@ -178,9 +178,10 @@ namespace bt { namespace analysis {
                         return result;
                     },
                     [&](const var_def_t<InputAttr>& i) {
-                        auto result = out_tree_t(var_def_t<OutputAttr>{
-                            i.name, i.n_indirections, walk_post_order_impl<OutputAttr>(i.type, fn...),
-                            walk_post_order_impl<OutputAttr>(i.rhs, fn...)});
+                        auto result = out_tree_t(
+                            var_def_t<OutputAttr>{i.name, i.n_indirections,
+                                                  walk_post_order_impl<OutputAttr>(i.type, fn...),
+                                                  walk_post_order_impl<OutputAttr>(i.rhs, fn...)});
                         result.location = l;
                         result.attribute = f(result.template get<var_def_t<OutputAttr>>(), node);
 

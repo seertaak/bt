@@ -34,7 +34,7 @@ auto ast(string_view input) -> syntax::tree_t {
 }  // namespace
 
 TEST_CASE("Integral literal parsing.", "[parser]") {
-    REQUIRE(ast("42"sv) == tree_t(integral_literal_t(42, 'i', 64)));
+    REQUIRE(ast("42"sv) == tree_t(integral_literal_t(42, '?', 0)));
 }
 
 TEST_CASE("Floating point parsing.", "[parser]") {
@@ -53,7 +53,7 @@ TEST_CASE("Group", "[parser]") {
     // FIXME: there is a bug in integral token lexing (surprise, surprise)
     // which means spaces need to surround the `5' in order for it to be parsed
     // correctly.
-    REQUIRE(ast("( 5 )") == tree_t(integral_literal_t(5, 'i', 64)));
+    REQUIRE(ast("( 5 )") == tree_t(integral_literal_t(5, '?', 0)));
 }
 
 TEST_CASE("Boolean literals", "[parser]") {
@@ -73,14 +73,14 @@ TEST_CASE("Boolean operations", "[parser]") {
 TEST_CASE("Boolean comparisons", "[parser]") {
     const auto x = node_t(id("x"));
     REQUIRE(ast("x > 5") ==
-            tree_t(noattr<bin_op_t>{GT, x, node_t(integral_literal_t(5, 'i', 64))}));
+            tree_t(noattr<bin_op_t>{GT, x, node_t(integral_literal_t(5, '?', 0))}));
 
     REQUIRE(ast("x<5.0") ==
-            tree_t(noattr<bin_op_t>{LT, x, node_t(floating_point_literal_t(5, 64))}));
+            tree_t(noattr<bin_op_t>{LT, x, node_t(floating_point_literal_t(5, 0))}));
 
     REQUIRE(ast("10.0f32 >= 5") ==
             tree_t(noattr<bin_op_t>{GEQ, node_t(floating_point_literal_t(10, 32)),
-                                    node_t(integral_literal_t(5, 'i', 64))}));
+                                    node_t(integral_literal_t(5, '?', 0))}));
 
     REQUIRE(ast("x == y") == tree_t(noattr<bin_op_t>{EQUAL, node_t(id("x")), node_t(id("y"))}));
 
@@ -114,9 +114,9 @@ TEST_CASE("Statements", "[parser]") {
     const auto y = node_t(id("y"));
     const auto z = node_t(id("z"));
 
-    const auto two = node_t(integral_literal_t(2, 'i', 64));
-    const auto three = node_t(integral_literal_t(3, 'i', 64));
-    const auto four = node_t(integral_literal_t(4, 'i', 64));
+    const auto two = node_t(integral_literal_t(2, '?', 0));
+    const auto three = node_t(integral_literal_t(3, '?', 0));
+    const auto four = node_t(integral_literal_t(4, '?', 0));
 
     REQUIRE(ast("x = y + 2") ==
             tree_t(noattr<syntax::assign_t>{x, node_t(noattr<bin_op_t>{PLUS, y, two})}));

@@ -24,13 +24,13 @@
 #include <bullet/parser/ast/if.hpp>
 #include <bullet/parser/ast/invoc.hpp>
 #include <bullet/parser/ast/let_type.hpp>
+#include <bullet/parser/ast/let_var.hpp>
 #include <bullet/parser/ast/return.hpp>
 #include <bullet/parser/ast/struct.hpp>
 #include <bullet/parser/ast/template.hpp>
 #include <bullet/parser/ast/type_expr.hpp>
 #include <bullet/parser/ast/unary_op.hpp>
 #include <bullet/parser/ast/var_def.hpp>
-#include <bullet/parser/ast/let_var.hpp>
 #include <bullet/parser/ast/while.hpp>
 #include <bullet/parser/ast/yield.hpp>
 #include <bullet/parser/ast_fwd.hpp>

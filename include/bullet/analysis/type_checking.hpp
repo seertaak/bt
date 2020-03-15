@@ -716,7 +716,7 @@ namespace bt { namespace analysis {
                 },
                 [&](elif_t<type_t>& i) -> type_t { return UNKOWN; },
                 [&](else_t<type_t>& i) -> type_t { return UNKOWN; },
-                [&](assign_t<type_t>& i) -> type_t { 
+                [&](assign_t<type_t>& i) -> type_t {
                     auto scope = parent_scope;
                     scope.context = context_t::var;
                     type_check(i.lhs, scope);
@@ -786,8 +786,7 @@ namespace bt { namespace analysis {
                     auto deduced_ty = f.rhs->attribute;
                     auto decl_ty = f.type->attribute;
 
-                    if (deduced_ty->empty() && decl_ty->empty())
-                        return UNKOWN;
+                    if (deduced_ty->empty() && decl_ty->empty()) return UNKOWN;
 
                     if (decl_ty->empty()) {
                         deduced_ty = decay_ptr(deduced_ty);
@@ -799,9 +798,9 @@ namespace bt { namespace analysis {
                         return UNKOWN;
                     }
 
-                    if (deduced_ty == INTLIT) 
+                    if (deduced_ty == INTLIT)
                         deduced_ty = I32;
-                    else if (deduced_ty == FLOATLIT) 
+                    else if (deduced_ty == FLOATLIT)
                         deduced_ty = F64;
 
                     if (decl_ty->empty()) decl_ty = deduced_ty;
@@ -813,8 +812,8 @@ namespace bt { namespace analysis {
                         }
 
                         auto err = raise<analysis::error>(ast);
-                        err << "Can't assign value of type \"" << deduced_ty
-                            << "\" to variable \"" << f.name.name << "\" of type \"" << decl_ty << "\"";
+                        err << "Can't assign value of type \"" << deduced_ty << "\" to variable \""
+                            << f.name.name << "\" of type \"" << decl_ty << "\"";
 
                         return UNKOWN;
                     }
@@ -831,35 +830,34 @@ namespace bt { namespace analysis {
                     auto deduced_ty = f.rhs->attribute;
                     auto& decl_ty = f.type->attribute;
 
-                    if (deduced_ty->empty() && decl_ty->empty())
-                        return UNKOWN;
+                    if (deduced_ty->empty() && decl_ty->empty()) return UNKOWN;
 
                     if (decl_ty->empty()) {
                         // note: behaviour in type deduction is as follows. 'var' statements
                         // are deduced, by default, as *values*. In order to allow pointers
-                        // to declared in a concise syntax, we modify and extend C++'s 
-                        // 'auto&' notation: 'var*' will re-introduce a pointer into the 
+                        // to declared in a concise syntax, we modify and extend C++'s
+                        // 'auto&' notation: 'var*' will re-introduce a pointer into the
                         // deduced type, 'var**' re-introduces two pointer indirections, and
                         // so on.
 
                         const auto d = ptr_depth(deduced_ty);
 
                         const auto z = d - f.n_indirections;
-                        if (z > 0) 
+                        if (z > 0)
                             deduced_ty = decay_ptr(deduced_ty, z);
                         else if (z < 0) {
                             auto err = raise<analysis::error>(ast);
-                            err << "In variable declaration, the left-hand side has " 
+                            err << "In variable declaration, the left-hand side has "
                                 << f.n_indirections << " '*' (pointer) symbols suggesting the "
                                 << "right-hand side has at least " << f.n_indirections << ", "
-                                << "but it actually has " << d << " < " << f.n_indirections 
+                                << "but it actually has " << d << " < " << f.n_indirections
                                 << " pointer indirections";
-                        } 
+                        }
                     }
 
-                    if (deduced_ty == INTLIT) 
+                    if (deduced_ty == INTLIT)
                         deduced_ty = I32;
-                    else if (deduced_ty == FLOATLIT) 
+                    else if (deduced_ty == FLOATLIT)
                         deduced_ty = F64;
 
                     if (decl_ty->empty()) decl_ty = deduced_ty;
@@ -870,8 +868,8 @@ namespace bt { namespace analysis {
                         if (is_assignable_to(deduced_ty, var_ty)) return var_ty;
 
                         auto err = raise<analysis::error>(ast);
-                        err << "Can't assign value of type \"" << deduced_ty
-                            << "\" to variable \"" << f.name.name << "\" of type \"" << decl_ty << "\"";
+                        err << "Can't assign value of type \"" << deduced_ty << "\" to variable \""
+                            << f.name.name << "\" of type \"" << decl_ty << "\"";
 
                         return UNKOWN;
                     }

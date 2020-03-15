@@ -24,8 +24,7 @@ namespace bt { namespace parser { namespace syntax {
     template <typename Attr>
     auto operator<<(std::ostream& os, const var_def_t<Attr>& v) -> std::ostream& {
         os << "var";
-        for (auto i = 0; i < v.n_indirections; i++)
-            os << '*';
+        for (auto i = 0; i < v.n_indirections; i++) os << '*';
         os << "[" << v.name;
         if (v.type.get()) os << ": " << v.type;
         os << " = " << v.rhs << "]";

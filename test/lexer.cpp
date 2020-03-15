@@ -112,7 +112,7 @@ TEST_CASE("Tokenize: line extension (no brackets generated)", "[lexer/tokenize]"
 
 TEST_CASE("Tokenize: integers.", "[lexer/tokenize]") {
     using namespace literal::numeric;
-    REQUIRE(tok_list("42"sv) == token_list_t{token_t(integral_t(42, 'i', 64))});
+    REQUIRE(tok_list("42"sv) == token_list_t{token_t(integral_t(42, '?', 0))});
 
     REQUIRE(tok_list("42i64"sv) == token_list_t{token_t(integral_t(42, 'i', 64))});
     REQUIRE(tok_list("42u64"sv) == token_list_t{token_t(integral_t(42, 'u', 64))});
@@ -126,9 +126,9 @@ TEST_CASE("Tokenize: integers.", "[lexer/tokenize]") {
 
 TEST_CASE("Tokenize: floats.", "[lexer/tokenize]") {
     using namespace literal::numeric;
-    REQUIRE(tok_list("42.0"sv) == token_list_t{token_t(floating_point_t(42, 64))});
-    REQUIRE(tok_list("42e0"sv) == token_list_t{token_t(floating_point_t(42, 64))});
-    REQUIRE(tok_list("42e1"sv) == token_list_t{token_t(floating_point_t(420, 64))});
+    REQUIRE(tok_list("42.0"sv) == token_list_t{token_t(floating_point_t(42, 0))});
+    REQUIRE(tok_list("42e0"sv) == token_list_t{token_t(floating_point_t(42, 0))});
+    REQUIRE(tok_list("42e1"sv) == token_list_t{token_t(floating_point_t(420, 0))});
 
     REQUIRE(tok_list("42.0f64"sv) == token_list_t{token_t(floating_point_t(42, 64))});
     REQUIRE(tok_list("42e0f64"sv) == token_list_t{token_t(floating_point_t(42, 64))});

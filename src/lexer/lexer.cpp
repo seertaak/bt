@@ -293,6 +293,7 @@ namespace bt { namespace lexer {
                             width = 32;
                             p += 2;
                         } else if (s == "64"sv) {
+                            width = 64;
                             p += 2;
                         } else {
                             throw_error("Invalid integral width speecifier", pos);
@@ -329,7 +330,7 @@ namespace bt { namespace lexer {
                     }
 
                     if (!signedness) {
-                        signedness = '?';
+                        signedness = 0;
                         width = 0;
                     } else {
                         if (p >= input_length) throw_error("Bad integral literal", pos);
@@ -354,7 +355,7 @@ namespace bt { namespace lexer {
 
                 emit_integral_token:
 
-                    if (signedness == 0) signedness = 'i';
+                    if (signedness == 0) signedness = '?';
 
                     pos = p;
                     const auto last_col = pos - start_of_line.back();

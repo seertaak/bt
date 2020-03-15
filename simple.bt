@@ -1,1 +1,5 @@
 var b = 5
+var x = 10
+let c = 
+    b
+    x

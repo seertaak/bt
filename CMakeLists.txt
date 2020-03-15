@@ -7,6 +7,8 @@ project(bullet  VERSION 0.1
 include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
 conan_basic_setup(TARGETS)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 ###################################################################
 # Source Files
 ###################################################################
@@ -37,12 +39,11 @@ target_compile_features(bt PUBLIC cxx_std_20)
 target_compile_options(bt PUBLIC 
     -Wno-logical-op-parentheses 
     -Wno-ambiguous-reversed-operator
+    -Wunused-command-line-argument
     "-Wno-#warnings"   # remove this when Boost 1.72 comes out (Hana doesn't like Clang 11!).
 )
 target_compile_definitions(bt PUBLIC 
     BOOST_HANA_CONFIG_ENABLE_STRING_UDL
-    CMAKE_C_FLAGS="-fuse-ld=lld"
-    CMAKE_CXX_FLAGS="-fuse-ld=lld"
 )
 target_include_directories(bt PUBLIC include third_party)
 

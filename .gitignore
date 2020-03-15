@@ -1,6 +1,9 @@
 *.swp
 *.swn
 *.swo
+**/*.swp
+**/*.swn
+**/*.swo
 build
 obj
 out

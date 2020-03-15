@@ -318,7 +318,8 @@ namespace bt { namespace parser {
                                 code = old_code;
                             }
 
-                            return var_def_t<empty_attribute_t>{lhs, n_indirections, result_type, rhs};
+                            return var_def_t<empty_attribute_t>{lhs, n_indirections, result_type,
+                                                                rhs};
                         },
                         [this](token::let_t) -> tree_t {
                             const auto lhs = expect<lexer::identifier_t>();
@@ -363,8 +364,7 @@ namespace bt { namespace parser {
                             const auto body = expression();
 
                             return var_def_t<empty_attribute_t>{
-                                fn_name,
-                                0,
+                                fn_name, 0,
                                 p_node_t(),  // TODO!
                                 p_node_t(fn_expr_t<empty_attribute_t>{arg_names, arg_types,
                                                                       result_type, body})};
