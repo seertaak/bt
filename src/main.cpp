@@ -9,6 +9,7 @@
 #include <range/v3/core.hpp>
 #include <range/v3/view/zip.hpp>
 
+#include <boost/stacktrace.hpp>
 #include <bullet/analysis/error.hpp>
 #include <bullet/analysis/symtab.hpp>
 #include <bullet/analysis/type.hpp>
@@ -51,6 +52,7 @@ auto print_kind(raise<T>& err, auto invoc, auto type) -> raise<T>& {
 };
 
 int main(int argc, const char* argv[]) {
+    //try { 
     cout << style::bold << fg::blue << title << style::reset << style::bold << fg::green
          << style::italic << "\n  fast. " << fg::blue << "expressive." << style::blink << fg::red
          << " dangerous.\n"
@@ -445,4 +447,8 @@ int main(int argc, const char* argv[]) {
     */
 
     return 0;
+    //} catch (...) {
+        //cout << "OH SHIT" << endl;
+        //std::cout << boost::stacktrace::stacktrace() << endl;
+    //}
 }

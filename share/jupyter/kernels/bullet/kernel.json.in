@@ -1,0 +1,9 @@
+{
+    "display_name": "bullet",
+    "argv": [
+        "@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_BINDIR@/bt_kernel",
+        "-f",
+        "{connection_file}"
+    ],
+    "language": "python"
+}

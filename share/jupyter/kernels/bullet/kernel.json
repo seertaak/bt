@@ -1,0 +1,9 @@
+{
+    "display_name": "bullet",
+    "argv": [
+        "/home/mpercossi/src/bt/build/package/bin/bt_kernel",
+        "-f",
+        "{connection_file}"
+    ],
+    "language": "python"
+}

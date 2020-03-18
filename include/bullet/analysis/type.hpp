@@ -358,4 +358,5 @@ namespace bt { namespace analysis {
     auto decay_ptr(type_t p) -> type_t;
     auto decay_ptr(type_t p, int n_levels) -> type_t;
     auto is_immutable(const type_t& t) -> bool;
+    auto regularized_type(const type_t& t) -> type_t;
 }}  // namespace bt::analysis

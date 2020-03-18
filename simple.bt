@@ -1,5 +1,6 @@
-var b = 5
-var x = 10
-let c = 
-    b
-    x
+var x:array(int, 5) =
+    1
+    2
+    3
+
+

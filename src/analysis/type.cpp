@@ -358,6 +358,8 @@ namespace bt { namespace analysis {
         return p;
     }
 
+    // +49 30 36 42 86 88 0
+
     auto is_immutable(const type_t& t) -> bool {
         return visit(
             hana::overload([&](const types::ptr_t& p) { return false; },
@@ -371,6 +373,13 @@ namespace bt { namespace analysis {
                            [&](const types::dynarr_t& t) { return is_immutable(t.value_type); },
                            [&](const auto& t) { return true; }),
             t.get());
+    }
+
+    auto regularized_type(const type_t& t) -> type_t {
+        const auto u = decay_ptr(t);
+        if (u == INTLIT) return I32;
+        if (u == FLOATLIT) return F64;
+        return u;
     }
 
     auto implicit_conversion_distance(const type_t& src, const type_t& dst) -> int {

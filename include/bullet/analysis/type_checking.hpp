@@ -11,6 +11,7 @@
 #include <range/v3/algorithm/contains.hpp>
 #include <range/v3/core.hpp>
 #include <range/v3/view/zip.hpp>
+#include <boost/stacktrace.hpp>
 
 #include <bullet/analysis/error.hpp>
 #include <bullet/analysis/symtab.hpp>
@@ -207,6 +208,7 @@ namespace bt { namespace analysis {
 
     auto type_check(parser::syntax::attr_node_t<type_t>& ast, const environment_t& parent_scope)
         -> void {
+       try { 
         ast.get().attribute = visit(
             hana::overload(
                 [&](primitive_type_t& i) -> type_t {
@@ -357,8 +359,9 @@ namespace bt { namespace analysis {
 
                     for (auto& elt : data) {
                         type_check(elt, parent_scope);
-                        if (!t.empty() && elt.get().attribute != t.back()) is_array = false;
-                        t.push_back(elt.get().attribute);
+                        const auto t_e = regularized_type(elt->attribute);
+                        if (!t.empty() && t_e != t.back()) is_array = false;
+                        t.push_back(t_e);
                     }
 
                     if (is_array) return type_value(types::array_t{t.front(), vector{t.size()}});
@@ -506,12 +509,14 @@ namespace bt { namespace analysis {
                     return VOID;
                 },
                 [&](invoc_t<type_t>& i) -> type_t {
+                    cout << "Got invocation type!" << endl;
                     auto scope = parent_scope;
 
                     if (scope.context != context_t::type) scope.context = context_t::fn;
 
                     switch (int(scope.context)) {
                     case int(context_t::fn): {
+                        cout << "function call: " << i.target << " (" << i.target->attribute << ")" << endl;
                         scope.context = context_t::fn;
                         type_check(i.target, scope);
 
@@ -580,8 +585,10 @@ namespace bt { namespace analysis {
                         type_check(i.target, scope);
                         auto& args = i.arguments;
 
-                        auto& tgt_ty = i.target.get().attribute;
+                        auto& tgt_ty = i.target->attribute;
                         auto result_ty = UNKOWN;
+
+                        cout << "type call statement (template): " << i.target << " (" << i.target->attribute << ")" << endl;
 
                         visit(hana::overload(
                                   [&](types::ptr_t& x) {
@@ -589,11 +596,25 @@ namespace bt { namespace analysis {
                                           auto err = raise<error>(ast);
                                           err << "Pointer generic type \"ptr()\"accepts a single "
                                                  "underlying value type argument, "
-                                                 "but got following argument pack: \""
+                                                 "but got: \""
                                               << args << "\"";
                                       }
                                       type_check(args.front(), scope);
                                       x.value_type = args.front().get().attribute;
+                                      result_ty = tgt_ty;
+                                  },
+                                  [&](types::array_t& x) {
+                                      if (args.size() != 2) {
+                                          auto err = raise<error>(ast);
+                                          err << "Fixed array generic type \"array()\" accepts "
+                                                 "a value type argument, and a sequence of dimension sizes, "
+                                                 "but got: \""
+                                              << args << "\"";
+                                      }
+                                      type_check(args.front(), scope);
+                                      x.value_type = args.front()->attribute;
+                                      type_check(args.back(), scope);
+                                      x.value_type = args.back()->attribute;
                                       result_ty = tgt_ty;
                                   },
                                   [&](types::dynarr_t& x) {
@@ -601,7 +622,7 @@ namespace bt { namespace analysis {
                                           auto err = raise<error>(ast);
                                           err << "Dynamic array generic type \"dynarr()\" accepts "
                                                  "a single value type argument, "
-                                                 "but got following argument pack: \""
+                                                 "but got: \""
                                               << args << "\"";
                                       }
                                       type_check(args.front(), scope);
@@ -622,6 +643,14 @@ namespace bt { namespace analysis {
                                                          [](auto& v) -> int { return 0; }),
                                           args.front().get().get<literal_t>());
                                       result_ty = tgt_ty;
+                                  },
+                                  [&](types::tuple_t& x) {
+                                      cout << "HEY GOT HERE" << endl;
+                                      for (auto& arg: i.arguments) {
+                                         type_check(arg, scope);
+                                         x.push_back(arg->attribute);
+                                      }
+                                      result_ty = type_t(type_value(x));
                                   },
                                   [&](types::function_t& x) {
                                       if (args.size() < 1) {
@@ -830,6 +859,10 @@ namespace bt { namespace analysis {
                     auto deduced_ty = f.rhs->attribute;
                     auto& decl_ty = f.type->attribute;
 
+                    cout << "Var def. initial. Decl var TYPE: " << f.type.get() << "; RHS: " << f.rhs.get() << endl;
+                    cout << "Var def. initial. Decl var type: " << decl_ty << "; deduced type: " << deduced_ty << endl;
+
+
                     if (deduced_ty->empty() && decl_ty->empty()) return UNKOWN;
 
                     if (decl_ty->empty()) {
@@ -916,10 +949,11 @@ namespace bt { namespace analysis {
                 [&](break_t& v) -> type_t { return VOID; },
                 [&](continue_t& v) -> type_t { return VOID; },
                 [&](type_expr_t<type_t>& v) -> type_t {
+                    cout << "TYPE EXPR: " << ast << endl;
                     auto scope = parent_scope;
                     scope.context = context_t::type;
                     type_check(v.type, scope);
-                    return v.type.get().attribute;
+                    return v.type->attribute;
                 },
                 [&](return_t<type_t>& v) -> type_t {
                     type_check(v.value, parent_scope);
@@ -937,6 +971,10 @@ namespace bt { namespace analysis {
                 [&](std::monostate& e) -> type_t { return UNKOWN; },
                 [&](auto&& e) -> type_t { return UNKOWN; }),
             ast.get());
+        } catch (const std::bad_variant_access& e) {
+            cerr << e.what() << endl;
+            cerr << boost::stacktrace::stacktrace() << endl;
+        }
     }
 
 }}  // namespace bt::analysis

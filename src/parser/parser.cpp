@@ -308,13 +308,14 @@ namespace bt { namespace parser {
                             auto result_type = p_node_t(tree_t());
                             if (eat_if<token::colon_t>())
                                 result_type =
-                                    p_node_t(type_expr_t<empty_attribute_t>{p_node_t(atom_expr())});
+                                    //p_node_t(type_expr_t<empty_attribute_t>{p_node_t(atom_expr())});
+                                    p_node_t(type_expr_t<empty_attribute_t>{p_node_t(expression())});
 
                             auto rhs = tree_t();
                             if (eat_if<token::assign_t>()) {
                                 const auto old_code = code;
                                 code = false;
-                                rhs = assignment_stmt();
+                                rhs = expression();
                                 code = old_code;
                             }
 
@@ -733,8 +734,8 @@ namespace bt { namespace parser {
 
                 code = old_code;
 
-                if (result.size() == 1 && result.front().get().is<p_data_t>())
-                    result = result.front().get().get<p_data_t>();
+                if (result.size() == 1 && result.front()->is<p_data_t>())
+                    result = result.front()->get<p_data_t>();
 
                 return result;
             }
