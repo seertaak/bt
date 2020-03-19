@@ -11,10 +11,12 @@
 
 #include <boost/stacktrace.hpp>
 #include <bullet/analysis/error.hpp>
+#include <bullet/analysis/prelude_environment.hpp>
 #include <bullet/analysis/symtab.hpp>
 #include <bullet/analysis/type.hpp>
 #include <bullet/analysis/type_checking.hpp>
 #include <bullet/analysis/walk.hpp>
+#include <bullet/banner.hpp>
 #include <bullet/lexer/lexer.hpp>
 #include <bullet/lexer/token.hpp>
 #include <bullet/parser/ast.hpp>
@@ -31,13 +33,6 @@ using namespace syntax;
 using namespace rang;
 using namespace analysis;
 
-constexpr auto title = R"(
-     / /_  __  __/ / /__  / /_
-    / __ \/ / / / / / _ \/ __/
-   / /_/ / /_/ / / /  __/ /_    
-  /_.___/\__,_/_/_/\___/\__/
-)"sv;
-
 template <typename T>
 auto print_kind(raise<T>& err, auto invoc, auto type) -> raise<T>& {
     if (type && invoc)
@@ -52,11 +47,8 @@ auto print_kind(raise<T>& err, auto invoc, auto type) -> raise<T>& {
 };
 
 int main(int argc, const char* argv[]) {
-    //try { 
-    cout << style::bold << fg::blue << title << style::reset << style::bold << fg::green
-         << style::italic << "\n  fast. " << fg::blue << "expressive." << style::blink << fg::red
-         << " dangerous.\n"
-         << style::reset << fg::reset << endl;
+    // try {
+    cout << coloured_banner() << endl;
 
     if (argc <= 1) return 0;
 
@@ -82,45 +74,7 @@ int main(int argc, const char* argv[]) {
     attr_node_t<analysis::type_t> typed_ast =
         walk_post_order<analysis::type_t>(ast, [](auto, auto) { return analysis::type_t(); });
 
-    auto builtins = environment_t();
-    builtins.context = context_t::fn;
-    builtins.types.insert("i8", analysis::I8);
-    builtins.types.insert("i16", analysis::I16);
-    builtins.types.insert("i32", analysis::I32);
-    builtins.types.insert("i64", analysis::I64);
-    builtins.types.insert("u8", analysis::U8);
-    builtins.types.insert("u16", analysis::U16);
-    builtins.types.insert("u32", analysis::U32);
-    builtins.types.insert("u64", analysis::U64);
-    builtins.types.insert("f32", analysis::F32);
-    builtins.types.insert("f64", analysis::F64);
-
-    builtins.types.insert("byte", analysis::I8);
-    builtins.types.insert("short", analysis::I16);
-    builtins.types.insert("int", analysis::I32);
-    builtins.types.insert("long", analysis::I64);
-
-    builtins.types.insert("ubyte", analysis::U8);
-    builtins.types.insert("ushort", analysis::U16);
-    builtins.types.insert("uint", analysis::U32);
-    builtins.types.insert("ulong", analysis::U64);
-
-    builtins.types.insert("ptr", analysis::PTR);
-    builtins.types.insert("array", analysis::ARRAY);
-    builtins.types.insert("dynarr", analysis::DYNARR);
-    builtins.types.insert("bool", analysis::BOOL);
-    builtins.types.insert("char", analysis::CHAR);
-    builtins.types.insert("slice", analysis::SLICE);
-    builtins.types.insert("variant", analysis::VARIANT);
-    builtins.types.insert("fn", analysis::FUNCTION);
-    builtins.types.insert("tuple", analysis::TUPLE);
-    builtins.types.insert("strlit", analysis::STRLIT);
-    builtins.types.insert("UNKNOWN", analysis::UNKOWN);
-    builtins.types.insert("void", analysis::VOID);
-    builtins.types.insert("string", analysis::STRING);
-
-    builtins.fns.insert("print", analysis::FUNCTION);
-
+    auto builtins = lang::prelude::environment();
     type_check(typed_ast, builtins);
 
     {
@@ -448,7 +402,7 @@ int main(int argc, const char* argv[]) {
 
     return 0;
     //} catch (...) {
-        //cout << "OH SHIT" << endl;
-        //std::cout << boost::stacktrace::stacktrace() << endl;
+    // cout << "OH SHIT" << endl;
+    // std::cout << boost::stacktrace::stacktrace() << endl;
     //}
 }

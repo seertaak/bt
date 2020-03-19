@@ -5,8 +5,7 @@
 
 #include <bullet/jupyter/interpreter.hpp>
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
     // Load configuration file
     std::string file_name = (argc == 1) ? "connection.json" : argv[2];
     xeus::xconfiguration config = xeus::load_configuration(file_name);

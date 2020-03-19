@@ -1,6 +1,4 @@
-var x:array(int, 5) =
-    1
-    2
-    3
-
-
+var x = 5.5
+let z = 5.2
+x + z
+z = 2

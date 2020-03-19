@@ -308,8 +308,9 @@ namespace bt { namespace parser {
                             auto result_type = p_node_t(tree_t());
                             if (eat_if<token::colon_t>())
                                 result_type =
-                                    //p_node_t(type_expr_t<empty_attribute_t>{p_node_t(atom_expr())});
-                                    p_node_t(type_expr_t<empty_attribute_t>{p_node_t(expression())});
+                                    // p_node_t(type_expr_t<empty_attribute_t>{p_node_t(atom_expr())});
+                                    p_node_t(
+                                        type_expr_t<empty_attribute_t>{p_node_t(expression())});
 
                             auto rhs = tree_t();
                             if (eat_if<token::assign_t>()) {

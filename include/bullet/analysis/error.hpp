@@ -6,12 +6,11 @@
 #include <string_view>
 #include <vector>
 
-#include <bullet/parser/location.hpp>
-#include <boost/stacktrace.hpp>
 #include <boost/exception/all.hpp>
+//#include <boost/stacktrace.hpp>
+#include <bullet/parser/location.hpp>
 
-typedef boost::error_info<struct tag_stacktrace, boost::stacktrace::stacktrace> traced;
-
+// typedef boost::error_info<struct tag_stacktrace, boost::stacktrace::stacktrace> traced;
 
 namespace bt { namespace analysis {
     struct error : std::runtime_error {
@@ -29,7 +28,7 @@ namespace bt { namespace analysis {
         template <typename Node>
         raise(const Node& node) : loc(node.get().location) {}
         ~raise() {
-            msg << "\n\n" << boost::stacktrace::stacktrace() << std::endl << std::endl;
+            // msg << "\n\n" << boost::stacktrace::stacktrace() << std::endl << std::endl;
 
             error::errors.emplace_back(std::unique_ptr<std::runtime_error>(new T(msg, loc)));
         }
